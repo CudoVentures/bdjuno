@@ -27,15 +27,12 @@ func (m *Module) refreshDelegatorsRewardsAmounts(height int64) {
 
 	// Get the rewards
 	for _, delegator := range delegators {
-
 		// Refresh the delegators using a goroutine to improve efficiency
-		go func(delegator string) {
-			err = m.RefreshDelegatorRewards(height, delegator)
-			if err != nil {
-				log.Error().Str("module", "distribution").Err(err).Int64("height", height).
-					Str("delegator", delegator).Msg("error while updating delegator rewards")
-			}
-		}(delegator)
+		err = m.RefreshDelegatorRewards(height, delegator)
+		if err != nil {
+			log.Error().Str("module", "distribution").Err(err).Int64("height", height).
+				Str("delegator", delegator).Msg("error while updating delegator rewards")
+		}
 	}
 }
 
