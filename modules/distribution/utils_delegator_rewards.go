@@ -11,6 +11,9 @@ import (
 // refreshDelegatorsRewardsAmounts refreshes the rewards associated with all the delegators for the given height,
 // deleting the ones existing and downloading them from scratch.
 func (m *Module) refreshDelegatorsRewardsAmounts(height int64) error {
+	log.Debug().Str("module", "distribution").
+		Int64("height", height).
+		Msg("refreshing delegators rewards amounts")
 
 	// Get the delegators
 	delegators, err := m.db.GetDelegators()
