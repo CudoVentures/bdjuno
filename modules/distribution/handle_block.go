@@ -1,6 +1,8 @@
 package distribution
 
 import (
+	"fmt"
+
 	juno "github.com/forbole/juno/v2/types"
 
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -12,12 +14,18 @@ func (m *Module) HandleBlock(
 ) error {
 	// Update the validator commissions amount upon reaching interval or if no commission amount is saved in db
 	if m.shouldUpdateValidatorsCommissionAmounts(b.Block.Height) {
-		go m.updateValidatorsCommissionAmounts(b.Block.Height)
+		err := m.updateValidatorsCommissionAmounts(b.Block.Height)
+		if err != nil {
+			return fmt.Errorf("error while updateValidatorsCommissionAmounts")
+		}
 	}
 
 	// Update the delegators commissions amounts upon reaching interval or no rewards saved yet
 	if m.shouldUpdateDelegatorRewardsAmounts(b.Block.Height) {
-		go m.refreshDelegatorsRewardsAmounts(b.Block.Height)
+		err := m.refreshDelegatorsRewardsAmounts(b.Block.Height)
+		if err != nil {
+			return fmt.Errorf("error while refreshDelegatorsRewardsAmounts")
+		}
 	}
 
 	return nil

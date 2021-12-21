@@ -10,19 +10,20 @@ import (
 
 // refreshDelegatorsRewardsAmounts refreshes the rewards associated with all the delegators for the given height,
 // deleting the ones existing and downloading them from scratch.
-func (m *Module) refreshDelegatorsRewardsAmounts(height int64) {
+func (m *Module) refreshDelegatorsRewardsAmounts(height int64) error {
 
 	// Get the delegators
 	delegators, err := m.db.GetDelegators()
 	if err != nil {
 		log.Error().Str("module", "distribution").Err(err).Int64("height", height).
 			Msg("error while getting delegators")
+		return err
 	}
 
 	if len(delegators) == 0 {
 		log.Debug().Str("module", "distribution").Int64("height", height).
 			Msg("no delegations found, make sure you are calling this module after the staking module")
-		return
+		return nil
 	}
 
 	// Get the rewards
@@ -32,8 +33,10 @@ func (m *Module) refreshDelegatorsRewardsAmounts(height int64) {
 		if err != nil {
 			log.Error().Str("module", "distribution").Err(err).Int64("height", height).
 				Str("delegator", delegator).Msg("error while updating delegator rewards")
+			return err
 		}
 	}
+	return nil
 }
 
 // shouldUpdateDelegatorRewardsAmounts tells whether or not the delegatos rewards amounts should be updated at the given height

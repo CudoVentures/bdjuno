@@ -7,7 +7,7 @@ import (
 )
 
 // updateValidatorsCommissionAmounts updates the validators commissions amounts
-func (m *Module) updateValidatorsCommissionAmounts(height int64) {
+func (m *Module) updateValidatorsCommissionAmounts(height int64) error {
 	log.Debug().Str("module", "distribution").
 		Int64("height", height).
 		Msg("updating validators commissions")
@@ -17,27 +17,32 @@ func (m *Module) updateValidatorsCommissionAmounts(height int64) {
 		log.Error().Str("module", "distribution").Err(err).
 			Int64("height", height).
 			Msg("error while getting validators")
-		return
+		return err
 	}
 
 	if len(validators) == 0 {
 		// No validators, just skip
-		return
+		return nil
 	}
 
 	// Get all the commissions
 	for _, validator := range validators {
-		go m.updateValidatorCommissionAmount(height, validator)
+		err := m.updateValidatorCommissionAmount(height, validator)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func (m *Module) updateValidatorCommissionAmount(height int64, validator types.Validator) {
+func (m *Module) updateValidatorCommissionAmount(height int64, validator types.Validator) error {
 	commission, err := m.source.ValidatorCommission(validator.GetOperator(), height)
 	if err != nil {
 		log.Error().Str("module", "distribution").Err(err).
 			Int64("height", height).
 			Str("validator", validator.GetOperator()).
 			Msg("error while getting validator commission")
+		return err
 	}
 
 	err = m.db.SaveValidatorCommissionAmount(types.NewValidatorCommissionAmount(
@@ -51,7 +56,9 @@ func (m *Module) updateValidatorCommissionAmount(height int64, validator types.V
 			Int64("height", height).
 			Str("validator", validator.GetOperator()).
 			Msg("error while saving validator commission amounts")
+		return err
 	}
+	return nil
 }
 
 // shouldUpdateValidatorsCommissionAmounts tells whether or not the validator commission amount should be updated at the given height
