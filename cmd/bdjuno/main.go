@@ -10,6 +10,7 @@ import (
 
 	"github.com/forbole/bdjuno/types/config"
 
+	cudosapp "cudos.org/cudos-node/app"
 	"github.com/forbole/bdjuno/database"
 	"github.com/forbole/bdjuno/modules"
 )
@@ -41,6 +42,7 @@ func getBasicManagers() []module.BasicManager {
 		module.NewBasicManager(
 			ibc.AppModule{},
 		),
+		cudosapp.ModuleBasics,
 	}
 }
 
