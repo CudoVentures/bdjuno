@@ -29,6 +29,8 @@ func (m *Module) refreshDelegatorsRewardsAmounts(height int64) error {
 		return nil
 	}
 
+	fmt.Println("delegators", delegators)
+
 	// Get the rewards
 	for _, delegator := range delegators {
 		// Refresh the delegators using a goroutine to improve efficiency
