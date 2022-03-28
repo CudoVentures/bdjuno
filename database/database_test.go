@@ -70,7 +70,7 @@ func (suite *DbTestSuite) SetupTest() {
 	_, err = bigDipperDb.Sql.Exec(`CREATE SCHEMA public;`)
 	suite.Require().NoError(err)
 
-	dirPath := path.Join(".", "schema")
+	dirPath := path.Join(".", "scheme")
 	dir, err := ioutil.ReadDir(dirPath)
 	suite.Require().NoError(err)
 

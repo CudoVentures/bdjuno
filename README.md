@@ -17,6 +17,9 @@ created using [Hasura](https://hasura.io/).
 To know how to setup and run BDJuno, please refer to
 the [docs website](https://docs.bigdipper.live/cosmos-based/parser/overview/).
 
+## Local env via Docker
+TODO: Add LINK to cudosbuilder init 
+
 ## Testing
 If you want to test the code, you can do so by running
 
