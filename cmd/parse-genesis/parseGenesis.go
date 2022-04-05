@@ -10,6 +10,7 @@ import (
 	"github.com/forbole/juno/v2/types/config"
 	junoutils "github.com/forbole/juno/v2/types/utils"
 	"github.com/spf13/cobra"
+	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 // NewParseGenesisCmd returns the Cobra command allowing to parse the genesis file
@@ -77,9 +78,21 @@ func getModule(module string, parseCtx *parse.Context) (modules.Module, bool) {
 }
 
 func resolveInitialHeightBlock(ctx *parse.Context, initialHeight int64) error {
+	hasBlock, err := ctx.Database.HasBlock(initialHeight)
+	if err != nil {
+		return err
+	}
+	if hasBlock {
+		return nil
+	}
+
 	block, err := ctx.Node.Block(initialHeight)
 	if err != nil {
 		return fmt.Errorf("failed to get block from node: %s", err)
+	}
+
+	if err := resolveInitialHeightValidator(ctx, initialHeight, block); err != nil {
+		return err
 	}
 
 	txs, err := ctx.Node.Txs(block)
@@ -87,6 +100,15 @@ func resolveInitialHeightBlock(ctx *parse.Context, initialHeight int64) error {
 		return fmt.Errorf("failed to get transactions for block: %s", err)
 	}
 
+	var totalGas uint64
+	for _, tx := range txs {
+		totalGas += uint64(tx.GasUsed)
+	}
+
+	return ctx.Database.SaveBlock(types.NewBlockFromTmBlock(block, totalGas))
+}
+
+func resolveInitialHeightValidator(ctx *parse.Context, initialHeight int64, block *coretypes.ResultBlock) error {
 	vals, err := ctx.Node.Validators(initialHeight)
 	if err != nil {
 		return fmt.Errorf("failed to get validators for block: %s", err)
@@ -117,11 +139,5 @@ func resolveInitialHeightBlock(ctx *parse.Context, initialHeight int64) error {
 		return fmt.Errorf("validator %s not found", proposerAddr.String())
 	}
 
-	var totalGas uint64
-
-	for _, tx := range txs {
-		totalGas += uint64(tx.GasUsed)
-	}
-
-	return ctx.Database.SaveBlock(types.NewBlockFromTmBlock(block, totalGas))
+	return nil
 }
