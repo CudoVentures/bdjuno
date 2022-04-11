@@ -3,11 +3,14 @@ package parsegenesis
 import (
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/forbole/juno/v2/cmd/parse"
 	"github.com/forbole/juno/v2/modules"
+	"github.com/forbole/juno/v2/types"
 	"github.com/forbole/juno/v2/types/config"
 	junoutils "github.com/forbole/juno/v2/types/utils"
 	"github.com/spf13/cobra"
+	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 // NewParseGenesisCmd returns the Cobra command allowing to parse the genesis file
@@ -45,6 +48,10 @@ func NewParseGenesisCmd(parseCfg *parse.Config) *cobra.Command {
 				return fmt.Errorf("error while getting genesis doc and state: %s", err)
 			}
 
+			if err := resolveInitialHeightBlock(parseCtx, genesisDoc.InitialHeight); err != nil {
+				return fmt.Errorf("failed to resolve initial height block: %v", err)
+			}
+
 			// For each module, parse the genesis
 			for _, module := range modulesToParse {
 				if genesisModule, ok := module.(modules.GenesisModule); ok {
@@ -68,4 +75,69 @@ func getModule(module string, parseCtx *parse.Context) (modules.Module, bool) {
 		}
 	}
 	return nil, false
+}
+
+func resolveInitialHeightBlock(ctx *parse.Context, initialHeight int64) error {
+	hasBlock, err := ctx.Database.HasBlock(initialHeight)
+	if err != nil {
+		return err
+	}
+	if hasBlock {
+		return nil
+	}
+
+	block, err := ctx.Node.Block(initialHeight)
+	if err != nil {
+		return fmt.Errorf("failed to get block from node: %s", err)
+	}
+
+	if err := resolveInitialHeightValidator(ctx, initialHeight, block); err != nil {
+		return err
+	}
+
+	txs, err := ctx.Node.Txs(block)
+	if err != nil {
+		return fmt.Errorf("failed to get transactions for block: %s", err)
+	}
+
+	var totalGas uint64
+	for _, tx := range txs {
+		totalGas += uint64(tx.GasUsed)
+	}
+
+	return ctx.Database.SaveBlock(types.NewBlockFromTmBlock(block, totalGas))
+}
+
+func resolveInitialHeightValidator(ctx *parse.Context, initialHeight int64, block *coretypes.ResultBlock) error {
+	vals, err := ctx.Node.Validators(initialHeight)
+	if err != nil {
+		return fmt.Errorf("failed to get validators for block: %s", err)
+	}
+
+	isValidatorFound := false
+	proposerAddr := sdk.ConsAddress(block.Block.ProposerAddress)
+	for _, val := range vals.Validators {
+		if proposerAddr.String() == sdk.ConsAddress(val.Address).String() {
+			isValidatorFound = true
+
+			consAddr := sdk.ConsAddress(val.Address).String()
+			consPubKey, err := types.ConvertValidatorPubKeyToBech32String(val.PubKey)
+			if err != nil {
+				return fmt.Errorf("failed to convert validator public key for validators %s: %s", consAddr, err)
+			}
+
+			validators := make([]*types.Validator, 1)
+			validators[0] = types.NewValidator(consAddr, consPubKey)
+
+			if err := ctx.Database.SaveValidators(validators); err != nil {
+				return err
+			}
+		}
+	}
+
+	if !isValidatorFound {
+		return fmt.Errorf("validator %s not found", proposerAddr.String())
+	}
+
+	return nil
 }

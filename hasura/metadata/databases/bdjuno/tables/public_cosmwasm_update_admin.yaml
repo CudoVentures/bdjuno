@@ -1,0 +1,19 @@
+table:
+  name: cosmwasm_update_admin
+  schema: public
+object_relationships:
+- name: transaction
+  using:
+    foreign_key_constraint_on: transaction_hash
+select_permissions:
+- permission:
+    allow_aggregations: true
+    columns:
+    - transaction_hash
+    - index
+    - sender
+    - contract
+    - new_admin
+    - success
+    filter: {}
+  role: anonymous
