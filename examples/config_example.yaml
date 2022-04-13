@@ -11,6 +11,7 @@ chain:
         - mint
         - slashing 
         - staking 
+        - cosmwasm
 node:
     type: remote
     config:
