@@ -288,6 +288,28 @@ WHERE proposal_vote.height <= excluded.height`
 	return nil
 }
 
+func (db *Db) SaveWeightedVote(weightedVote types.WeightedVote) error {
+	query := `
+INSERT INTO proposal_vote_weighted (proposal_id, voter_address, option, weight, height) 
+VALUES ($1, $2, $3, $4, $5) 
+ON CONFLICT ON CONSTRAINT unique_vote_weighted DO UPDATE
+	SET option = excluded.option,
+		height = excluded.height
+WHERE proposal_vote_weighted.height <= excluded.height`
+
+	if err := db.SaveAccounts([]types.Account{types.NewAccount(weightedVote.Voter)}); err != nil {
+		return fmt.Errorf("error while storing voter account: %s", err)
+	}
+
+	for _, opt := range weightedVote.Options {
+		if _, err := db.Sql.Exec(query, weightedVote.ProposalID, weightedVote.Voter, opt.Option, opt.Weight, weightedVote.Height); err != nil {
+			return fmt.Errorf("error while storing vote: %s", err)
+		}
+	}
+
+	return nil
+}
+
 // SaveTallyResults allows to save for the given height the given total amount of coins
 func (db *Db) SaveTallyResults(tallys []types.TallyResult) error {
 	if len(tallys) == 0 {

@@ -46,3 +46,4 @@
 - "!include public_cosmwasm_migrate.yaml"
 - "!include public_cosmwasm_update_admin.yaml"
 - "!include public_cosmwasm_clear_admin.yaml"
+- "!include public_proposal_vote_weighted.yaml"
