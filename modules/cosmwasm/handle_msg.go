@@ -8,6 +8,7 @@ import (
 
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/forbole/bdjuno/v2/modules/utils"
 	"github.com/forbole/bdjuno/v2/types"
 	juno "github.com/forbole/juno/v2/types"
 )
@@ -53,7 +54,7 @@ func (m *Module) handleMsgStoreCode(index int, msg *wasmTypes.MsgStoreCode, tx *
 		return err
 	}
 
-	resultCodeID := getValueFromLogs(uint32(index), tx.Logs, wasmTypes.EventTypeStoreCode, wasmTypes.AttributeKeyCodeID)
+	resultCodeID := utils.GetValueFromLogs(uint32(index), tx.Logs, wasmTypes.EventTypeStoreCode, wasmTypes.AttributeKeyCodeID)
 
 	return m.db.SaveMsgStoreCodeData(
 		types.NewMsgStoreCodeData(
@@ -73,7 +74,7 @@ func (m *Module) handleMsgInstantiateContract(index int, msg *wasmTypes.MsgInsta
 		return err
 	}
 
-	resultContractAddress := getValueFromLogs(uint32(index), tx.Logs, wasmTypes.EventTypeInstantiate, wasmTypes.AttributeKeyContractAddr)
+	resultContractAddress := utils.GetValueFromLogs(uint32(index), tx.Logs, wasmTypes.EventTypeInstantiate, wasmTypes.AttributeKeyContractAddr)
 
 	return m.db.SaveMsgInstantiateContractData(
 		types.NewMsgInstantiateContractData(
@@ -170,28 +171,6 @@ func (m *Module) handleMsgClearAdmin(index int, msg *wasmTypes.MsgClearAdmin, tx
 
 func isSuccess(code uint32) bool {
 	return code == 0
-}
-
-func getValueFromLogs(index uint32, logs sdk.ABCIMessageLogs, eventType, attributeKey string) string {
-	for _, log := range logs {
-		if log.MsgIndex != index {
-			continue
-		}
-
-		for _, event := range log.Events {
-			if event.Type != eventType {
-				continue
-			}
-
-			for _, attr := range event.Attributes {
-				if attr.Key == attributeKey {
-					return attr.Value
-				}
-			}
-		}
-	}
-
-	return ""
 }
 
 func getPayloadMapKeys(payloadMap map[string]interface{}) []string {
