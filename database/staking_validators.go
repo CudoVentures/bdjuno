@@ -479,3 +479,51 @@ VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`
 
 	return nil
 }
+
+func (db *Db) SaveValidatorDelegation(delegationResponses stakingtypes.DelegationResponses) error {
+	if len(delegationResponses) == 0 {
+		return nil
+	}
+
+	tx, err := db.Sqlx.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to open transaction for saving validator delegation: %s", err)
+	}
+
+	if _, err = tx.Exec(`DELETE FROM delegation WHERE validator_address = $1`, delegationResponses[0].Delegation.ValidatorAddress); err != nil {
+		return fmt.Errorf("failed to delete delegation: %s", err)
+	}
+
+	sqlStr := "INSERT INTO delegation(validator_address, delegator_address, amount) VALUES "
+	vals := []interface{}{}
+	argCounter := 1
+
+	for _, response := range delegationResponses {
+		sqlStr += fmt.Sprintf("($%d, $%d, $%d),", argCounter, argCounter+1, argCounter+2)
+		argCounter += 3
+		dbcoin := dbtypes.NewDbCoin(sdk.NewCoin(response.Balance.Denom, response.Balance.Amount))
+		value, err := dbcoin.Value()
+		if err != nil {
+			return fmt.Errorf("failed to convert balanace to dbcoin: %s", err)
+		}
+		vals = append(vals, response.Delegation.ValidatorAddress, response.Delegation.DelegatorAddress, value)
+	}
+
+	// trim the last ,
+	sqlStr = sqlStr[0 : len(sqlStr)-1]
+
+	stmt, err := tx.Prepare(sqlStr)
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement to insert delegations: %s", err)
+	}
+
+	if _, err := stmt.Exec(vals...); err != nil {
+		return fmt.Errorf("failed to exec delegations insert statement: %s", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %s", err)
+	}
+
+	return nil
+}
