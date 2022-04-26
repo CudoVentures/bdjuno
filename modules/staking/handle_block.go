@@ -36,6 +36,9 @@ func (m *Module) HandleBlock(
 	// Update the staking pool
 	go m.updateStakingPool(block.Block.Height)
 
+	// TODO: Can be moved eventually as periodic operation to reduce DB usage if its required
+	go m.updateDelegations(block.Block.Height, validators)
+
 	return nil
 }
 
@@ -141,5 +144,21 @@ func (m *Module) updateStakingPool(height int64) {
 		log.Error().Str("module", "staking").Err(err).Int64("height", height).
 			Msg("error while saving staking pool")
 		return
+	}
+}
+
+func (m *Module) updateDelegations(height int64, validators []stakingtypes.Validator) {
+	for i := range validators {
+		response, err := m.source.GetValidatorDelegationsWithPagination(height, validators[i].OperatorAddress, nil)
+		if err != nil {
+			log.Error().Str("module", "staking").Err(err).Int64("height", height).
+				Msg("error while getting validator delegations")
+			continue
+		}
+
+		if err := m.db.SaveValidatorDelegation(response.DelegationResponses); err != nil {
+			log.Error().Str("module", "staking").Err(err).Int64("height", height).
+				Msg("error while saving validator delegation")
+		}
 	}
 }

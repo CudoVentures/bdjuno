@@ -250,55 +250,6 @@ CREATE TABLE validator_status
 );
 CREATE INDEX validator_status_height_index ON validator_status (height);
 
-/* ---- DELEGATIONS ---- */
-
-/*
- * This table holds the HISTORICAL delegations.
- * It should be updated on a MESSAGE basis, to avoid data duplication.
- */
-CREATE TABLE delegation
-(
-    /* This is used to make it possible for Hasura to connect validator and self_delegations properly */
-    id                SERIAL PRIMARY KEY NOT NULL,
-
-    validator_address TEXT               NOT NULL REFERENCES validator (consensus_address),
-    delegator_address TEXT               NOT NULL REFERENCES account (address),
-    amount            COIN               NOT NULL,
-    height            BIGINT             NOT NULL,
-    CONSTRAINT delegation_validator_delegator_unique UNIQUE (validator_address, delegator_address)
-);
-CREATE INDEX delegation_validator_address_index ON delegation (validator_address);
-CREATE INDEX delegation_delegator_address ON delegation (delegator_address);
-CREATE INDEX delegation_height_index ON delegation (height);
-
-/**
-  * This function is used to add a self_delegations field to the validator table allowing to easily get all the
-  * self delegations related to a specific validator.
- */
-CREATE FUNCTION self_delegations(validator_row validator) RETURNS SETOF delegation AS
-$$
-SELECT *
-FROM delegation
-WHERE delegator_address = (
-    SELECT self_delegate_address
-    FROM validator_info
-    WHERE validator_info.consensus_address = validator_row.consensus_address
-)
-$$ LANGUAGE sql STABLE;
-
-/**
-  * This function is used to have a Hasura compute field (https://hasura.io/docs/1.0/graphql/core/schema/computed-fields.html)
-  * inside the delegation_history table, so that it's easy to determine whether an entry represents a self delegation or not.
- */
-CREATE FUNCTION is_delegation_self_delegate(delegation_row delegation) RETURNS BOOLEAN AS
-$$
-SELECT (
-           SELECT self_delegate_address
-           FROM validator_info
-           WHERE validator_info.consensus_address = delegation_row.validator_address
-       ) = delegation_row.delegator_address
-$$ LANGUAGE sql STABLE;
-
 /* ---- RE-DELEGATIONS ---- */
 
 /*
@@ -622,19 +573,6 @@ CREATE INDEX proposal_vote_proposal_id_index ON proposal_vote (proposal_id);
 CREATE INDEX proposal_vote_voter_address_index ON proposal_vote (voter_address);
 CREATE INDEX proposal_vote_height_index ON proposal_vote (height);
 
-CREATE TABLE proposal_vote_weighted
-(
-    proposal_id   INTEGER NOT NULL REFERENCES proposal (id),
-    voter_address TEXT    NOT NULL REFERENCES account (address),
-    option        TEXT    NOT NULL,
-    weight        TEXT    NOT NULL,
-    height        BIGINT  NOT NULL,
-    CONSTRAINT unique_vote_weighted UNIQUE (proposal_id, voter_address, option)
-);
-CREATE INDEX proposal_vote_weighted_proposal_id_index ON proposal_vote_weighted (proposal_id);
-CREATE INDEX proposal_vote_weighted_voter_address_index ON proposal_vote_weighted (voter_address);
-CREATE INDEX proposal_vote_weighted_height_index ON proposal_vote_weighted (height);
-
 CREATE TABLE proposal_tally_result
 (
     proposal_id  INTEGER REFERENCES proposal (id) PRIMARY KEY,
@@ -857,3 +795,11 @@ CREATE TABLE proposal_vote_weighted
 CREATE INDEX proposal_vote_weighted_proposal_id_index ON proposal_vote_weighted (proposal_id);
 CREATE INDEX proposal_vote_weighted_voter_address_index ON proposal_vote_weighted (voter_address);
 CREATE INDEX proposal_vote_weighted_height_index ON proposal_vote_weighted (height);
+
+CREATE TABLE delegation
+(
+    validator_address TEXT               NOT NULL REFERENCES validator_info (operator_address),
+    delegator_address TEXT               NOT NULL REFERENCES account (address),
+    amount            COIN               NOT NULL,
+    PRIMARY KEY (validator_address, delegator_address)
+);
