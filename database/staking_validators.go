@@ -514,11 +514,23 @@ func (db *Db) SaveValidatorDelegation(delegationResponses stakingtypes.Delegatio
 
 	stmt, err := tx.Prepare(sqlStr)
 	if err != nil {
-		return fmt.Errorf("failed to prepare statement to insert delegations: %s", err)
+		failErr := fmt.Errorf("failed to prepare statement to insert delegations: %s", err)
+
+		if err := tx.Rollback(); err != nil {
+			return fmt.Errorf("failed to rollback during: %s", failErr)
+		}
+
+		return failErr
 	}
 
 	if _, err := stmt.Exec(vals...); err != nil {
-		return fmt.Errorf("failed to exec delegations insert statement: %s", err)
+		failErr := fmt.Errorf("failed to exec delegations insert statement: %s", err)
+
+		if err := tx.Rollback(); err != nil {
+			return fmt.Errorf("failed to rollback during: %s", failErr)
+		}
+
+		return failErr
 	}
 
 	if err := tx.Commit(); err != nil {
