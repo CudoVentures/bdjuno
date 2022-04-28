@@ -2,6 +2,7 @@ package gravity
 
 import (
 	"fmt"
+	"strconv"
 
 	gravityTypes "github.com/althea-net/cosmos-gravity-bridge/module/x/gravity/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -28,7 +29,9 @@ func (m *Module) handleMsgSendToCosmosClaim(index int, msg *gravityTypes.MsgSend
 		return fmt.Errorf("attestation id not found: %+v", msg)
 	}
 
-	if err := m.db.SaveMsgSendToCosmosClaim(tx.TxHash, msg.Type(), attestationID, msg.CosmosReceiver, msg.Orchestrator); err != nil {
+	attestationID = strconv.QuoteToASCII(attestationID)
+
+	if err := m.db.SaveMsgSendToCosmosClaim(tx.TxHash, msg.Type(), attestationID, msg.CosmosReceiver, msg.Orchestrator, tx.Height); err != nil {
 		return fmt.Errorf("failed to save send to cosmos claim %+v: %v", msg, err)
 	}
 

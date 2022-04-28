@@ -11,5 +11,6 @@ type GravityTransactionRow struct {
 	Receiver        string `db:"receiver"`
 	Votes           int    `db:"votes"`
 	Consensus       bool   `db:"consensus"`
+	Height          int64  `db:"height"`
 	TransactionHash string `db:"transaction_hash"`
 }

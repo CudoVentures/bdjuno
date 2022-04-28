@@ -47,17 +47,18 @@ func testGravity_GetOrchestratorsCount(suite *DbTestSuite, expectedValue int) {
 
 func testGravity_SaveMsgSendToCosmosClaim(suite *DbTestSuite) {
 	txHash := "txhash#31337"
-	insertDummyTransaction(suite, txHash)
+	var height int64 = 1
+	insertDummyTransaction(suite, height, txHash)
 
-	err := suite.database.SaveMsgSendToCosmosClaim(txHash, "SendToCosmosClaim", "1", "me", "you")
+	err := suite.database.SaveMsgSendToCosmosClaim(txHash, "SendToCosmosClaim", "1", "me", "you", height)
 	suite.Require().NotNil(err)
 
-	err = suite.database.SaveMsgSendToCosmosClaim(txHash, "SendToCosmosClaim", "1", "me", testOrchestrator1)
+	err = suite.database.SaveMsgSendToCosmosClaim(txHash, "SendToCosmosClaim", "1", "me", testOrchestrator1, height)
 	suite.Require().Nil(err)
-	err = suite.database.SaveMsgSendToCosmosClaim(txHash, "SendToCosmosClaim", "1", "me", testOrchestrator1)
+	err = suite.database.SaveMsgSendToCosmosClaim(txHash, "SendToCosmosClaim", "1", "me", testOrchestrator1, height)
 	suite.Require().Nil(err)
 
-	err = suite.database.SaveMsgSendToCosmosClaim(txHash, "SendToCosmosClaim", "2", "me", testOrchestrator1)
+	err = suite.database.SaveMsgSendToCosmosClaim(txHash, "SendToCosmosClaim", "2", "me", testOrchestrator1, height)
 	suite.Require().Nil(err)
 }
 

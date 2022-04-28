@@ -14,11 +14,11 @@ func (db *Db) GetOrchestratorsCount() (int, error) {
 	return count, nil
 }
 
-func (db *Db) SaveMsgSendToCosmosClaim(transactionHash, msgType, attestationID, receiver, orchestrator string) error {
-	_, err := db.Sql.Exec(`INSERT INTO gravity_transaction AS gt (type, attestation_id, orchestrator, receiver, votes, consensus, transaction_hash) 
-		VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (attestation_id) DO UPDATE SET 
+func (db *Db) SaveMsgSendToCosmosClaim(transactionHash, msgType, attestationID, receiver, orchestrator string, height int64) error {
+	_, err := db.Sql.Exec(`INSERT INTO gravity_transaction AS gt (type, attestation_id, orchestrator, receiver, votes, consensus, transaction_hash, height) 
+		VALUES($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (attestation_id) DO UPDATE SET 
 		orchestrator = excluded.orchestrator, transaction_hash = excluded.transaction_hash, votes = gt.votes + 1`,
-		msgType, attestationID, orchestrator, receiver, 1, false, transactionHash)
+		msgType, attestationID, orchestrator, receiver, 1, false, transactionHash, height)
 	return err
 }
 
