@@ -10,7 +10,8 @@ import (
 
 func (suite *DbTestSuite) TestCosmWasm_SaveMsgStoreCodeData() {
 	txHash := "txhash#1"
-	insertDummyTransaction(suite, txHash)
+	var height int64 = 1
+	insertDummyTransaction(suite, height, txHash)
 	msgIndex := 0
 	sender := "cudos1a326k254fukx9jlp0h3fwcr2ymjgludzum67dv"
 	instantiatePermission := "{}"
@@ -75,12 +76,13 @@ func (suite *DbTestSuite) TestCosmWasm_SaveMsgStoreCodeData() {
 	err = suite.database.Sqlx.Select(&rows, "DELETE FROM cosmwasm_store")
 	suite.Require().NoError(err)
 
-	deleteDummyTransaction(suite, txHash)
+	deleteDummyTransaction(suite, height, txHash)
 }
 
 func (suite *DbTestSuite) TestCosmWasm_SaveMsgInstantiateContractData() {
 	txHash := "txhash#1"
-	insertDummyTransaction(suite, txHash)
+	var height int64 = 1
+	insertDummyTransaction(suite, height, txHash)
 	msgIndex := 0
 	sender := "cudos1a326k254fukx9jlp0h3fwcr2ymjgludzum67dv"
 	success := true
@@ -161,12 +163,13 @@ func (suite *DbTestSuite) TestCosmWasm_SaveMsgInstantiateContractData() {
 	err = suite.database.Sqlx.Select(&rows, "DELETE FROM cosmwasm_instantiate")
 	suite.Require().NoError(err)
 
-	deleteDummyTransaction(suite, txHash)
+	deleteDummyTransaction(suite, height, txHash)
 }
 
 func (suite *DbTestSuite) TestCosmWasm_SaveMsgExecuteContractData() {
 	txHash := "txhash#1"
-	insertDummyTransaction(suite, txHash)
+	var height int64 = 1
+	insertDummyTransaction(suite, height, txHash)
 	msgIndex := 0
 	sender := "cudos1a326k254fukx9jlp0h3fwcr2ymjgludzum67dv"
 	success := true
@@ -241,12 +244,13 @@ func (suite *DbTestSuite) TestCosmWasm_SaveMsgExecuteContractData() {
 	err = suite.database.Sqlx.Select(&rows, "DELETE FROM cosmwasm_execute")
 	suite.Require().NoError(err)
 
-	deleteDummyTransaction(suite, txHash)
+	deleteDummyTransaction(suite, height, txHash)
 }
 
 func (suite *DbTestSuite) TestCosmWasm_SaveMsgMigrateContactData() {
 	txHash := "txhash#1"
-	insertDummyTransaction(suite, txHash)
+	var height int64 = 1
+	insertDummyTransaction(suite, height, txHash)
 	msgIndex := 0
 	sender := "cudos1a326k254fukx9jlp0h3fwcr2ymjgludzum67dv"
 	success := true
@@ -315,12 +319,13 @@ func (suite *DbTestSuite) TestCosmWasm_SaveMsgMigrateContactData() {
 	err = suite.database.Sqlx.Select(&rows, "DELETE FROM cosmwasm_migrate")
 	suite.Require().NoError(err)
 
-	deleteDummyTransaction(suite, txHash)
+	deleteDummyTransaction(suite, height, txHash)
 }
 
 func (suite *DbTestSuite) TestCosmWasm_SaveMsgUpdateAdminData() {
 	txHash := "txhash#1"
-	insertDummyTransaction(suite, txHash)
+	var height int64 = 1
+	insertDummyTransaction(suite, height, txHash)
 	msgIndex := 0
 	sender := "cudos1a326k254fukx9jlp0h3fwcr2ymjgludzum67dv"
 	success := true
@@ -385,12 +390,13 @@ func (suite *DbTestSuite) TestCosmWasm_SaveMsgUpdateAdminData() {
 	err = suite.database.Sqlx.Select(&rows, "DELETE FROM cosmwasm_update_admin")
 	suite.Require().NoError(err)
 
-	deleteDummyTransaction(suite, txHash)
+	deleteDummyTransaction(suite, height, txHash)
 }
 
 func (suite *DbTestSuite) TestCosmWasm_SaveMsgClearAdminData() {
 	txHash := "txhash#1"
-	insertDummyTransaction(suite, txHash)
+	var height int64 = 1
+	insertDummyTransaction(suite, height, txHash)
 	msgIndex := 0
 	sender := "cudos1a326k254fukx9jlp0h3fwcr2ymjgludzum67dv"
 	success := true
@@ -449,11 +455,10 @@ func (suite *DbTestSuite) TestCosmWasm_SaveMsgClearAdminData() {
 	err = suite.database.Sqlx.Select(&rows, "DELETE FROM cosmwasm_clear_admin")
 	suite.Require().NoError(err)
 
-	deleteDummyTransaction(suite, txHash)
+	deleteDummyTransaction(suite, height, txHash)
 }
 
-func insertDummyTransaction(suite *DbTestSuite, txHash string) {
-	height := 1
+func insertDummyTransaction(suite *DbTestSuite, height int64, txHash string) {
 	insertDummyBlock(suite, height)
 	success := true
 	messages := "[]"
@@ -467,7 +472,7 @@ func insertDummyTransaction(suite *DbTestSuite, txHash string) {
 	suite.Require().NoError(err)
 }
 
-func insertDummyBlock(suite *DbTestSuite, height int) {
+func insertDummyBlock(suite *DbTestSuite, height int64) {
 	hash := "some hash"
 	now := time.Now()
 	_, err := suite.database.Sqlx.Exec(`INSERT INTO block (height, hash, timestamp) VALUES (
@@ -475,13 +480,13 @@ func insertDummyBlock(suite *DbTestSuite, height int) {
 	suite.Require().NoError(err)
 }
 
-func deleteDummyTransaction(suite *DbTestSuite, txHash string) {
+func deleteDummyTransaction(suite *DbTestSuite, height int64, txHash string) {
 	_, err := suite.database.Sqlx.Exec(`DELETE FROM transaction WHERE hash = $1`, txHash)
 	suite.Require().NoError(err)
-	deleteDummyBlock(suite, 1)
+	deleteDummyBlock(suite, height)
 }
 
-func deleteDummyBlock(suite *DbTestSuite, height int) {
+func deleteDummyBlock(suite *DbTestSuite, height int64) {
 	_, err := suite.database.Sqlx.Exec(`DELETE FROM block WHERE height = $1`, height)
 	suite.Require().NoError(err)
 }

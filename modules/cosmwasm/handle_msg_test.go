@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/types"
+	"github.com/forbole/bdjuno/v2/modules/utils"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,7 +33,7 @@ func TestGetPayloadMapKeysShouldReturnSliceWithOnlyRootKeys(t *testing.T) {
 }
 
 func TestGetValueFromLogsShouldReturnEmptyStringWithAllNilArguments(t *testing.T) {
-	require.Equal(t, "", getValueFromLogs(0, nil, "", ""))
+	require.Equal(t, "", utils.GetValueFromLogs(0, nil, "", ""))
 }
 
 func TestGetValueFromLogsShouldReturnEmptyStringIfValueNotFound(t *testing.T) {
@@ -55,7 +56,7 @@ func TestGetValueFromLogsShouldReturnEmptyStringIfValueNotFound(t *testing.T) {
 		}
 	]`
 	require.NoError(t, json.Unmarshal([]byte(logsJSON), &logs))
-	require.Equal(t, "", getValueFromLogs(0, logs, "test", "key"))
+	require.Equal(t, "", utils.GetValueFromLogs(0, logs, "test", "key"))
 }
 
 func TestGetValueFromLogsShouldReturnCorrectValueWhenFound(t *testing.T) {
@@ -78,5 +79,5 @@ func TestGetValueFromLogsShouldReturnCorrectValueWhenFound(t *testing.T) {
 		}
 	]`
 	require.NoError(t, json.Unmarshal([]byte(logsJSON), &logs))
-	require.Equal(t, "val", getValueFromLogs(0, logs, "test", "key1"))
+	require.Equal(t, "val", utils.GetValueFromLogs(0, logs, "test", "key1"))
 }
