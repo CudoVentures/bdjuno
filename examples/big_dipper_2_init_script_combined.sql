@@ -161,16 +161,6 @@ CREATE TABLE supply
 
 CREATE INDEX supply_height_index ON supply (height);
 
-/* ---- BALANCES---- */
-
-CREATE TABLE account_balance
-(
-    address TEXT   NOT NULL REFERENCES account (address) PRIMARY KEY,
-    coins   COIN[] NOT NULL DEFAULT '{}',
-    height  BIGINT NOT NULL
-);
-CREATE INDEX account_balance_height_index ON account_balance (height);
-
 /* 03-staking.sql */
 
 /* ---- PARAMS ---- */
@@ -249,60 +239,6 @@ CREATE TABLE validator_status
     height            BIGINT  NOT NULL
 );
 CREATE INDEX validator_status_height_index ON validator_status (height);
-
-/* ---- RE-DELEGATIONS ---- */
-
-/*
- * This table holds the HISTORICAL redelegations.
- * It should be updated on a MESSAGE basis, to avoid data duplication.
- */
-CREATE TABLE redelegation
-(
-    delegator_address     TEXT                        NOT NULL REFERENCES account (address),
-    src_validator_address TEXT                        NOT NULL REFERENCES validator (consensus_address),
-    dst_validator_address TEXT                        NOT NULL REFERENCES validator (consensus_address),
-    amount                COIN                        NOT NULL,
-    completion_time       TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    height                BIGINT                      NOT NULL,
-    CONSTRAINT redelegation_validator_delegator_unique UNIQUE (delegator_address, src_validator_address,
-                                                               dst_validator_address, amount, completion_time)
-);
-CREATE INDEX redelegation_delegator_address_index ON redelegation (delegator_address);
-CREATE INDEX redelegation_src_validator_address_index ON redelegation (src_validator_address);
-CREATE INDEX redelegation_dst_validator_address_index ON redelegation (dst_validator_address);
-
-/* ---- UNBONDING DELEGATIONS ---- */
-
-/*
- * This table holds the HISTORICAL unbonding delegations.
- * It should be updated on a MESSAGE basis, to avoid data duplication.
- */
-CREATE TABLE unbonding_delegation
-(
-    validator_address    TEXT                        NOT NULL REFERENCES validator (consensus_address),
-    delegator_address    TEXT                        NOT NULL REFERENCES account (address),
-    amount               COIN                        NOT NUll,
-    completion_timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    height               BIGINT                      NOT NULL,
-    CONSTRAINT unbonding_delegation_validator_delegator_unique UNIQUE (delegator_address, validator_address,
-                                                                       amount, completion_timestamp)
-);
-CREATE INDEX unbonding_delegation_validator_address_index ON unbonding_delegation (validator_address);
-CREATE INDEX unbonding_delegation_delegator_address_index ON unbonding_delegation (delegator_address);
-
-/* ---- ELAPSED DELEGATIONS --- */
-
-/*
- * This holds the list of addresses whose balances that should be refreshed when a redelegation or unbonding delegation
- * has completed. We store them here cause we need to refresh them one block after the delegation has completed.
- */
-CREATE TABLE delegators_to_refresh
-(
-    address TEXT   NOT NULL REFERENCES account (address),
-    height  BIGINT NOT NULL,
-    CONSTRAINT unique_address UNIQUE (address)
-);
-
 
 /* ---- DOUBLE SIGN EVIDENCE ---- */
 
@@ -439,30 +375,6 @@ CREATE TABLE community_pool
 );
 CREATE INDEX community_pool_height_index ON community_pool (height);
 
-/* ---- VALIDATOR COMMISSION AMOUNTS ---- */
-
-CREATE TABLE validator_commission_amount
-(
-    validator_address TEXT       NOT NULL REFERENCES validator (consensus_address) PRIMARY KEY,
-    amount            DEC_COIN[] NOT NULL,
-    height            BIGINT     NOT NULL
-);
-CREATE INDEX validator_commission_amount_height_index ON validator_commission_amount (height);
-
-/* ---- DELEGATOR REWARDS AMOUNTS ---- */
-
-CREATE TABLE delegation_reward
-(
-    validator_address TEXT       NOT NULL REFERENCES validator (consensus_address),
-    delegator_address TEXT       NOT NULL REFERENCES account (address),
-    withdraw_address  TEXT       NOT NULL,
-    amount            DEC_COIN[] NOT NULL,
-    height            BIGINT     NOT NULL,
-    CONSTRAINT delegation_reward_validator_delegator_unique UNIQUE (validator_address, delegator_address)
-);
-CREATE INDEX delegation_reward_delegator_address_index ON delegation_reward (delegator_address);
-CREATE INDEX delegation_reward_height_index ON delegation_reward (height);
-
 /* 07-pricefeed.sql  */
 CREATE TABLE token
 (
@@ -492,23 +404,6 @@ CREATE TABLE token_price
     timestamp  TIMESTAMP WITHOUT TIME ZONE NOT NULL
 );
 CREATE INDEX token_price_timestamp_index ON token_price (timestamp);
-
-/**
-  * This function is used to have a Hasura compute field (https://hasura.io/docs/1.0/graphql/core/schema/computed-fields.html)
-  * inside the account_balance table, so that it's easy to determine the token price that is associated with that balance.
- */
-CREATE FUNCTION account_balance_tokens_prices(account_balance_row account_balance) RETURNS SETOF token_price AS
-$$
-SELECT id, unit_name, price, market_cap, timestamp
-FROM (
-         SELECT DISTINCT ON (unit_name) unit_name, id, price, market_cap, timestamp
-         FROM (
-                  SELECT *
-                  FROM token_price
-                  ORDER BY timestamp DESC
-              ) AS prices
-     ) as prices
-$$ LANGUAGE sql STABLE;
 
 CREATE TABLE token_price_history
 (
