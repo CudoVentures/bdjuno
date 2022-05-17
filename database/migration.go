@@ -13,13 +13,13 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type migration struct {
-	Id        int64  `db:"id"`
+type Migration struct {
+	ID        int64  `db:"id"`
 	Name      string `db:"name"`
 	CreatedAt int64  `db:"created_at"`
 }
 
-const noMigrationsTableError = "pq: relation \"migrations\" does not exist"
+const noMigrationsTablePqError = "pq: relation \"migrations\" does not exist"
 
 //go:embed scheme
 var scheme embed.FS
@@ -27,8 +27,8 @@ var scheme embed.FS
 func ExecuteMigrations(ctx context.Context, parseCtx *parsecmd.Context) error {
 	db := Cast(parseCtx.Database)
 
-	var rows []migration
-	if err := db.Sqlx.SelectContext(ctx, &rows, "SELECT * FROM migrations"); err != nil && err.Error() != noMigrationsTableError {
+	var rows []Migration
+	if err := db.Sqlx.SelectContext(ctx, &rows, "SELECT * FROM migrations"); err != nil && err.Error() != noMigrationsTablePqError {
 		return err
 	}
 
@@ -86,8 +86,6 @@ func ExecuteMigrations(ctx context.Context, parseCtx *parsecmd.Context) error {
 
 	now := time.Now().UnixNano()
 	for _, executedMigration := range currentlyExecutedMigrations {
-		fmt.Println(executedMigration)
-		fmt.Println(now)
 		if _, err := tx.ExecContext(ctx, sqlx.Rebind(sqlx.DOLLAR, "INSERT INTO migrations (name, created_at) VALUES(?, ?);"), executedMigration, now); err != nil {
 
 			failErr := fmt.Errorf("failed to insert executed migration: %s", err)
