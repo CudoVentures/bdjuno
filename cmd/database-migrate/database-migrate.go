@@ -10,12 +10,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewMigrateDBCmd returns the Cobra command allowing to migrate the db up to latest scheme
-func NewMigrateDBCmd(parseCfg *parse.Config) *cobra.Command {
+// NewDatabaseMigrateCmd returns the Cobra command allowing to migrate the db up to latest scheme
+func NewDatabaseMigrateCmd(parseCfg *parse.Config) *cobra.Command {
 	return &cobra.Command{
-		Use:     "migrate-db",
+		Use:     "database migrate",
 		Short:   "Migrates database to latest scheme from database/scheme folder",
-		Example: "bdjuno migrate-db",
+		Example: "bdjuno database migrate",
 		PreRunE: parse.ReadConfig(parseCfg),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			parseCtx, err := parse.GetParsingContext(parseCfg)

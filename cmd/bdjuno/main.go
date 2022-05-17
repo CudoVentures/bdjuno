@@ -8,9 +8,9 @@ import (
 	"github.com/forbole/juno/v2/modules/messages"
 
 	actionscmd "github.com/forbole/bdjuno/v2/cmd/actions"
+	databasemigratecmd "github.com/forbole/bdjuno/v2/cmd/database-migrate"
 	fixcmd "github.com/forbole/bdjuno/v2/cmd/fix"
 	migratecmd "github.com/forbole/bdjuno/v2/cmd/migrate"
-	migratedbcmd "github.com/forbole/bdjuno/v2/cmd/migrate-db"
 	parsegenesiscmd "github.com/forbole/bdjuno/v2/cmd/parse-genesis"
 
 	"github.com/forbole/bdjuno/v2/types/config"
@@ -42,7 +42,7 @@ func main() {
 		fixcmd.NewFixCmd(cfg.GetParseConfig()),
 		parsegenesiscmd.NewParseGenesisCmd(cfg.GetParseConfig()),
 		actionscmd.NewActionsCmd(cfg.GetParseConfig()),
-		migratedbcmd.NewMigrateDBCmd(cfg.GetParseConfig()),
+		databasemigratecmd.NewDatabaseMigrateCmd(cfg.GetParseConfig()),
 	)
 
 	executor := cmd.PrepareRootCmd(cfg.GetName(), rootCmd)
