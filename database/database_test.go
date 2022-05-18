@@ -23,8 +23,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/stretchr/testify/suite"
-
-	_ "github.com/proullon/ramsql/driver"
 )
 
 func TestDatabaseTestSuite(t *testing.T) {
