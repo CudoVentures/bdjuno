@@ -12,6 +12,7 @@ import (
 	fixcmd "github.com/forbole/bdjuno/v2/cmd/fix"
 	migratecmd "github.com/forbole/bdjuno/v2/cmd/migrate"
 	parsegenesiscmd "github.com/forbole/bdjuno/v2/cmd/parse-genesis"
+	"github.com/forbole/bdjuno/v2/workers"
 
 	"github.com/forbole/bdjuno/v2/types/config"
 
@@ -34,10 +35,13 @@ func main() {
 	// Run the command
 	rootCmd := cmd.RootCmd(cfg.GetName())
 
+	pcmd := parsecmd.ParseCmd(cfg.GetParseConfig())
+	pcmd.PreRunE = workers.GetStartWorkersPrerunE(pcmd.PreRunE, cfg.GetParseConfig())
+
 	rootCmd.AddCommand(
 		cmd.VersionCmd(),
 		initcmd.InitCmd(cfg.GetInitConfig()),
-		parsecmd.ParseCmd(cfg.GetParseConfig()),
+		pcmd,
 		migratecmd.NewMigrateCmd(),
 		fixcmd.NewFixCmd(cfg.GetParseConfig()),
 		parsegenesiscmd.NewParseGenesisCmd(cfg.GetParseConfig()),

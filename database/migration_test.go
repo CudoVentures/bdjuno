@@ -3,12 +3,15 @@ package database_test
 import (
 	"github.com/forbole/bdjuno/v2/database"
 	_ "github.com/lib/pq"
-	_ "github.com/proullon/ramsql/driver"
 )
+
+var expectedAppliedMigrations = []database.Migration{
+	{ID: int64(1), Name: "000-initial_schema.sql", CreatedAt: int64(0)},
+	{ID: int64(2), Name: "001-workers_storage.sql", CreatedAt: int64(0)},
+}
 
 func (suite *DbTestSuite) TestExecuteMigrations() {
 	var rows []database.Migration
-	suite.Require().NoError(suite.database.Sqlx.Select(&rows, `SELECT * FROM migrations`))
-	suite.Require().Equal(int64(1), rows[0].ID)
-	suite.Require().Equal("000-initial_schema.sql", rows[0].Name)
+	suite.Require().NoError(suite.database.Sqlx.Select(&rows, `SELECT id, name FROM migrations`))
+	suite.Require().Equal(expectedAppliedMigrations, rows)
 }
