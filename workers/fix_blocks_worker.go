@@ -43,6 +43,16 @@ func (fbw fixBlocksWorker) fixBlocks(parseCfg *parse.Config, parseCtx *parse.Con
 		return fmt.Errorf("error while getting chain latest block height: %s", err)
 	}
 
+	isSynced, err := parseCtx.Database.HasBlock(latestHeight - 10)
+	if err != nil {
+		return fmt.Errorf("error while checking if synced: %s", err)
+	}
+
+	if !isSynced {
+		parseCtx.Logger.Info("Not synced - fix blocks worker will skip")
+		return nil
+	}
+
 	latestHeight-- // This worker should not compete with the main parsing worker
 
 	startHeightVal, err := storage.GetOrDefaultValue(startHeightKey, strconv.FormatInt(config.Cfg.Parser.StartHeight, 10))
