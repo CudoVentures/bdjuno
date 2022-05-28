@@ -2,13 +2,17 @@ package workers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
 
+	"github.com/forbole/bdjuno/v2/database"
+	"github.com/forbole/bdjuno/v2/database/types"
 	"github.com/forbole/juno/v2/cmd/parse"
 	"github.com/forbole/juno/v2/parser"
 	"github.com/forbole/juno/v2/types/config"
+	"github.com/jmoiron/sqlx"
 	"github.com/spf13/cobra"
 )
 
@@ -43,6 +47,16 @@ func (fbw fixBlocksWorker) fixBlocks(parseCfg *parse.Config, parseCtx *parse.Con
 		return fmt.Errorf("error while getting chain latest block height: %s", err)
 	}
 
+	isSynced, err := parseCtx.Database.HasBlock(latestHeight - 10)
+	if err != nil {
+		return fmt.Errorf("error while checking if synced: %s", err)
+	}
+
+	if !isSynced {
+		parseCtx.Logger.Info("Not synced - fix blocks worker will skip")
+		return nil
+	}
+
 	latestHeight-- // This worker should not compete with the main parsing worker
 
 	startHeightVal, err := storage.GetOrDefaultValue(startHeightKey, strconv.FormatInt(config.Cfg.Parser.StartHeight, 10))
@@ -53,6 +67,13 @@ func (fbw fixBlocksWorker) fixBlocks(parseCfg *parse.Config, parseCtx *parse.Con
 	startHeight, err := strconv.ParseInt(startHeightVal, 10, 64)
 	if err != nil {
 		return fmt.Errorf("error while parsing start height '%s': %s", startHeightVal, err)
+	}
+
+	if startHeight == 0 {
+		startHeight, err = getGenesisMaxInitialHeight(parseCtx)
+		if err != nil {
+			return fmt.Errorf("error while getting genesis max initial height: %s", err)
+		}
 	}
 
 	parseCtx.Logger.Info("Refetching missing blocks and transactions from height %d... \n", startHeight)
@@ -69,4 +90,18 @@ func (fbw fixBlocksWorker) fixBlocks(parseCfg *parse.Config, parseCtx *parse.Con
 	}
 
 	return nil
+}
+
+func getGenesisMaxInitialHeight(parseCtx *parse.Context) (int64, error) {
+	var rows []types.GenesisRow
+	db := database.Cast(parseCtx.Database)
+	if err := db.Sqlx.Select(&rows, sqlx.Rebind(sqlx.DOLLAR, "SELECT MAX(initial_height) FROM genesis")); err != nil {
+		return 0, err
+	}
+
+	if len(rows) == 0 {
+		return 0, errors.New("failed to find genesis initial height")
+	}
+
+	return rows[0].InitialHeight, nil
 }
