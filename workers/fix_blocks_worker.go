@@ -11,7 +11,6 @@ import (
 	"github.com/forbole/bdjuno/v2/database/types"
 	"github.com/forbole/juno/v2/cmd/parse"
 	"github.com/forbole/juno/v2/parser"
-	"github.com/forbole/juno/v2/types/config"
 	"github.com/jmoiron/sqlx"
 	"github.com/spf13/cobra"
 )
@@ -59,7 +58,7 @@ func (fbw fixBlocksWorker) fixBlocks(parseCfg *parse.Config, parseCtx *parse.Con
 
 	latestHeight-- // This worker should not compete with the main parsing worker
 
-	startHeightVal, err := storage.GetOrDefaultValue(startHeightKey, strconv.FormatInt(config.Cfg.Parser.StartHeight, 10))
+	startHeightVal, err := storage.GetOrDefaultValue(startHeightKey, "0")
 	if err != nil {
 		return fmt.Errorf("error while getting worker storage key '%s': %s", startHeightKey, err)
 	}
