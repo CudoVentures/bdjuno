@@ -702,9 +702,11 @@ CREATE TABLE delegation
 (
     validator_address TEXT               NOT NULL REFERENCES validator_info (operator_address),
     delegator_address TEXT               NOT NULL REFERENCES account (address),
-    amount            COIN               NOT NULL,
-    PRIMARY KEY (validator_address, delegator_address)
+    amount            COIN               NOT NULL
 );
+
+CREATE INDEX delegation_validator_address_index ON delegation (validator_address);
+CREATE INDEX delegation_delegator_address_index ON delegation (delegator_address);
 
 CREATE TABLE gravity_orchestrator
 (
