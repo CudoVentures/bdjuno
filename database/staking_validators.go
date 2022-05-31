@@ -491,7 +491,13 @@ func (db *Db) SaveValidatorDelegation(delegationResponses stakingtypes.Delegatio
 	}
 
 	if _, err = tx.Exec(`DELETE FROM delegation WHERE validator_address = $1`, delegationResponses[0].Delegation.ValidatorAddress); err != nil {
-		return fmt.Errorf("failed to delete delegation: %s", err)
+		failErr := fmt.Errorf("failed to delete delegation: %s", err)
+
+		if err := tx.Rollback(); err != nil {
+			return fmt.Errorf("failed to rollback during: %s", failErr)
+		}
+
+		return failErr
 	}
 
 	sqlStr := "INSERT INTO delegation(validator_address, delegator_address, amount) VALUES "
@@ -504,7 +510,13 @@ func (db *Db) SaveValidatorDelegation(delegationResponses stakingtypes.Delegatio
 		dbcoin := dbtypes.NewDbCoin(sdk.NewCoin(response.Balance.Denom, response.Balance.Amount))
 		value, err := dbcoin.Value()
 		if err != nil {
-			return fmt.Errorf("failed to convert balanace to dbcoin: %s", err)
+			failErr := fmt.Errorf("failed to convert balanace to dbcoin: %s", err)
+
+			if err := tx.Rollback(); err != nil {
+				return fmt.Errorf("failed to rollback during: %s", failErr)
+			}
+
+			return failErr
 		}
 		vals = append(vals, response.Delegation.ValidatorAddress, response.Delegation.DelegatorAddress, value)
 	}
