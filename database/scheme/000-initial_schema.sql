@@ -732,7 +732,7 @@ CREATE INDEX gravity_transaction_height_index ON gravity_transaction (height);
  * This function is used to find all gravity transactions associated with given receiver
  */
 CREATE FUNCTION gravity_messages_by_address(
-    receiver TEXT,
+    receiver_addr TEXT,
     "limit" BIGINT = 100,
     "offset" BIGINT = 0)
     RETURNS SETOF message AS
@@ -740,7 +740,7 @@ $$
 SELECT m.transaction_hash, m.index, m.type, m.value, m.involved_accounts_addresses
 FROM message m
          JOIN gravity_transaction t on m.transaction_hash = t.transaction_hash
-WHERE t.receiver = receiver AND t.orchestrator = ANY(m.involved_accounts_addresses)
+WHERE t.receiver = receiver_addr AND t.orchestrator = ANY(m.involved_accounts_addresses)
 ORDER BY t.height DESC
 LIMIT "limit" OFFSET "offset"
 $$ LANGUAGE sql STABLE;
