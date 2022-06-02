@@ -1,14 +1,11 @@
 package database_test
 
 import (
-	"io/ioutil"
-	"path"
-	"path/filepath"
-	"regexp"
-	"strings"
+	"context"
 	"testing"
 	"time"
 
+	"github.com/forbole/juno/v2/cmd/parse"
 	dbconfig "github.com/forbole/juno/v2/database/config"
 	"github.com/forbole/juno/v2/logging"
 
@@ -26,8 +23,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/stretchr/testify/suite"
-
-	_ "github.com/proullon/ramsql/driver"
 )
 
 func TestDatabaseTestSuite(t *testing.T) {
@@ -70,21 +65,12 @@ func (suite *DbTestSuite) SetupTest() {
 	_, err = bigDipperDb.Sql.Exec(`CREATE SCHEMA public;`)
 	suite.Require().NoError(err)
 
-	dirPath := path.Join(".", "scheme")
-	dir, err := ioutil.ReadDir(dirPath)
-	suite.Require().NoError(err)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancelFunc()
 
-	for _, fileInfo := range dir {
-		file, err := ioutil.ReadFile(filepath.Join(dirPath, fileInfo.Name()))
-		suite.Require().NoError(err)
-
-		commentsRegExp := regexp.MustCompile(`/\*.*\*/`)
-		requests := strings.Split(string(file), ";")
-		for _, request := range requests {
-			_, err := bigDipperDb.Sql.Exec(commentsRegExp.ReplaceAllString(request, ""))
-			suite.Require().NoError(err)
-		}
-	}
+	suite.Require().NoError(database.ExecuteMigrations(ctx, &parse.Context{
+		Database: db,
+	}))
 
 	suite.database = bigDipperDb
 }

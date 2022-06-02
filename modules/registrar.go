@@ -13,6 +13,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/forbole/juno/v2/node/remote"
 
+	"github.com/forbole/bdjuno/v2/modules/cosmwasm"
+	"github.com/forbole/bdjuno/v2/modules/gravity"
 	"github.com/forbole/bdjuno/v2/modules/history"
 	"github.com/forbole/bdjuno/v2/modules/slashing"
 
@@ -110,13 +112,15 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	authModule := auth.NewModule(r.parser, cdc, db)
 	bankModule := bank.NewModule(r.parser, sources.BankSource, cdc, db)
 	consensusModule := consensus.NewModule(db)
-	distrModule := distribution.NewModule(ctx.JunoConfig, sources.DistrSource, bankModule, cdc, db)
+	distrModule := distribution.NewModule(sources.DistrSource, cdc, db)
 	feegrantModule := feegrant.NewModule(cdc, db)
 	historyModule := history.NewModule(ctx.JunoConfig.Chain, r.parser, cdc, db)
 	mintModule := mint.NewModule(sources.MintSource, cdc, db)
-	slashingModule := slashing.NewModule(sources.SlashingSource, nil, cdc, db)
-	stakingModule := staking.NewModule(sources.StakingSource, bankModule, distrModule, historyModule, slashingModule, cdc, db)
-	govModule := gov.NewModule(sources.GovSource, authModule, bankModule, distrModule, mintModule, slashingModule, stakingModule, cdc, db)
+	slashingModule := slashing.NewModule(sources.SlashingSource, cdc, db)
+	stakingModule := staking.NewModule(sources.StakingSource, slashingModule, cdc, db)
+	govModule := gov.NewModule(sources.GovSource, authModule, distrModule, mintModule, slashingModule, stakingModule, cdc, db)
+	cosmwasmModule := cosmwasm.NewModule(cdc, db)
+	gravityModule := gravity.NewModule(cdc, db)
 
 	return []jmodules.Module{
 		messages.NewModule(r.parser, cdc, ctx.Database),
@@ -130,11 +134,13 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		feegrantModule,
 		govModule,
 		historyModule,
-		mint.NewModule(sources.MintSource, cdc, db),
+		mintModule,
 		modules.NewModule(ctx.JunoConfig.Chain, db),
 		pricefeed.NewModule(ctx.JunoConfig, historyModule, cdc, db),
-		slashing.NewModule(sources.SlashingSource, stakingModule, cdc, db),
+		slashingModule,
 		stakingModule,
+		cosmwasmModule,
+		gravityModule,
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	dbtypes "github.com/forbole/bdjuno/v2/database/types"
+	junotypes "github.com/forbole/juno/v2/types"
 )
 
 func newDecPts(value int64, prec int64) *sdk.Dec {
@@ -794,4 +795,79 @@ func (suite *DbTestSuite) TestSaveDoubleVoteEvidence() {
 	for index, row := range votesRows {
 		suite.Require().True(expectVotes[index].Equal(row))
 	}
+}
+
+func (suite *DbTestSuite) TestSaveValidatorDelegation() {
+	delegators := []string{
+		"cudos1a326k254fukx9jlp0h3fwcr2ymjgludzum2ba1",
+		"cudos1a326k254fukx9jlp0h3fwcr2ymjgludzum2ba2",
+		"cudos1a326k254fukx9jlp0h3fwcr2ymjgludzum2ba3",
+	}
+	validators := []string{
+		"cudos1a326k254fukx9jlp0h3fwcr2ymjgludzum67d1",
+		"cudos1a326k254fukx9jlp0h3fwcr2ymjgludzum67d2",
+		"cudos1a326k254fukx9jlp0h3fwcr2ymjgludzum67d3",
+	}
+
+	accounts := make([]types.Account, len(delegators)+len(validators))
+	for i := range delegators {
+		accounts[i] = types.NewAccount(delegators[i])
+	}
+	startIdx := len(delegators)
+	for i := range validators {
+		accounts[startIdx+i] = types.NewAccount(validators[i])
+	}
+	suite.Require().NoError(suite.database.SaveAccounts(accounts))
+
+	vals := make([]*junotypes.Validator, len(validators))
+	for i := range validators {
+		vals[i] = junotypes.NewValidator(validators[i], validators[i])
+	}
+	suite.Require().NoError(suite.database.SaveValidators(vals))
+
+	for i := range validators {
+		_, err := suite.database.Sqlx.Exec(`INSERT INTO validator_info (consensus_address, operator_address, self_delegate_address, max_rate, max_change_rate, height) 
+			VALUES ($1, $2, $3, '1', '2', 1)`, validators[i], validators[i], validators[i])
+		suite.Require().NoError(err)
+	}
+
+	delegationRespones := stakingtypes.DelegationResponses{}
+	startingBalance := int64(123450)
+
+	for i := range delegators {
+		delegationRespones = append(delegationRespones,
+			stakingtypes.DelegationResponse{
+				Delegation: stakingtypes.Delegation{
+					DelegatorAddress: delegators[i],
+					ValidatorAddress: validators[i],
+				},
+				Balance: sdk.NewCoin("acudos", sdk.NewInt(startingBalance+int64(i))),
+			},
+		)
+	}
+	suite.Require().NoError(suite.database.SaveValidatorDelegation(delegationRespones))
+
+	type delegationRow struct {
+		ValidatorAddress string `db:"validator_address"`
+		DelegatorAddress string `db:"delegator_address"`
+		Amount           string `db:"amount"`
+	}
+
+	var rows []delegationRow
+	suite.Require().NoError(suite.database.Sqlx.Select(&rows, `SELECT * FROM delegation ORDER BY validator_address`))
+
+	expectedRows := []delegationRow{}
+	for i := range validators {
+		dbcoin := dbtypes.NewDbCoin(sdk.NewCoin("acudos", sdk.NewInt(startingBalance+int64(i))))
+		value, err := dbcoin.Value()
+		suite.Require().NoError(err)
+
+		expectedRows = append(expectedRows, delegationRow{
+			ValidatorAddress: validators[i],
+			DelegatorAddress: delegators[i],
+			Amount:           value.(string),
+		})
+	}
+
+	suite.Require().Equal(expectedRows, rows)
 }

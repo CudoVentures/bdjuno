@@ -27,6 +27,9 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 
 	case *govtypes.MsgVote:
 		return m.handleMsgVote(tx, cosmosMsg)
+
+	case *govtypes.MsgVoteWeighted:
+		return m.handleMsgVoteWeighted(tx, cosmosMsg)
 	}
 
 	return nil
@@ -102,4 +105,9 @@ func (m *Module) handleMsgDeposit(tx *juno.Tx, msg *govtypes.MsgDeposit) error {
 func (m *Module) handleMsgVote(tx *juno.Tx, msg *govtypes.MsgVote) error {
 	vote := types.NewVote(msg.ProposalId, msg.Voter, msg.Option, tx.Height)
 	return m.db.SaveVote(vote)
+}
+
+func (m *Module) handleMsgVoteWeighted(tx *juno.Tx, msg *govtypes.MsgVoteWeighted) error {
+	weightedVote := types.NewWeightedVote(msg.ProposalId, msg.Voter, msg.Options, tx.Height)
+	return m.db.SaveWeightedVote(weightedVote)
 }

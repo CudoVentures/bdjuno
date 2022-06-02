@@ -21,11 +21,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.15
+          go-version: 1.18
       - name: Test & Create coverage report
         run: make install test-unit stop-docker-test
       - name: Upload cove coverage
