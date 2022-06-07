@@ -75,11 +75,11 @@ func (fbw fixBlocksWorker) fixBlocks(parseCfg *parse.Config, parseCtx *parse.Con
 		}
 	}
 
-	parseCtx.Logger.Info("Refetching missing blocks and transactions from height %d... \n", startHeight)
+	parseCtx.Logger.Info(fmt.Sprintf("Refetching missing blocks and transactions from height %d... \n", startHeight))
 
 	for ; startHeight <= latestHeight; startHeight++ {
 		if err := worker.ProcessIfNotExists(startHeight); err != nil {
-			parseCtx.Logger.Error("error while re-fetching block %d: %s", startHeight, err)
+			parseCtx.Logger.Error(fmt.Sprintf("Error while re-fetching block %d: %s", startHeight, err))
 			break
 		}
 	}
