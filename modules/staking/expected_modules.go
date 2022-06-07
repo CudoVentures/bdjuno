@@ -9,3 +9,7 @@ import (
 type SlashingModule interface {
 	GetSigningInfo(height int64, consAddr sdk.ConsAddress) (types.ValidatorSigningInfo, error)
 }
+
+type AuthModule interface {
+	RefreshAccounts(height int64, addresses []string) error
+}
