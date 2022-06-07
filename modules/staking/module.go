@@ -17,22 +17,26 @@ var (
 
 // Module represents the x/staking module
 type Module struct {
-	cdc            codec.Codec
-	db             *database.Db
-	source         stakingsource.Source
-	slashingModule SlashingModule
+	cdc               codec.Codec
+	db                *database.Db
+	source            stakingsource.Source
+	slashingModule    SlashingModule
+	authModule        AuthModule
+	refreshedAccounts map[string]bool
 }
 
 // NewModule returns a new Module instance
 func NewModule(
-	source stakingsource.Source, slashingModule SlashingModule,
+	source stakingsource.Source, slashingModule SlashingModule, authModule AuthModule,
 	cdc codec.Codec, db *database.Db,
 ) *Module {
 	return &Module{
-		cdc:            cdc,
-		db:             db,
-		source:         source,
-		slashingModule: slashingModule,
+		cdc:               cdc,
+		db:                db,
+		source:            source,
+		slashingModule:    slashingModule,
+		authModule:        authModule,
+		refreshedAccounts: make(map[string]bool),
 	}
 }
 

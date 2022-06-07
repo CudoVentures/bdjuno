@@ -117,7 +117,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	historyModule := history.NewModule(ctx.JunoConfig.Chain, r.parser, cdc, db)
 	mintModule := mint.NewModule(sources.MintSource, cdc, db)
 	slashingModule := slashing.NewModule(sources.SlashingSource, cdc, db)
-	stakingModule := staking.NewModule(sources.StakingSource, slashingModule, cdc, db)
+	stakingModule := staking.NewModule(sources.StakingSource, slashingModule, authModule, cdc, db)
 	govModule := gov.NewModule(sources.GovSource, authModule, distrModule, mintModule, slashingModule, stakingModule, cdc, db)
 	cosmwasmModule := cosmwasm.NewModule(cdc, db)
 	gravityModule := gravity.NewModule(cdc, db)
