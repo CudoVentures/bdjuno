@@ -79,7 +79,8 @@ func (fbw fixBlocksWorker) fixBlocks(parseCfg *parse.Config, parseCtx *parse.Con
 
 	for ; startHeight <= latestHeight; startHeight++ {
 		if err := worker.ProcessIfNotExists(startHeight); err != nil {
-			return fmt.Errorf("error while re-fetching block %d: %s", startHeight, err)
+			parseCtx.Logger.Error("error while re-fetching block %d: %s", startHeight, err)
+			break
 		}
 	}
 
