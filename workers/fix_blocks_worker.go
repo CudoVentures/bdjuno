@@ -94,7 +94,7 @@ func (fbw fixBlocksWorker) fixBlocks(parseCfg *parse.Config, parseCtx *parse.Con
 func getGenesisMaxInitialHeight(parseCtx *parse.Context) (int64, error) {
 	var rows []types.GenesisRow
 	db := database.Cast(parseCtx.Database)
-	if err := db.Sqlx.Select(&rows, sqlx.Rebind(sqlx.DOLLAR, "SELECT MAX(initial_height) FROM genesis")); err != nil {
+	if err := db.Sqlx.Select(&rows, sqlx.Rebind(sqlx.DOLLAR, "SELECT MAX(initial_height) AS initial_height FROM genesis")); err != nil {
 		return 0, err
 	}
 
