@@ -75,11 +75,12 @@ func (fbw fixBlocksWorker) fixBlocks(parseCfg *parse.Config, parseCtx *parse.Con
 		}
 	}
 
-	parseCtx.Logger.Info("Refetching missing blocks and transactions from height %d... \n", startHeight)
+	parseCtx.Logger.Info(fmt.Sprintf("Refetching missing blocks and transactions from height %d... \n", startHeight))
 
 	for ; startHeight <= latestHeight; startHeight++ {
 		if err := worker.ProcessIfNotExists(startHeight); err != nil {
-			return fmt.Errorf("error while re-fetching block %d: %s", startHeight, err)
+			parseCtx.Logger.Error(fmt.Sprintf("Error while re-fetching block %d: %s", startHeight, err))
+			break
 		}
 	}
 
@@ -94,7 +95,7 @@ func (fbw fixBlocksWorker) fixBlocks(parseCfg *parse.Config, parseCtx *parse.Con
 func getGenesisMaxInitialHeight(parseCtx *parse.Context) (int64, error) {
 	var rows []types.GenesisRow
 	db := database.Cast(parseCtx.Database)
-	if err := db.Sqlx.Select(&rows, sqlx.Rebind(sqlx.DOLLAR, "SELECT MAX(initial_height) FROM genesis")); err != nil {
+	if err := db.Sqlx.Select(&rows, sqlx.Rebind(sqlx.DOLLAR, "SELECT MAX(initial_height) AS initial_height FROM genesis")); err != nil {
 		return 0, err
 	}
 

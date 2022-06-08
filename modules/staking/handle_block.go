@@ -156,6 +156,28 @@ func (m *Module) updateDelegations(height int64, validators []stakingtypes.Valid
 			continue
 		}
 
+		if len(response.DelegationResponses) == 0 {
+			continue
+		}
+
+		delegators := []string{}
+		for _, response := range response.DelegationResponses {
+			delegator := response.Delegation.DelegatorAddress
+
+			if !m.refreshedAccounts[delegator] {
+				m.refreshedAccounts[delegator] = true
+				delegators = append(delegators, delegator)
+			}
+		}
+
+		if len(delegators) > 0 {
+			if err := m.authModule.RefreshAccounts(height, delegators); err != nil {
+				log.Error().Str("module", "staking").Err(err).Int64("height", height).
+					Msg("error while refreshing accounts")
+				// We ignore the error because the it may not stop the saving of delegations
+			}
+		}
+
 		if err := m.db.SaveValidatorDelegation(response.DelegationResponses); err != nil {
 			log.Error().Str("module", "staking").Err(err).Int64("height", height).
 				Msg("error while saving validator delegation")
