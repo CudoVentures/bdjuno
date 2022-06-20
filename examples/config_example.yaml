@@ -8,10 +8,11 @@ chain:
         - bank
         - consensus
         - gov
-        - mint
         - slashing 
         - staking 
         - cosmwasm
+        - gravity
+        - cudomint
 node:
     type: remote
     config:

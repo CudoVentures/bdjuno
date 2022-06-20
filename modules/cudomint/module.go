@@ -1,11 +1,11 @@
-package mint
+package cudomint
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/forbole/juno/v2/modules"
 
 	"github.com/forbole/bdjuno/v2/database"
-	mintsource "github.com/forbole/bdjuno/v2/modules/mint/source"
+	bankSource "github.com/forbole/bdjuno/v2/modules/bank/source"
 )
 
 var (
@@ -18,11 +18,11 @@ var (
 type Module struct {
 	cdc    codec.Codec
 	db     *database.Db
-	source mintsource.Source
+	source bankSource.Source
 }
 
 // NewModule returns a new Module instance
-func NewModule(source mintsource.Source, cdc codec.Codec, db *database.Db) *Module {
+func NewModule(cdc codec.Codec, db *database.Db, source bankSource.Source) *Module {
 	return &Module{
 		cdc:    cdc,
 		db:     db,
@@ -32,5 +32,5 @@ func NewModule(source mintsource.Source, cdc codec.Codec, db *database.Db) *Modu
 
 // Name implements modules.Module
 func (m *Module) Name() string {
-	return "mint"
+	return "cudomint"
 }

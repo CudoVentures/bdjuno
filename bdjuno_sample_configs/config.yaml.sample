@@ -7,10 +7,12 @@ chain:
         - bank
         - consensus
         - gov
-        - mint
         - slashing 
         - staking
         - pricefeed
+        - cosmwasm
+        - gravity
+        - cudomint
 node:
     type: remote
     config:

@@ -24,7 +24,6 @@ type Module struct {
 	source         govsource.Source
 	authModule     AuthModule
 	distrModule    DistrModule
-	mintModule     MintModule
 	slashingModule SlashingModule
 	stakingModule  StakingModule
 }
@@ -34,7 +33,6 @@ func NewModule(
 	source govsource.Source,
 	authModule AuthModule,
 	distrModule DistrModule,
-	mintModule MintModule,
 	slashingModule SlashingModule,
 	stakingModule StakingModule,
 	cdc codec.Codec,
@@ -45,7 +43,6 @@ func NewModule(
 		source:         source,
 		authModule:     authModule,
 		distrModule:    distrModule,
-		mintModule:     mintModule,
 		slashingModule: slashingModule,
 		stakingModule:  stakingModule,
 		db:             db,
