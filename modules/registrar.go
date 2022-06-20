@@ -23,7 +23,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -47,6 +46,7 @@ import (
 	"github.com/forbole/bdjuno/v2/modules/distribution"
 	"github.com/forbole/bdjuno/v2/modules/feegrant"
 
+	"github.com/forbole/bdjuno/v2/modules/cudomint"
 	distrsource "github.com/forbole/bdjuno/v2/modules/distribution/source"
 	localdistrsource "github.com/forbole/bdjuno/v2/modules/distribution/source/local"
 	remotedistrsource "github.com/forbole/bdjuno/v2/modules/distribution/source/remote"
@@ -54,10 +54,6 @@ import (
 	govsource "github.com/forbole/bdjuno/v2/modules/gov/source"
 	localgovsource "github.com/forbole/bdjuno/v2/modules/gov/source/local"
 	remotegovsource "github.com/forbole/bdjuno/v2/modules/gov/source/remote"
-	"github.com/forbole/bdjuno/v2/modules/mint"
-	mintsource "github.com/forbole/bdjuno/v2/modules/mint/source"
-	localmintsource "github.com/forbole/bdjuno/v2/modules/mint/source/local"
-	remotemintsource "github.com/forbole/bdjuno/v2/modules/mint/source/remote"
 	"github.com/forbole/bdjuno/v2/modules/modules"
 	"github.com/forbole/bdjuno/v2/modules/pricefeed"
 	slashingsource "github.com/forbole/bdjuno/v2/modules/slashing/source"
@@ -115,10 +111,10 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	distrModule := distribution.NewModule(sources.DistrSource, cdc, db)
 	feegrantModule := feegrant.NewModule(cdc, db)
 	historyModule := history.NewModule(ctx.JunoConfig.Chain, r.parser, cdc, db)
-	mintModule := mint.NewModule(sources.MintSource, cdc, db)
+	cudoMintModule := cudomint.NewModule(cdc, db, sources.BankSource)
 	slashingModule := slashing.NewModule(sources.SlashingSource, cdc, db)
 	stakingModule := staking.NewModule(sources.StakingSource, slashingModule, authModule, cdc, db)
-	govModule := gov.NewModule(sources.GovSource, authModule, distrModule, mintModule, slashingModule, stakingModule, cdc, db)
+	govModule := gov.NewModule(sources.GovSource, authModule, distrModule, slashingModule, stakingModule, cdc, db)
 	cosmwasmModule := cosmwasm.NewModule(cdc, db)
 	gravityModule := gravity.NewModule(cdc, db)
 
@@ -134,7 +130,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		feegrantModule,
 		govModule,
 		historyModule,
-		mintModule,
+		cudoMintModule,
 		modules.NewModule(ctx.JunoConfig.Chain, db),
 		pricefeed.NewModule(ctx.JunoConfig, historyModule, cdc, db),
 		slashingModule,
@@ -148,7 +144,6 @@ type Sources struct {
 	BankSource     banksource.Source
 	DistrSource    distrsource.Source
 	GovSource      govsource.Source
-	MintSource     mintsource.Source
 	SlashingSource slashingsource.Source
 	StakingSource  stakingsource.Source
 }
@@ -180,7 +175,6 @@ func buildLocalSources(cfg *local.Details, encodingConfig *params.EncodingConfig
 		BankSource:     localbanksource.NewSource(source, banktypes.QueryServer(app.BankKeeper)),
 		DistrSource:    localdistrsource.NewSource(source, distrtypes.QueryServer(app.DistrKeeper)),
 		GovSource:      localgovsource.NewSource(source, govtypes.QueryServer(app.GovKeeper)),
-		MintSource:     localmintsource.NewSource(source, minttypes.QueryServer(app.MintKeeper)),
 		SlashingSource: localslashingsource.NewSource(source, slashingtypes.QueryServer(app.SlashingKeeper)),
 		StakingSource:  localstakingsource.NewSource(source, stakingkeeper.Querier{Keeper: app.StakingKeeper}),
 	}
@@ -219,7 +213,6 @@ func buildRemoteSources(cfg *remote.Details) (*Sources, error) {
 		BankSource:     remotebanksource.NewSource(source, banktypes.NewQueryClient(source.GrpcConn)),
 		DistrSource:    remotedistrsource.NewSource(source, distrtypes.NewQueryClient(source.GrpcConn)),
 		GovSource:      remotegovsource.NewSource(source, govtypes.NewQueryClient(source.GrpcConn)),
-		MintSource:     remotemintsource.NewSource(source, minttypes.NewQueryClient(source.GrpcConn)),
 		SlashingSource: remoteslashingsource.NewSource(source, slashingtypes.NewQueryClient(source.GrpcConn)),
 		StakingSource:  remotestakingsource.NewSource(source, stakingtypes.NewQueryClient(source.GrpcConn)),
 	}, nil

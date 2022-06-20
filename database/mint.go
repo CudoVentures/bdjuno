@@ -2,6 +2,7 @@ package database
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,7 +30,7 @@ WHERE inflation.height <= excluded.height`
 
 // SaveMintParams allows to store the given params inside the database
 func (db *Db) SaveMintParams(params *types.MintParams) error {
-	paramsBz, err := json.Marshal(&params.Params)
+	paramsBz, err := json.Marshal(&params)
 	if err != nil {
 		return fmt.Errorf("error while marshaling mint params: %s", err)
 	}
@@ -48,4 +49,22 @@ WHERE mint_params.height <= excluded.height`
 	}
 
 	return nil
+}
+
+func (db *Db) GetMintParams() (types.MintParams, error) {
+	var mintParamsRows []string
+	if err := db.Sqlx.Select(&mintParamsRows, `SELECT params FROM mint_params`); err != nil {
+		return types.MintParams{}, fmt.Errorf("error while getting mint params: %s", err)
+	}
+
+	if len(mintParamsRows) == 0 {
+		return types.MintParams{}, errors.New("mint params not found")
+	}
+
+	var mintParams types.MintParams
+	if err := json.Unmarshal([]byte(mintParamsRows[0]), &mintParams); err != nil {
+		return types.MintParams{}, fmt.Errorf("invalid mint params: %+v", mintParams)
+	}
+
+	return mintParams, nil
 }
