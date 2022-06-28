@@ -1,8 +1,10 @@
 package database
 
 import (
+	"errors"
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/forbole/bdjuno/v2/types"
 )
 
@@ -23,4 +25,26 @@ WHERE staking_pool.height <= excluded.height`
 	}
 
 	return nil
+}
+
+func (db *Db) GetBondedTokens() (sdk.Int, error) {
+	type row struct {
+		BondedTokens string `db:"bonded_tokens"`
+	}
+
+	var rows []row
+	if err := db.Sqlx.Select(&rows, `SELECT bonded_tokens FROM staking_pool`); err != nil {
+		return sdk.Int{}, fmt.Errorf("error while getting bonded_tokens: %s", err)
+	}
+
+	if len(rows) == 0 {
+		return sdk.Int{}, errors.New("failed to find boned_tokens")
+	}
+
+	bondedTokens, ok := sdk.NewIntFromString(rows[0].BondedTokens)
+	if !ok {
+		return sdk.Int{}, fmt.Errorf("invalid bonded_tokens: %s", rows[0].BondedTokens)
+	}
+
+	return bondedTokens, nil
 }

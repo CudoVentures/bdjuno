@@ -48,3 +48,6 @@
 - "!include public_cosmwasm_clear_admin.yaml"
 - "!include public_proposal_vote_weighted.yaml"
 - "!include public_delegation.yaml"
+- "!include public_adjusted_supply.yaml"
+- "!include public_apr_history.yaml"
+- "!include public_apr.yaml"
