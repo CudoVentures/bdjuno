@@ -4,7 +4,7 @@ USER root
 RUN apt-get update && apt-get install git
 WORKDIR /go/src/github.com/forbole/bdjuno
 COPY . ./
-RUN go mod tidy
+RUN go mod tidy -compat=1.17
 RUN make build
 RUN FOLDER=$(ls /go/pkg/mod/github.com/\!cosm\!wasm/ | grep wasmvm@v) && ln -s /go/pkg/mod/github.com/\!cosm\!wasm/${FOLDER} /go/pkg/mod/github.com/\!cosm\!wasm/wasmvm
 
