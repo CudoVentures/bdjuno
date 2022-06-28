@@ -8,6 +8,7 @@ require (
 	github.com/althea-net/cosmos-gravity-bridge/module v0.0.0-00010101000000-000000000000
 	github.com/cosmos/cosmos-sdk v0.45.3
 	github.com/cosmos/gaia/v6 v6.0.0-rc1
+	github.com/ethereum/go-ethereum v1.10.19
 	github.com/forbole/juno/v2 v2.0.0-20220223115732-dbb226a91ce9
 	github.com/go-co-op/gocron v1.11.0
 	github.com/gogo/protobuf v1.3.3
@@ -55,7 +56,6 @@ require (
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/dvsekhvalnov/jose2go v0.0.0-20200901110807-248326c1351b // indirect
-	github.com/ethereum/go-ethereum v1.10.19 // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-kit/kit v0.10.0 // indirect
