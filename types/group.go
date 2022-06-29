@@ -1,17 +1,9 @@
 package types
 
-import (
-	"fmt"
-)
-
 type GroupMember struct {
 	Address        string
-	Weight         int64
+	Weight         uint64
 	MemberMetadata string
-}
-
-func (m *GroupMember) ToString() string {
-	return fmt.Sprintf("\"(%s, %d, %s)\"", m.Address, m.Weight, m.MemberMetadata)
 }
 
 type GroupWithPolicy struct {
@@ -20,7 +12,7 @@ type GroupWithPolicy struct {
 	Members            []*GroupMember
 	GroupMetadata      string
 	PolicyMegadata     string
-	Threshold          int64
-	VotingPeriod       int64
-	MinExecutionPeriod int64
+	Threshold          uint64
+	VotingPeriod       uint64
+	MinExecutionPeriod uint64
 }

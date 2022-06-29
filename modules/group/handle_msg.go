@@ -2,11 +2,12 @@ package group
 
 import (
 	"fmt"
+	"strconv"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/group"
 	"github.com/forbole/bdjuno/v2/types"
 	juno "github.com/forbole/juno/v2/types"
-	"strconv"
 )
 
 func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
@@ -49,13 +50,13 @@ func (m *Module) handleMsgCreateGroupWithPolicy(tx *juno.Tx, index int, msg *gro
 
 	members := make([]*types.GroupMember, 0)
 	for _, m := range msg.Members {
-		weight, _ := strconv.ParseInt(m.Weight, 10, 64)
+		weight, _ := strconv.ParseUint(m.Weight, 10, 64)
 		member := &types.GroupMember{Address: m.Address, Weight: weight, MemberMetadata: m.Metadata}
 		members = append(members, member)
 	}
 
 	decisionPolicy, _ := msg.DecisionPolicy.GetCachedValue().(*group.ThresholdDecisionPolicy)
-	threshold, _ := strconv.ParseInt(decisionPolicy.Threshold, 10, 64)
+	threshold, _ := strconv.ParseUint(decisionPolicy.Threshold, 10, 64)
 
 	return m.db.SaveGroupWithPolicy(types.GroupWithPolicy{
 		ID:                 groupID,
@@ -64,7 +65,7 @@ func (m *Module) handleMsgCreateGroupWithPolicy(tx *juno.Tx, index int, msg *gro
 		GroupMetadata:      msg.GroupMetadata,
 		PolicyMegadata:     msg.GroupPolicyMetadata,
 		Threshold:          threshold,
-		VotingPeriod:       decisionPolicy.Windows.VotingPeriod.Milliseconds(),
-		MinExecutionPeriod: decisionPolicy.Windows.MinExecutionPeriod.Milliseconds(),
+		VotingPeriod:       uint64(decisionPolicy.Windows.VotingPeriod.Seconds()),
+		MinExecutionPeriod: uint64(decisionPolicy.Windows.MinExecutionPeriod.Seconds()),
 	})
 }
