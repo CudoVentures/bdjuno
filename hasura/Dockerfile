@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install git
 # RUN curl -L https://github.com/hasura/graphql-engine/raw/stable/cli/get.sh | bash
 WORKDIR /go/src/github.com/forbole/bdjuno
 COPY . ./
-RUN go mod tidy
+RUN go mod tidy -compat=1.17
 RUN make build
 RUN FOLDER=$(ls /go/pkg/mod/github.com/\!cosm\!wasm/ | grep wasmvm@v) && ln -s /go/pkg/mod/github.com/\!cosm\!wasm/${FOLDER} /go/pkg/mod/github.com/\!cosm\!wasm/wasmvm
 
