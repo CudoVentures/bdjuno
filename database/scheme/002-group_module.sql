@@ -1,4 +1,3 @@
--- Active: 1656007054073@@127.0.0.1@5432@bdjuno1@public
 CREATE TABLE group_with_policy
 (
     id                    INTEGER  NOT NULL PRIMARY KEY,
@@ -25,7 +24,8 @@ CREATE TYPE PROPOSAL_STATUS AS ENUM
     'PROPOSAL_STATUS_SUBMITTED',
     'PROPOSAL_STATUS_ACCEPTED',
     'PROPOSAL_STATUS_REJECTED',
-    'PROPOSAL_STATUS_ABORTED'
+    'PROPOSAL_STATUS_ABORTED',
+    'PROPOSAL_STATUS_WITHDRAWN'
 );
 
 CREATE TYPE PROPOSAL_EXEUTOR_RESULT AS ENUM 
@@ -41,10 +41,10 @@ CREATE TABLE group_proposal
     id                 INTEGER                  NOT NULL PRIMARY KEY,
     group_id           INTEGER                  NOT NULL REFERENCES group_with_policy (id),
     proposal_metadata  TEXT                     NULL,
-    proposers          TEXT[]                   NOT NULL,
+    proposer           TEXT                     NOT NULL,
     submit_time        TIMESTAMP                WITHOUT TIME ZONE NOT NULL,
-    status             PROPOSAL_STATUS          NOT NULL,
-    executor_result    PROPOSAL_EXEUTOR_RESULT  NOT NULL,
+    status             PROPOSAL_STATUS          NOT NULL DEFAULT 'PROPOSAL_STATUS_SUBMITTED',
+    executor_result    PROPOSAL_EXEUTOR_RESULT  NOT NULL DEFAULT 'PROPOSAL_EXECUTOR_RESULT_NOT_RUN',
     messages           JSONB                    NOT NULL DEFAULT '{}'::JSONB
 );
 
@@ -59,9 +59,8 @@ CREATE TYPE VOTE_OPTION AS ENUM
 
 CREATE TABLE group_proposal_vote
 (
-    id             INTEGER      NOT NULL PRIMARY KEY,
     proposal_id    INTEGER      NOT NULL REFERENCES group_proposal (id),
-    voter          TEXT         NOT NULL REFERENCES account (address),
+    voter          TEXT         NOT NULL,
     vote_option    VOTE_OPTION  NOT NULL,
     vote_metadata  TEXT         NULL,
     submit_time    TIMESTAMP    WITHOUT TIME ZONE NOT NULL

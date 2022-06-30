@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 
+	dbtypes "github.com/forbole/bdjuno/v2/database/types"
 	"github.com/forbole/bdjuno/v2/types"
 )
 
@@ -22,8 +23,8 @@ func (db *Db) SaveGroupWithPolicy(data types.GroupWithPolicy) error {
 
 func (db *Db) saveGroupMembers(data []*types.GroupMember, groupID uint64) error {
 	stmt := "INSERT INTO group_member VALUES "
-
 	var params []interface{}
+
 	for i, member := range data {
 		ai := i * 4
 		stmt += fmt.Sprintf("($%d, $%d, $%d, $%d),", ai+1, ai+2, ai+3, ai+4)
@@ -31,7 +32,41 @@ func (db *Db) saveGroupMembers(data []*types.GroupMember, groupID uint64) error 
 	}
 	stmt = stmt[:len(stmt)-1]
 	stmt += " ON CONFLICT DO NOTHING"
+
 	_, err := db.Sql.Exec(stmt, params...)
+
+	return err
+}
+
+func (db *Db) GetGroupId(groupAddress string) uint64 {
+	stmt := `SELECT id FROM group_with_policy WHERE address = $1 LIMIT 1`
+	var groupRows []dbtypes.GroupWithPolicyRow
+
+	err := db.Sqlx.Select(&groupRows, stmt, groupAddress)
+	if err != nil {
+		return 0
+	}
+	return groupRows[0].ID
+}
+
+func (db *Db) SaveGroupProposal(data types.GroupProposal) error {
+	_, err := db.Sql.Exec(
+		`INSERT INTO group_proposal VALUES ($1, $2, $3, $4, $5, $6, $7)
+		ON CONFLICT DO NOTHING`,
+		data.ID, data.GroupID, data.ProposalMetadata, data.Proposer,
+		data.SubmitTime, data.ExecutorResult, data.Messages,
+	)
+
+	return err
+}
+
+func (db *Db) SaveGroupProposalVote(data types.GroupProposalVote) error {
+	_, err := db.Sql.Exec(
+		`INSERT INTO group_proposal_vote VALUES ($1, $2, $3, $4, $5)
+		ON CONFLICT DO NOTHING`,
+		data.ProposalID, data.Voter, data.VoteOption,
+		data.VoteMetadata, data.SubmitTime,
+	)
 
 	return err
 }

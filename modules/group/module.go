@@ -18,18 +18,18 @@ var (
 
 // Module represents the x/bank module
 type Module struct {
-	cdc codec.Codec
-	db  *database.Db
-	keeper        source.Source
+	cdc    codec.Codec
+	db     *database.Db
+	source source.Source
 }
 
 // NewModule returns a new Module instance
-func NewModule(keeper source.Source, cdc codec.Codec, db *database.Db,
+func NewModule(source source.Source, cdc codec.Codec, db *database.Db,
 ) *Module {
 	return &Module{
-		cdc:           cdc,
-		db:            db,
-		keeper:        keeper,
+		cdc:    cdc,
+		db:     db,
+		source: source,
 	}
 }
 

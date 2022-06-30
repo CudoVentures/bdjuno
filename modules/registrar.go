@@ -57,7 +57,6 @@ import (
 	remotegovsource "github.com/forbole/bdjuno/v2/modules/gov/source/remote"
 	"github.com/forbole/bdjuno/v2/modules/group"
 	groupsource "github.com/forbole/bdjuno/v2/modules/group/source"
-	localgroupsource "github.com/forbole/bdjuno/v2/modules/group/source/local"
 	remotegroupsource "github.com/forbole/bdjuno/v2/modules/group/source/remote"
 	"github.com/forbole/bdjuno/v2/modules/modules"
 	"github.com/forbole/bdjuno/v2/modules/pricefeed"
@@ -184,7 +183,6 @@ func buildLocalSources(cfg *local.Details, encodingConfig *params.EncodingConfig
 		GovSource:      localgovsource.NewSource(source, govtypes.QueryServer(app.GovKeeper)),
 		SlashingSource: localslashingsource.NewSource(source, slashingtypes.QueryServer(app.SlashingKeeper)),
 		StakingSource:  localstakingsource.NewSource(source, stakingkeeper.Querier{Keeper: app.StakingKeeper}),
-		GroupSource:    localgroupsource.NewSource(source, groupmodule.QueryServer(app.GroupKeeper)),
 	}
 
 	// Mount and initialize the stores
