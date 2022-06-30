@@ -4,32 +4,28 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/forbole/bdjuno/v2/database"
-	"github.com/forbole/bdjuno/v2/modules/group/source"
 
 	"github.com/forbole/juno/v2/modules"
 )
 
 var (
 	_ modules.Module        = &Module{}
-	_ modules.GenesisModule = &Module{}
 	_ modules.BlockModule   = &Module{}
 	_ modules.MessageModule = &Module{}
 )
 
 // Module represents the x/bank module
 type Module struct {
-	cdc    codec.Codec
-	db     *database.Db
-	source source.Source
+	cdc codec.Codec
+	db  *database.Db
 }
 
 // NewModule returns a new Module instance
-func NewModule(source source.Source, cdc codec.Codec, db *database.Db,
+func NewModule(cdc codec.Codec, db *database.Db,
 ) *Module {
 	return &Module{
-		cdc:    cdc,
-		db:     db,
-		source: source,
+		cdc: cdc,
+		db:  db,
 	}
 }
 

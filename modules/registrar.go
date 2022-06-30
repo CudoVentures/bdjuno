@@ -23,7 +23,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	groupmodule "github.com/cosmos/cosmos-sdk/x/group"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -56,8 +55,6 @@ import (
 	localgovsource "github.com/forbole/bdjuno/v2/modules/gov/source/local"
 	remotegovsource "github.com/forbole/bdjuno/v2/modules/gov/source/remote"
 	"github.com/forbole/bdjuno/v2/modules/group"
-	groupsource "github.com/forbole/bdjuno/v2/modules/group/source"
-	remotegroupsource "github.com/forbole/bdjuno/v2/modules/group/source/remote"
 	"github.com/forbole/bdjuno/v2/modules/modules"
 	"github.com/forbole/bdjuno/v2/modules/pricefeed"
 	slashingsource "github.com/forbole/bdjuno/v2/modules/slashing/source"
@@ -141,7 +138,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		stakingModule,
 		cosmwasmModule,
 		gravityModule,
-		group.NewModule(sources.GroupSource, cdc, db),
+		group.NewModule(cdc, db),
 	}
 }
 
@@ -151,7 +148,6 @@ type Sources struct {
 	GovSource      govsource.Source
 	SlashingSource slashingsource.Source
 	StakingSource  stakingsource.Source
-	GroupSource    groupsource.Source
 }
 
 func BuildSources(nodeCfg nodeconfig.Config, encodingConfig *params.EncodingConfig) (*Sources, error) {
@@ -221,6 +217,5 @@ func buildRemoteSources(cfg *remote.Details) (*Sources, error) {
 		GovSource:      remotegovsource.NewSource(source, govtypes.NewQueryClient(source.GrpcConn)),
 		SlashingSource: remoteslashingsource.NewSource(source, slashingtypes.NewQueryClient(source.GrpcConn)),
 		StakingSource:  remotestakingsource.NewSource(source, stakingtypes.NewQueryClient(source.GrpcConn)),
-		GroupSource:    remotegroupsource.NewSource(source, groupmodule.NewQueryClient(source.GrpcConn)),
 	}, nil
 }
