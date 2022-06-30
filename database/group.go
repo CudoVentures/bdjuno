@@ -72,7 +72,32 @@ func (db *Db) SaveGroupProposalVote(data types.GroupProposalVote) error {
 	return err
 }
 
-func (db *Db) UpdateGroupProposalStatuses(blockTime time.Time) error {
+func (db *Db) UpdateGroupProposalStatus(proposalID uint64, status string) error {
+	_, err := db.Sql.Exec(
+		`UPDATE group_proposal
+		SET status = $1
+		WHERE id = $2`,
+		status, proposalID,
+	)
+
+	return err
+}
+
+func (db *Db) UpdateGroupProposalExecutorResult(
+	proposalID uint64,
+	executorResult string,
+) error {
+	_, err := db.Sql.Exec(
+		`UPDATE group_proposal
+		SET executor_result = $1
+		WHERE id = $2`,
+		executorResult, proposalID,
+	)
+
+	return err
+}
+
+func (db *Db) UpdateGroupProposalExpirations(blockTime time.Time) error {
 	_, err := db.Sql.Exec(
 		`UPDATE group_proposal
 		SET status = 'PROPOSAL_STATUS_REJECTED'
@@ -80,6 +105,37 @@ func (db *Db) UpdateGroupProposalStatuses(blockTime time.Time) error {
 		JOIN group_with_policy g ON g.id = p.group_id
 		WHERE g.voting_period < EXTRACT(EPOCH FROM ($1 - p.submit_time))`,
 		blockTime,
+	)
+
+	return err
+}
+
+func (db *Db) UpdateGroupProposalTallyResult(
+	proposalID uint64,
+	executorResult string,
+) error {
+	_, err := db.Sql.Exec(
+		`UPDATE group_proposal
+		SET status = 
+		CASE  
+			WHEN p.yes_vote_count = p.threshold THEN 'PROPOSAL_STATUS_ACCEPTED'::PROPOSAL_STATUS
+			WHEN p.no_vote_count > (p.member_count - p.threshold) THEN 'PROPOSAL_STATUS_REJECTED'::PROPOSAL_STATUS
+		END,
+		executor_result = $1
+		FROM (
+			SELECT 
+				(SELECT COUNT(*) FROM group_member WHERE group_id = p.group_id) AS member_count,
+				(SELECT threshold FROM group_with_policy WHERE id = p.group_id) AS threshold,
+				COUNT(CASE WHEN v.vote_option = 'VOTE_OPTION_YES' THEN 1 END) AS yes_vote_count,
+				COUNT(CASE WHEN v.vote_option = 'VOTE_OPTION_NO' THEN 1 END) AS no_vote_count
+			FROM group_proposal p
+			LEFT JOIN group_proposal_vote v ON v.proposal_id = p.id
+			WHERE p.id = $2
+			GROUP BY p.group_id
+			LIMIT 1
+		) p
+		WHERE id = $2`,
+		executorResult, proposalID,
 	)
 
 	return err
