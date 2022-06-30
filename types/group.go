@@ -55,6 +55,7 @@ type GroupProposal struct {
 	ProposalMetadata string
 	Proposer         string
 	SubmitTime       time.Time
+	Status           string
 	ExecutorResult   string
 	Messages         string
 }
@@ -65,6 +66,7 @@ func NewGroupProposal(
 	proposalMetadata string,
 	proposer string,
 	submitTime time.Time,
+	status string,
 	executorResult string,
 	messages string,
 ) *GroupProposal {
@@ -74,6 +76,7 @@ func NewGroupProposal(
 		ProposalMetadata: proposalMetadata,
 		Proposer:         proposer,
 		SubmitTime:       submitTime,
+		Status:           status,
 		ExecutorResult:   executorResult,
 		Messages:         messages,
 	}

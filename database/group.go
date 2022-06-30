@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"time"
 
 	dbtypes "github.com/forbole/bdjuno/v2/database/types"
 	"github.com/forbole/bdjuno/v2/types"
@@ -51,10 +52,10 @@ func (db *Db) GetGroupId(groupAddress string) uint64 {
 
 func (db *Db) SaveGroupProposal(data types.GroupProposal) error {
 	_, err := db.Sql.Exec(
-		`INSERT INTO group_proposal VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`INSERT INTO group_proposal VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		ON CONFLICT DO NOTHING`,
 		data.ID, data.GroupID, data.ProposalMetadata, data.Proposer,
-		data.SubmitTime, data.ExecutorResult, data.Messages,
+		data.SubmitTime, data.Status, data.ExecutorResult, data.Messages,
 	)
 
 	return err
@@ -66,6 +67,19 @@ func (db *Db) SaveGroupProposalVote(data types.GroupProposalVote) error {
 		ON CONFLICT DO NOTHING`,
 		data.ProposalID, data.Voter, data.VoteOption,
 		data.VoteMetadata, data.SubmitTime,
+	)
+
+	return err
+}
+
+func (db *Db) UpdateGroupProposalStatuses(blockTime time.Time) error {
+	_, err := db.Sql.Exec(
+		`UPDATE group_proposal
+		SET status = 'PROPOSAL_STATUS_REJECTED'
+		FROM group_proposal p
+		JOIN group_with_policy g ON g.id = p.group_id
+		WHERE g.voting_period < EXTRACT(EPOCH FROM ($1 - p.submit_time))`,
+		blockTime,
 	)
 
 	return err

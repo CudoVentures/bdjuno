@@ -10,5 +10,5 @@ import (
 func (m *Module) HandleBlock(
 	block *tmctypes.ResultBlock, _ *tmctypes.ResultBlockResults, _ []*types.Tx, _ *tmctypes.ResultValidators,
 ) error {
-	return nil
+	return m.db.UpdateGroupProposalStatuses(block.Block.Time)
 }

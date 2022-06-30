@@ -75,6 +75,7 @@ func (m *Module) handleMsgCreateGroupWithPolicy(tx *juno.Tx, index int, msg *gro
 
 func (m *Module) handleMsgSubmitProposal(tx *juno.Tx, index int, msg *group.MsgSubmitProposal) error {
 	executorResult := group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN.String()
+	status := group.PROPOSAL_STATUS_SUBMITTED.String()
 	execEvent, _ := strconv.Unquote(utils.GetValueFromLogs(
 		uint32(index),
 		tx.Logs,
@@ -83,6 +84,7 @@ func (m *Module) handleMsgSubmitProposal(tx *juno.Tx, index int, msg *group.MsgS
 	))
 	if execEvent != "" {
 		executorResult = execEvent
+		status = group.PROPOSAL_STATUS_ACCEPTED.String()
 	}
 
 	proposalIdAttr, _ := strconv.Unquote(utils.GetValueFromLogs(
@@ -106,6 +108,7 @@ func (m *Module) handleMsgSubmitProposal(tx *juno.Tx, index int, msg *group.MsgS
 			msg.Metadata,
 			msg.Proposers[0],
 			timestamp,
+			status,
 			executorResult,
 			utils.SanitizeUTF8(string(messages)),
 		),
