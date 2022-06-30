@@ -58,5 +58,5 @@ func TestBaseWorkerStart(t *testing.T) {
 	bw := baseWorker{}
 	bw.Start(context.Background(), "test", job, nil, nil, nil, 1*time.Millisecond)
 	time.Sleep(10 * time.Millisecond)
-	require.Greater(t, executionsCount, 5)
+	require.Greater(t, executionsCount, 2)
 }
