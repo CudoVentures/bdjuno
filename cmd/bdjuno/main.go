@@ -14,10 +14,10 @@ import (
 	parsegenesiscmd "github.com/forbole/bdjuno/v2/cmd/parse-genesis"
 	"github.com/forbole/bdjuno/v2/workers"
 
-	"github.com/forbole/bdjuno/v2/types/config"
-
+	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
 	"github.com/forbole/bdjuno/v2/database"
 	"github.com/forbole/bdjuno/v2/modules"
+	"github.com/forbole/bdjuno/v2/types/config"
 
 	cudosapp "github.com/CudoVentures/cudos-node/app"
 	gaiaapp "github.com/cosmos/gaia/v6/app"
@@ -62,6 +62,7 @@ func getBasicManagers() []module.BasicManager {
 	return []module.BasicManager{
 		gaiaapp.ModuleBasics,
 		cudosapp.ModuleBasics,
+		module.NewBasicManager(groupmodule.AppModuleBasic{}),
 	}
 }
 
