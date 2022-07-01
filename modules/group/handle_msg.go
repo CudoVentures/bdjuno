@@ -38,13 +38,13 @@ func (m *Module) handleMsgCreateGroupWithPolicy(
 	index int,
 	msg *group.MsgCreateGroupWithPolicy,
 ) error {
-	groupIdAttr, _ := strconv.Unquote(utils.GetValueFromLogs(
+	groupIDAttr, _ := strconv.Unquote(utils.GetValueFromLogs(
 		uint32(index),
 		tx.Logs,
 		"cosmos.group.v1.EventCreateGroup",
 		"group_id",
 	))
-	groupID, _ := strconv.ParseUint(groupIdAttr, 10, 64)
+	groupID, _ := strconv.ParseUint(groupIDAttr, 10, 64)
 
 	address, _ := strconv.Unquote(utils.GetValueFromLogs(
 		uint32(index),
@@ -98,19 +98,23 @@ func (m *Module) handleMsgSubmitProposal(
 		status = group.PROPOSAL_STATUS_ACCEPTED.String()
 	}
 
-	proposalIdAttr, _ := strconv.Unquote(utils.GetValueFromLogs(
+	proposalIDAttr, _ := strconv.Unquote(utils.GetValueFromLogs(
 		uint32(index),
 		tx.Logs,
 		"cosmos.group.v1.EventSubmitProposal",
 		"proposal_id",
 	))
-	proposalID, _ := strconv.ParseUint(proposalIdAttr, 10, 64)
+	proposalID, _ := strconv.ParseUint(proposalIDAttr, 10, 64)
 
-	groupID := m.db.GetGroupId(msg.GroupPolicyAddress)
+	groupID, err := m.db.GetGroupID(msg.GroupPolicyAddress)
+	if err != nil {
+		return err
+	}
+
 	messages, _ := json.Marshal(msg.Messages)
 	timestamp, _ := time.Parse(time.RFC3339, tx.Timestamp)
 
-	err := m.db.SaveGroupProposal(
+	err = m.db.SaveGroupProposal(
 		*types.NewGroupProposal(
 			proposalID,
 			groupID,
