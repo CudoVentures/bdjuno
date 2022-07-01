@@ -21,10 +21,10 @@ type GroupWithPolicy struct {
 	Address            string
 	Members            []*GroupMember
 	GroupMetadata      string
-	PolicyMegadata     string
+	PolicyMetadata     string
 	Threshold          uint64
-	VotingPeriod       uint64
-	MinExecutionPeriod uint64
+	VotingPeriod       time.Time
+	MinExecutionPeriod time.Time
 }
 
 func NewGroupWithPolicy(
@@ -34,15 +34,15 @@ func NewGroupWithPolicy(
 	groupMetadata string,
 	policyMetadata string,
 	threshold uint64,
-	votingPeriod uint64,
-	minExecutionPeriod uint64,
+	votingPeriod time.Time,
+	minExecutionPeriod time.Time,
 ) *GroupWithPolicy {
 	return &GroupWithPolicy{
 		ID:                 id,
 		Address:            address,
 		Members:            members,
 		GroupMetadata:      groupMetadata,
-		PolicyMegadata:     policyMetadata,
+		PolicyMetadata:     policyMetadata,
 		Threshold:          threshold,
 		VotingPeriod:       votingPeriod,
 		MinExecutionPeriod: minExecutionPeriod,

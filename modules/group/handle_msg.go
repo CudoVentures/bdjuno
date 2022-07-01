@@ -62,6 +62,9 @@ func (m *Module) handleMsgCreateGroupWithPolicy(
 
 	decisionPolicy, _ := msg.DecisionPolicy.GetCachedValue().(*group.ThresholdDecisionPolicy)
 	threshold, _ := strconv.ParseUint(decisionPolicy.Threshold, 10, 64)
+	timestamp, _ := time.Parse(time.RFC3339, tx.Timestamp)
+	votingPeriod := timestamp.Add(decisionPolicy.Windows.VotingPeriod)
+	minExecutionPeriod := timestamp.Add(decisionPolicy.Windows.MinExecutionPeriod)
 
 	return m.db.SaveGroupWithPolicy(
 		*types.NewGroupWithPolicy(
@@ -71,8 +74,8 @@ func (m *Module) handleMsgCreateGroupWithPolicy(
 			msg.GroupMetadata,
 			msg.GroupPolicyMetadata,
 			threshold,
-			uint64(decisionPolicy.Windows.VotingPeriod.Seconds()),
-			uint64(decisionPolicy.Windows.MinExecutionPeriod.Seconds()),
+			votingPeriod,
+			minExecutionPeriod,
 		),
 	)
 }
@@ -104,9 +107,7 @@ func (m *Module) handleMsgSubmitProposal(
 	proposalID, _ := strconv.ParseUint(proposalIdAttr, 10, 64)
 
 	groupID := m.db.GetGroupId(msg.GroupPolicyAddress)
-
 	messages, _ := json.Marshal(msg.Messages)
-
 	timestamp, _ := time.Parse(time.RFC3339, tx.Timestamp)
 
 	err := m.db.SaveGroupProposal(
@@ -163,7 +164,7 @@ func (m *Module) handleMsgVote(tx *juno.Tx, index int, msg *group.MsgVote) error
 		),
 	)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	executorResult := group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN.String()

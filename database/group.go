@@ -10,9 +10,10 @@ import (
 
 func (db *Db) SaveGroupWithPolicy(data types.GroupWithPolicy) error {
 	_, err := db.Sql.Exec(
-		`INSERT INTO group_with_policy VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`INSERT INTO group_with_policy
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT DO NOTHING`,
-		data.ID, data.Address, data.GroupMetadata, data.PolicyMegadata,
+		data.ID, data.Address, data.GroupMetadata, data.PolicyMetadata,
 		data.Threshold, data.VotingPeriod, data.MinExecutionPeriod,
 	)
 	if err != nil {
@@ -52,7 +53,8 @@ func (db *Db) GetGroupId(groupAddress string) uint64 {
 
 func (db *Db) SaveGroupProposal(data types.GroupProposal) error {
 	_, err := db.Sql.Exec(
-		`INSERT INTO group_proposal VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`INSERT INTO group_proposal
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		ON CONFLICT DO NOTHING`,
 		data.ID, data.GroupID, data.ProposalMetadata, data.Proposer,
 		data.SubmitTime, data.Status, data.ExecutorResult, data.Messages,
@@ -63,7 +65,8 @@ func (db *Db) SaveGroupProposal(data types.GroupProposal) error {
 
 func (db *Db) SaveGroupProposalVote(data types.GroupProposalVote) error {
 	_, err := db.Sql.Exec(
-		`INSERT INTO group_proposal_vote VALUES ($1, $2, $3, $4, $5)
+		`INSERT INTO group_proposal_vote
+		VALUES ($1, $2, $3, $4, $5)
 		ON CONFLICT DO NOTHING`,
 		data.ProposalID, data.Voter, data.VoteOption,
 		data.VoteMetadata, data.SubmitTime,
@@ -97,13 +100,14 @@ func (db *Db) UpdateGroupProposalExecutorResult(
 	return err
 }
 
-func (db *Db) UpdateGroupProposalExpirations(blockTime time.Time) error {
+func (db *Db) UpdateGroupProposalsExpiration(blockTime time.Time) error {
+	// TODO test WHERE
 	_, err := db.Sql.Exec(
 		`UPDATE group_proposal
 		SET status = 'PROPOSAL_STATUS_REJECTED'
 		FROM group_proposal p
 		JOIN group_with_policy g ON g.id = p.group_id
-		WHERE g.voting_period < EXTRACT(EPOCH FROM ($1 - p.submit_time))`,
+		WHERE g.voting_period < $1`,
 		blockTime,
 	)
 
@@ -117,9 +121,10 @@ func (db *Db) UpdateGroupProposalTallyResult(
 	_, err := db.Sql.Exec(
 		`UPDATE group_proposal
 		SET status = 
-		CASE  
+		CASE
 			WHEN p.yes_vote_count = p.threshold THEN 'PROPOSAL_STATUS_ACCEPTED'::PROPOSAL_STATUS
 			WHEN p.no_vote_count > (p.member_count - p.threshold) THEN 'PROPOSAL_STATUS_REJECTED'::PROPOSAL_STATUS
+			ELSE status
 		END,
 		executor_result = $1
 		FROM (

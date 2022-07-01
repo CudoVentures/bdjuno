@@ -9,18 +9,16 @@ import (
 )
 
 var (
-	_ modules.Module        = &Module{}
-	_ modules.BlockModule   = &Module{}
-	_ modules.MessageModule = &Module{}
+	_ modules.Module                   = &Module{}
+	_ modules.PeriodicOperationsModule = &Module{}
+	_ modules.MessageModule            = &Module{}
 )
 
-// Module represents the x/bank module
 type Module struct {
 	cdc codec.Codec
 	db  *database.Db
 }
 
-// NewModule returns a new Module instance
 func NewModule(cdc codec.Codec, db *database.Db,
 ) *Module {
 	return &Module{
@@ -29,7 +27,6 @@ func NewModule(cdc codec.Codec, db *database.Db,
 	}
 }
 
-// Name implements modules.Module
 func (m *Module) Name() string {
 	return "group"
 }
