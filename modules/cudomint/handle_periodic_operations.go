@@ -23,8 +23,8 @@ func (m *Module) RegisterPeriodicOperations(scheduler *gocron.Scheduler) error {
 	log.Debug().Str("module", "cudomint").Msg("setting up periodic tasks")
 
 	// // Setup a cron job to run every midnight
-	if _, err := scheduler.Every(1).Minute().Do(func() {
-		// if _, err := scheduler.Every(1).Day().At("00:00").Do(func() {
+	// if _, err := scheduler.Every(1).Minute().Do(func() {
+	if _, err := scheduler.Every(1).Day().At("00:00").Do(func() {
 		utils.WatchMethod(m.calculateInflation)
 		utils.WatchMethod(m.calculateAPR)
 	}); err != nil {
