@@ -118,7 +118,7 @@ func (m *Module) calculateInflation() error {
 		inflationSinceDays--
 	}
 
-	mintAmountInt, err := m.calculateMintedTokensSinceHeight(startBlockHeight, 30)
+	mintAmountInt, err := m.calculateMintedTokensSinceHeight(startBlockHeight, inflationSinceDays)
 	if err != nil {
 		return fmt.Errorf("failed to calculated minted tokens: %s", err)
 	}
