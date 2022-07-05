@@ -9,3 +9,7 @@ type GroupWithPolicyRow struct {
 	VotingPeriod       uint64 `db:"voting_period"`
 	MinExecutionPeriod uint64 `db:"min_execution_period"`
 }
+
+type GroupProposalRow struct {
+	GroupID uint64 `db:"group_id"`
+}

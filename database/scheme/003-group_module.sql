@@ -12,10 +12,10 @@ CREATE TABLE group_with_policy
 CREATE TABLE group_member
 (
     group_id        INT  NOT NULL REFERENCES group_with_policy (id),
-    address         TEXT NOT NULL,
+    address         TEXT NOT NULL PRIMARY KEY,
     weight          INT  NOT NULL,
     member_metadata TEXT NULL,
-    PRIMARY KEY(group_id, address)
+    UNIQUE(group_id, address)
 );
 
 CREATE TYPE PROPOSAL_STATUS AS ENUM
@@ -57,7 +57,7 @@ CREATE TYPE VOTE_OPTION AS ENUM
 CREATE TABLE group_proposal_vote
 (
     proposal_id   INT                         NOT NULL REFERENCES group_proposal (id),
-    voter         TEXT                        NOT NULL,
+    voter         TEXT                        NOT NULL REFERENCES group_member (address),
     vote_option   VOTE_OPTION                 NOT NULL,
     vote_metadata TEXT                        NULL,
     submit_time   TIMESTAMP WITHOUT TIME ZONE NOT NULL,
