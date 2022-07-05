@@ -136,10 +136,8 @@ func (m *Module) calculateInflation() error {
 		return fmt.Errorf("failed to convert big.Int to sdk.Int: %s", currentTotalBalance.String())
 	}
 
-	currentTotalBalanceInt = currentTotalBalanceInt.Add(mintAmountInt)
-
 	currentTotalSupply, _ := sdk.NewIntFromString(maxSupply)
-	currentTotalSupply = currentTotalSupply.Sub(currentTotalBalanceInt)
+	currentTotalSupply = currentTotalSupply.Sub(currentTotalBalanceInt).Add(mintAmountInt)
 
 	inflation := currentTotalSupply.Sub(startTotalSupply).ToDec().Quo(startTotalSupply.ToDec())
 
