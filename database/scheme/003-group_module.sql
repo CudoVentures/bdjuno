@@ -1,21 +1,21 @@
 CREATE TABLE group_with_policy
 (
-    id                   INT                         NOT NULL PRIMARY KEY,
-    address              TEXT                        NOT NULL,
-    group_metadata       TEXT                        NULL,
-    policy_metadata      TEXT                        NULL,
-    threshold            INT                         NOT NULL,
-    voting_period        TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    min_execution_period TIMESTAMP WITHOUT TIME ZONE NOT NULL
+    id                   INT    NOT NULL PRIMARY KEY,
+    address              TEXT   NOT NULL,
+    group_metadata       TEXT   NULL,
+    policy_metadata      TEXT   NULL,
+    threshold            INT    NOT NULL,
+    voting_period        BIGINT NOT NULL,
+    min_execution_period BIGINT NOT NULL
 );
 
 CREATE TABLE group_member
 (
     group_id        INT  NOT NULL REFERENCES group_with_policy (id),
-    address         TEXT NOT NULL PRIMARY KEY,
+    address         TEXT NOT NULL,
     weight          INT  NOT NULL,
     member_metadata TEXT NULL,
-    UNIQUE(group_id, address)
+    PRIMARY KEY(group_id, address)
 );
 
 CREATE TYPE PROPOSAL_STATUS AS ENUM
@@ -57,9 +57,11 @@ CREATE TYPE VOTE_OPTION AS ENUM
 CREATE TABLE group_proposal_vote
 (
     proposal_id   INT                         NOT NULL REFERENCES group_proposal (id),
-    voter         TEXT                        NOT NULL REFERENCES group_member (address),
+    group_id      INT                         NOT NULL,
+    voter         TEXT                        NOT NULL,
     vote_option   VOTE_OPTION                 NOT NULL,
     vote_metadata TEXT                        NULL,
     submit_time   TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    FOREIGN KEY (group_id, voter) REFERENCES group_member (group_id, address),
     PRIMARY KEY(proposal_id, voter)
 );

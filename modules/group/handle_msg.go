@@ -62,9 +62,6 @@ func (m *Module) handleMsgCreateGroupWithPolicy(
 
 	decisionPolicy, _ := msg.DecisionPolicy.GetCachedValue().(*group.ThresholdDecisionPolicy)
 	threshold, _ := strconv.ParseUint(decisionPolicy.Threshold, 10, 64)
-	timestamp, _ := time.Parse(time.RFC3339, tx.Timestamp)
-	votingPeriod := timestamp.Add(decisionPolicy.Windows.VotingPeriod)
-	minExecutionPeriod := timestamp.Add(decisionPolicy.Windows.MinExecutionPeriod)
 
 	return m.db.SaveGroupWithPolicy(
 		*types.NewGroupWithPolicy(
@@ -74,8 +71,8 @@ func (m *Module) handleMsgCreateGroupWithPolicy(
 			msg.GroupMetadata,
 			msg.GroupPolicyMetadata,
 			threshold,
-			votingPeriod,
-			minExecutionPeriod,
+			uint64(decisionPolicy.Windows.VotingPeriod.Seconds()),
+			uint64(decisionPolicy.Windows.MinExecutionPeriod.Seconds()),
 		),
 	)
 }

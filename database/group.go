@@ -107,7 +107,7 @@ func (db *Db) UpdateGroupProposalsExpiration(blockTime time.Time) error {
 		SET status = 'PROPOSAL_STATUS_REJECTED'
 		FROM group_proposal p
 		JOIN group_with_policy g ON g.id = p.group_id
-		WHERE g.voting_period < $1`,
+		WHERE g.voting_period < EXTRACT(EPOCH FROM ($1 - p.submit_time))`,
 		blockTime,
 	)
 	return err
@@ -159,7 +159,8 @@ func (db *Db) getGroupProposal(proposalID uint64) (dbtypes.GroupProposalRow, err
 		`SELECT group_id 
 		FROM group_proposal 
 		WHERE id = $1`,
-		proposalID)
+		proposalID,
+	)
 	if err != nil {
 		return dbtypes.GroupProposalRow{}, err
 	}

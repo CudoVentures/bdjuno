@@ -1,0 +1,29 @@
+table:
+  name: group_proposal
+  schema: public
+object_relationships:
+  - name: group_with_policy
+    using:
+      foreign_key_constraint_on: group_id
+array_relationships:
+  - name: group_proposal_votes
+    using:
+      foreign_key_constraint_on:
+        column: proposal_id
+        table:
+          schema: public
+          name: group_proposal_vote
+select_permissions:
+- permission:
+    allow_aggregations: true
+    columns:
+    - id
+    - group_id
+    - proposal_metadata
+    - proposer
+    - submit_time
+    - status
+    - executor_result
+    - messages
+    filter: {}
+  role: anonymous

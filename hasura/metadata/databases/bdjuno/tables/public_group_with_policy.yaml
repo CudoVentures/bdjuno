@@ -1,0 +1,38 @@
+table:
+  name: group_with_policy
+  schema: public
+array_relationships:
+  - name: group_members
+    using:
+      foreign_key_constraint_on:
+        column: group_id
+        table:
+          name: group_member
+          schema: public
+  - name: group_proposal_votes
+    using:
+      foreign_key_constraint_on:
+        column: group_id
+        table:
+          name: group_proposal_vote
+          schema: public
+  - name: group_proposals
+    using:
+      foreign_key_constraint_on:
+        column: group_id
+        table:
+          name: group_proposal
+          schema: public
+select_permissions:
+- permission:
+    allow_aggregations: true
+    columns:
+    - id
+    - address
+    - group_metadata
+    - policy_metadata
+    - threshold
+    - voting_period
+    - min_execution_period
+    filter: {}
+  role: anonymous
