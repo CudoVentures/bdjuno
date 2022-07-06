@@ -68,12 +68,17 @@ func (db *Db) SaveGroupProposal(proposal types.GroupProposal) error {
 }
 
 func (db *Db) SaveGroupProposalVote(vote types.GroupProposalVote) error {
-	_, err := db.Sql.Exec(
+	proposal, err := db.getGroupProposal(vote.ProposalID)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Sql.Exec(
 		`INSERT INTO group_proposal_vote
-		VALUES ($1, $2, $3, $4, $5)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT DO NOTHING`,
-		vote.ProposalID, vote.Voter, vote.VoteOption,
-		vote.VoteMetadata, vote.SubmitTime,
+		vote.ProposalID, proposal.GroupID, vote.Voter,
+		vote.VoteOption, vote.VoteMetadata, vote.SubmitTime,
 	)
 	return err
 }
