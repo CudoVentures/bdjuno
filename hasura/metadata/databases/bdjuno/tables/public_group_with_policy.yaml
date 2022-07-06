@@ -9,13 +9,6 @@ array_relationships:
         table:
           name: group_member
           schema: public
-  - name: group_proposal_votes
-    using:
-      foreign_key_constraint_on:
-        column: group_id
-        table:
-          name: group_proposal_vote
-          schema: public
   - name: group_proposals
     using:
       foreign_key_constraint_on:
