@@ -11,5 +11,7 @@ type GroupWithPolicyRow struct {
 }
 
 type GroupProposalRow struct {
-	GroupID uint64 `db:"group_id"`
+	ID       uint64 `db:"id"`
+	GroupID  uint64 `db:"group_id"`
+	Messages string `db:"messages"`
 }

@@ -2,10 +2,13 @@ package database
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/x/group"
 	dbtypes "github.com/forbole/bdjuno/v2/database/types"
 	"github.com/forbole/bdjuno/v2/types"
+	"github.com/lib/pq"
 )
 
 func (db *Db) SaveGroupWithPolicy(group types.GroupWithPolicy) error {
@@ -20,25 +23,54 @@ func (db *Db) SaveGroupWithPolicy(group types.GroupWithPolicy) error {
 		return err
 	}
 
-	return db.saveGroupMembers(group.Members, group.ID)
+	return db.SaveGroupMembers(group.Members, group.ID)
 }
 
-func (db *Db) saveGroupMembers(
-	members []*types.GroupMember,
+func (db *Db) SaveGroupMembers(
+	members *[]group.MemberRequest,
 	groupID uint64,
 ) error {
 	stmt := "INSERT INTO group_member VALUES "
 	var params []interface{}
-	for i, m := range members {
-		n := i * 4
+	var deleteMembers = make([]string, 0)
+	count := -1
+	for _, m := range *members {
+		if m.Weight == "0" {
+			deleteMembers = append(deleteMembers, m.Address)
+			continue
+		}
+		count++
+		n := count * 4
 		stmt += fmt.Sprintf("($%d, $%d, $%d, $%d),", n+1, n+2, n+3, n+4)
-		params = append(params, groupID, m.Address, m.Weight, m.MemberMetadata)
+		weight, _ := strconv.ParseUint(m.Weight, 10, 64)
+		params = append(params, groupID, m.Address, weight, m.Metadata)
 	}
 	stmt = stmt[:len(stmt)-1]
-	stmt += " ON CONFLICT DO NOTHING"
+	stmt += `
+	ON CONFLICT (group_id, address) DO UPDATE 
+    SET weight = excluded.weight,
+    member_metadata = excluded.member_metadata`
 
 	_, err := db.Sql.Exec(stmt, params...)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// todo test if pq.Array works properly
+	if len(deleteMembers) > 0 {
+		_, err = db.Sql.Exec(
+			`DELETE FROM group_member
+			WHERE group_id = $1
+			AND address = ANY($2)`,
+			groupID,
+			pq.Array(&deleteMembers),
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (db *Db) GetGroupID(groupAddress string) (uint64, error) {
@@ -58,7 +90,7 @@ func (db *Db) GetGroupID(groupAddress string) (uint64, error) {
 func (db *Db) SaveGroupProposal(proposal types.GroupProposal) error {
 	_, err := db.Sql.Exec(
 		`INSERT INTO group_proposal
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, null)
 		ON CONFLICT DO NOTHING`,
 		proposal.ID, proposal.GroupID, proposal.ProposalMetadata,
 		proposal.Proposer, proposal.SubmitTime, proposal.Status,
@@ -68,7 +100,7 @@ func (db *Db) SaveGroupProposal(proposal types.GroupProposal) error {
 }
 
 func (db *Db) SaveGroupProposalVote(vote types.GroupProposalVote) error {
-	proposal, err := db.getGroupProposal(vote.ProposalID)
+	proposal, err := db.GetGroupProposal(vote.ProposalID)
 	if err != nil {
 		return err
 	}
@@ -93,15 +125,18 @@ func (db *Db) UpdateGroupProposalStatus(proposalID uint64, status string) error 
 	return err
 }
 
-func (db *Db) UpdateGroupProposalExecutorResult(
+func (db *Db) UpdateGroupProposalExecResult(
 	proposalID uint64,
 	executorResult string,
+	txHash string,
 ) error {
 	_, err := db.Sql.Exec(
 		`UPDATE group_proposal
-		SET executor_result = $1
-		WHERE id = $2`,
-		executorResult, proposalID,
+		SET executor_result = $1,
+		transaction_hash = $2,
+		status = 'PROPOSAL_STATUS_ACCEPTED'
+		WHERE id = $3`,
+		executorResult, txHash, proposalID,
 	)
 	return err
 }
@@ -112,17 +147,15 @@ func (db *Db) UpdateGroupProposalsExpiration(blockTime time.Time) error {
 		SET status = 'PROPOSAL_STATUS_REJECTED'
 		FROM group_proposal p
 		JOIN group_with_policy g ON g.id = p.group_id
-		WHERE g.voting_period < EXTRACT(EPOCH FROM ($1 - p.submit_time))`,
+		WHERE p.status = 'PROPOSAL_STATUS_SUBMITTED'
+		AND g.voting_period < EXTRACT(EPOCH FROM ($1 - p.submit_time))`,
 		blockTime,
 	)
 	return err
 }
 
-func (db *Db) UpdateGroupProposalTallyResult(
-	proposalID uint64,
-	executorResult string,
-) error {
-	proposal, err := db.getGroupProposal(proposalID)
+func (db *Db) UpdateGroupProposalTallyResult(proposalID uint64) error {
+	proposal, err := db.GetGroupProposal(proposalID)
 	if err != nil {
 		return err
 	}
@@ -138,26 +171,24 @@ func (db *Db) UpdateGroupProposalTallyResult(
 			THEN 'PROPOSAL_STATUS_REJECTED'
 
 			ELSE status
-		END,
-		executor_result = $1
+		END
 		FROM (
 			SELECT
 				COUNT(CASE WHEN vote_option = 'VOTE_OPTION_YES' THEN 1 END) AS yes,
 				COUNT(*) as total,
-				(SELECT COUNT(*) AS members FROM group_member WHERE group_id = $2),
-				(SELECT threshold FROM group_with_policy WHERE id = $2)
+				(SELECT COUNT(*) AS members FROM group_member WHERE group_id = $1),
+				(SELECT threshold FROM group_with_policy WHERE id = $1)
 			FROM group_proposal_vote
-			WHERE proposal_id = $3
+			WHERE proposal_id = $2
 		) _
-		WHERE id = $3`,
-		executorResult,
+		WHERE id = $2 AND status = 'PROPOSAL_STATUS_SUBMITTED'`,
 		proposal.GroupID,
 		proposalID,
 	)
 	return err
 }
 
-func (db *Db) getGroupProposal(proposalID uint64) (dbtypes.GroupProposalRow, error) {
+func (db *Db) GetGroupProposal(proposalID uint64) (dbtypes.GroupProposalRow, error) {
 	var proposalRows []dbtypes.GroupProposalRow
 	err := db.Sqlx.Select(
 		&proposalRows,
@@ -170,4 +201,42 @@ func (db *Db) getGroupProposal(proposalID uint64) (dbtypes.GroupProposalRow, err
 		return dbtypes.GroupProposalRow{}, err
 	}
 	return proposalRows[0], nil
+}
+
+func (db *Db) UpdateGroupMetadata(groupID uint64, metadata string) error {
+	_, err := db.Sql.Exec(
+		`UPDATE group_with_policy
+		SET group_metadata = $1
+		WHERE id = $2`,
+		metadata, groupID,
+	)
+	return err
+}
+
+func (db *Db) UpdateGroupPolicyMetadata(groupID uint64, metadata string) error {
+	_, err := db.Sql.Exec(
+		`UPDATE group_with_policy
+		SET policy_metadata = $1
+		WHERE id = $2`,
+		metadata, groupID,
+	)
+	return err
+}
+
+func (db *Db) UpdateGroupPolicy(
+	groupID uint64,
+	policy *group.ThresholdDecisionPolicy,
+) error {
+	_, err := db.Sql.Exec(
+		`UPDATE group_with_policy
+		SET threshold = $1,
+		voting_period = $2,
+		min_execution_period = $3
+		WHERE id = $4`,
+		policy.Threshold,
+		policy.Windows.VotingPeriod,
+		policy.Windows.MinExecutionPeriod,
+		groupID,
+	)
+	return err
 }

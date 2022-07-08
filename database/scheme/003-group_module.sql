@@ -43,7 +43,8 @@ CREATE TABLE group_proposal
     submit_time       TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     status            PROPOSAL_STATUS             NOT NULL,
     executor_result   PROPOSAL_EXECUTOR_RESULT    NOT NULL,
-    messages          JSONB                       NOT NULL DEFAULT '{}'::JSONB
+    messages          JSONB                       NOT NULL DEFAULT '{}'::JSONB,
+    transaction_hash  TEXT                        NULL REFERENCES transaction (hash)
 );
 
 CREATE TYPE VOTE_OPTION AS ENUM
