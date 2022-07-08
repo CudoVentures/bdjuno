@@ -8,6 +8,7 @@ import (
 
 	"github.com/forbole/bdjuno/v2/modules/pricefeed/coingecko"
 	"github.com/forbole/bdjuno/v2/modules/utils"
+	"github.com/forbole/bdjuno/v2/types"
 )
 
 // RegisterPeriodicOperations implements modules.PeriodicOperationsModule
@@ -21,6 +22,12 @@ func (m *Module) RegisterPeriodicOperations(scheduler *gocron.Scheduler) error {
 		return fmt.Errorf("error while setting up pricefeed period operations: %s", err)
 	}
 
+	if _, err := scheduler.Every(1).Hour().Do(func() {
+		utils.WatchMethod(m.updatePricesHistory)
+	}); err != nil {
+		return fmt.Errorf("error while setting up pricefeed price history periodic operation: %s", err)
+	}
+
 	return nil
 }
 
@@ -31,21 +38,9 @@ func (m *Module) updatePrice() error {
 		Str("operation", "pricefeed").
 		Msg("getting token price and market cap")
 
-	// Get the list of tokens price id
-	ids, err := m.db.GetTokensPriceID()
+	prices, err := m.getPrices()
 	if err != nil {
-		return fmt.Errorf("error while getting tokens price id: %s", err)
-	}
-
-	if len(ids) == 0 {
-		log.Debug().Str("module", "pricefeed").Msg("no traded tokens price id found")
-		return nil
-	}
-
-	// Get the tokens prices
-	prices, err := coingecko.GetTokensPrices(ids)
-	if err != nil {
-		return fmt.Errorf("error while getting tokens prices: %s", err)
+		return err
 	}
 
 	// Save the token prices
@@ -54,5 +49,42 @@ func (m *Module) updatePrice() error {
 		return fmt.Errorf("error while saving token prices: %s", err)
 	}
 
+	return nil
+}
+
+// updatePricesHistory fetches total amount of coins in the system from RPC
+// and stores historical perice data inside the database
+func (m *Module) updatePricesHistory() error {
+	log.Debug().
+		Str("module", "pricefeed").
+		Str("operation", "pricefeed").
+		Msg("getting token price and market cap history")
+
+	prices, err := m.getPrices()
+	if err != nil {
+		return err
+	}
+
 	return m.historyModule.UpdatePricesHistory(prices)
+}
+
+func (m *Module) getPrices() ([]types.TokenPrice, error) {
+	// Get the list of tokens price id
+	ids, err := m.db.GetTokensPriceID()
+	if err != nil {
+		return []types.TokenPrice{}, fmt.Errorf("error while getting tokens price id: %s", err)
+	}
+
+	if len(ids) == 0 {
+		log.Debug().Str("module", "pricefeed").Msg("no traded tokens price id found")
+		return []types.TokenPrice{}, nil
+	}
+
+	// Get the tokens prices
+	prices, err := coingecko.GetTokensPrices(ids)
+	if err != nil {
+		return []types.TokenPrice{}, fmt.Errorf("error while getting tokens prices: %s", err)
+	}
+
+	return prices, nil
 }
