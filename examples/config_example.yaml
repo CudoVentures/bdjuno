@@ -13,6 +13,7 @@ chain:
         - cosmwasm
         - gravity
         - cudomint
+        - nft
 node:
     type: remote
     config:
