@@ -22,6 +22,7 @@ var cancelWorkersCtx context.CancelFunc
 
 var workers = []worker{
 	fixBlocksWorker{},
+	migrateNftsWorker{},
 }
 
 func GetStartWorkersPrerunE(origPreRunE PreRunE, parseCfg *parse.Config) PreRunE {

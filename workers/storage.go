@@ -12,10 +12,6 @@ type Storage struct {
 	workerName string
 }
 
-type keyValueRow struct {
-	value string `db:"value"`
-}
-
 var ErrKeyNotFound = errors.New("key not found")
 
 func NewWorkersStorage(db *database.Db, workerName string) *Storage {
@@ -35,8 +31,9 @@ func (ws *Storage) SetValue(key, value string) error {
 }
 
 func (ws *Storage) GetValue(key string) (string, error) {
-	var rows []keyValueRow
-	if err := ws.db.Sqlx.Select(&rows, sqlx.Rebind(sqlx.DOLLAR, `SELECT value FROM workers_storage WHERE key = ?`), key); err != nil {
+	var rows []string
+	workerKey := ws.workerName + "_" + key
+	if err := ws.db.Sqlx.Select(&rows, sqlx.Rebind(sqlx.DOLLAR, `SELECT value FROM workers_storage WHERE key = ?`), workerKey); err != nil {
 		return "", err
 	}
 
@@ -44,13 +41,13 @@ func (ws *Storage) GetValue(key string) (string, error) {
 		return "", ErrKeyNotFound
 	}
 
-	return rows[0].value, nil
+	return rows[0], nil
 }
 
 func (ws *Storage) GetOrDefaultValue(key, defaultValue string) (string, error) {
-	startHeightVal, err := ws.GetValue(startHeightKey)
+	value, err := ws.GetValue(key)
 	if err == ErrKeyNotFound {
 		return defaultValue, nil
 	}
-	return startHeightVal, err
+	return value, err
 }
