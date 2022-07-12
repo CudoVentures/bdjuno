@@ -41,34 +41,42 @@ func (m *Module) handleMsgCreateGroupWithPolicy(
 	index int,
 	msg *group.MsgCreateGroupWithPolicy,
 ) error {
-	groupIDAttr, _ := strconv.Unquote(utils.GetValueFromLogs(
-		uint32(index),
-		tx.Logs,
-		"cosmos.group.v1.EventCreateGroup",
-		"group_id",
-	))
+	groupIDAttr := strings.ReplaceAll(
+		utils.GetValueFromLogs(
+			uint32(index),
+			tx.Logs,
+			"cosmos.group.v1.EventCreateGroup",
+			"group_id",
+		), "\"", "",
+	)
 	groupID, _ := strconv.ParseUint(groupIDAttr, 10, 64)
 
-	address, _ := strconv.Unquote(utils.GetValueFromLogs(
-		uint32(index),
-		tx.Logs,
-		"cosmos.group.v1.EventCreateGroupPolicy",
-		"address",
-	))
+	address := strings.ReplaceAll(
+		utils.GetValueFromLogs(
+			uint32(index),
+			tx.Logs,
+			"cosmos.group.v1.EventCreateGroupPolicy",
+			"address",
+		), "\"", "",
+	)
 
-	decisionPolicy, _ := msg.DecisionPolicy.GetCachedValue().(*group.ThresholdDecisionPolicy)
+	decisionPolicy, _ := msg.DecisionPolicy.
+		GetCachedValue().(*group.ThresholdDecisionPolicy)
+
 	threshold, _ := strconv.ParseUint(decisionPolicy.Threshold, 10, 64)
+	votingPeriod := uint64(decisionPolicy.Windows.VotingPeriod.Seconds())
+	minExecutionPeriod := uint64(decisionPolicy.Windows.MinExecutionPeriod.Seconds())
 
 	return m.db.SaveGroupWithPolicy(
-		*types.NewGroupWithPolicy(
+		types.NewGroupWithPolicy(
 			groupID,
 			address,
-			&msg.Members,
+			msg.Members,
 			msg.GroupMetadata,
 			msg.GroupPolicyMetadata,
 			threshold,
-			uint64(decisionPolicy.Windows.VotingPeriod.Seconds()),
-			uint64(decisionPolicy.Windows.MinExecutionPeriod.Seconds()),
+			votingPeriod,
+			minExecutionPeriod,
 		),
 	)
 }
@@ -78,26 +86,26 @@ func (m *Module) handleMsgSubmitProposal(
 	index int,
 	msg *group.MsgSubmitProposal,
 ) error {
-	proposalIDAttr, _ := strconv.Unquote(utils.GetValueFromLogs(
-		uint32(index),
-		tx.Logs,
-		"cosmos.group.v1.EventSubmitProposal",
-		"proposal_id",
-	))
+	proposalIDAttr := strings.ReplaceAll(
+		utils.GetValueFromLogs(
+			uint32(index),
+			tx.Logs,
+			"cosmos.group.v1.EventSubmitProposal",
+			"proposal_id",
+		), "\"", "",
+	)
 	proposalID, _ := strconv.ParseUint(proposalIDAttr, 10, 64)
 
-	groupID, err := m.db.GetGroupID(msg.GroupPolicyAddress)
-	if err != nil {
-		return err
-	}
-
+	groupID := m.db.GetGroupIdByGroupAddress(msg.GroupPolicyAddress)
 	timestamp, _ := time.Parse(time.RFC3339, tx.Timestamp)
 	executorResult := group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN.String()
 	status := group.PROPOSAL_STATUS_SUBMITTED.String()
-	messages, _ := json.Marshal(msg.Messages)
 
-	err = m.db.SaveGroupProposal(
-		*types.NewGroupProposal(
+	msgBytes, _ := json.Marshal(msg.Messages)
+	msgs := utils.SanitizeUTF8(string(msgBytes))
+
+	if err := m.db.SaveGroupProposal(
+		types.NewGroupProposal(
 			proposalID,
 			groupID,
 			msg.Metadata,
@@ -105,10 +113,9 @@ func (m *Module) handleMsgSubmitProposal(
 			timestamp,
 			status,
 			executorResult,
-			utils.SanitizeUTF8(string(messages)),
+			msgs,
 		),
-	)
-	if err != nil {
+	); err != nil {
 		return err
 	}
 
@@ -120,8 +127,8 @@ func (m *Module) handleMsgSubmitProposal(
 			Metadata:   "",
 			Exec:       group.Exec_EXEC_TRY,
 		}
-		err := m.handleMsgVote(tx, index, &msgVote)
-		if err != nil {
+
+		if err := m.handleMsgVote(tx, index, &msgVote); err != nil {
 			return err
 		}
 	}
@@ -132,22 +139,20 @@ func (m *Module) handleMsgSubmitProposal(
 func (m *Module) handleMsgVote(tx *juno.Tx, index int, msg *group.MsgVote) error {
 	timestamp, _ := time.Parse(time.RFC3339, tx.Timestamp)
 
-	err := m.db.SaveGroupProposalVote(
-		*types.NewGroupProposalVote(
+	if err := m.db.SaveGroupProposalVote(
+		types.NewGroupProposalVote(
 			msg.ProposalId,
 			msg.Voter,
 			msg.Option.String(),
 			msg.Metadata,
 			timestamp,
 		),
-	)
-	if err != nil {
+	); err != nil {
 		return err
 	}
 
 	if msg.Exec == group.Exec_EXEC_TRY {
-		err = m.handleMsgExec(tx, index, msg.ProposalId)
-		if err != nil {
+		if err := m.handleMsgExec(tx, index, msg.ProposalId); err != nil {
 			return err
 		}
 	}
@@ -156,18 +161,23 @@ func (m *Module) handleMsgVote(tx *juno.Tx, index int, msg *group.MsgVote) error
 }
 
 func (m *Module) handleMsgExec(tx *juno.Tx, index int, proposalID uint64) error {
-	executorResult, _ := strconv.Unquote(utils.GetValueFromLogs(
-		uint32(index),
-		tx.Logs,
-		"cosmos.group.v1.EventExec",
-		"result",
-	))
+	executorResult := strings.ReplaceAll(
+		utils.GetValueFromLogs(
+			uint32(index),
+			tx.Logs,
+			"cosmos.group.v1.EventExec",
+			"result",
+		), "\"", "",
+	)
 	if executorResult == "" {
 		return nil
 	}
 
-	err := m.db.UpdateGroupProposalExecResult(proposalID, executorResult, tx.TxHash)
-	if err != nil {
+	if err := m.db.UpdateGroupProposalExecResult(
+		proposalID,
+		executorResult,
+		tx.TxHash,
+	); err != nil {
 		return err
 	}
 
@@ -176,7 +186,7 @@ func (m *Module) handleMsgExec(tx *juno.Tx, index int, proposalID uint64) error 
 		if err != nil {
 			return err
 		} else if strings.Contains(proposal.Messages, "MsgUpdateGroup") {
-			return m.handleMsgUpdateGroup(&proposal)
+			return m.handleMsgUpdateGroup(proposal)
 		}
 	}
 
@@ -184,36 +194,35 @@ func (m *Module) handleMsgExec(tx *juno.Tx, index int, proposalID uint64) error 
 }
 
 func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error {
-	err := m.db.UpdateGroupProposalStatus(
+	if err := m.db.UpdateGroupProposalStatus(
 		proposal.ID,
 		group.PROPOSAL_STATUS_ABORTED.String(),
-	)
-	if err != nil {
+	); err != nil {
 		return err
 	}
 
-	var messages []*codectypes.Any
-	json.Unmarshal([]byte(proposal.Messages), &messages)
+	var msgs []*codectypes.Any
+	json.Unmarshal([]byte(proposal.Messages), &msgs)
 
-	for _, message := range messages {
+	for _, message := range msgs {
 		switch message.TypeUrl {
 		case "cosmos.group.v1.MsgUpdateGroupMembers":
-			var msg *group.MsgUpdateGroupMembers
-			json.Unmarshal(message.Value, &msg)
-			return m.db.SaveGroupMembers(&msg.MemberUpdates, msg.GroupId)
+			var msg group.MsgUpdateGroupMembers
+			_ = json.Unmarshal(message.Value, &msg)
+			return m.db.SaveGroupMembers(msg.MemberUpdates, msg.GroupId)
 		case "cosmos.group.v1.MsgUpdateGroupMetadata":
-			var msg *group.MsgUpdateGroupMetadata
-			json.Unmarshal(message.Value, &msg)
+			var msg group.MsgUpdateGroupMetadata
+			_ = json.Unmarshal(message.Value, &msg)
 			return m.db.UpdateGroupMetadata(proposal.GroupID, msg.Metadata)
 		case "cosmos.group.v1.MsgUpdateGroupPolicyMetadata":
-			var msg *group.MsgUpdateGroupPolicyMetadata
-			json.Unmarshal(message.Value, &msg)
+			var msg group.MsgUpdateGroupPolicyMetadata
+			_ = json.Unmarshal(message.Value, &msg)
 			return m.db.UpdateGroupPolicyMetadata(proposal.GroupID, msg.Metadata)
 		case "cosmos.group.v1.MsgUpdateGroupPolicyDecisionPolicy":
-			var msg *group.MsgUpdateGroupPolicyDecisionPolicy
-			json.Unmarshal(message.Value, &msg)
-			var decisionPolicy *group.ThresholdDecisionPolicy
-			json.Unmarshal(msg.DecisionPolicy.Value, &decisionPolicy)
+			var msg group.MsgUpdateGroupPolicyDecisionPolicy
+			_ = json.Unmarshal(message.Value, &msg)
+			decisionPolicy, _ := msg.DecisionPolicy.
+				GetCachedValue().(*group.ThresholdDecisionPolicy)
 			return m.db.UpdateGroupPolicy(proposal.GroupID, decisionPolicy)
 		}
 	}

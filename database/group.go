@@ -11,15 +11,14 @@ import (
 	"github.com/lib/pq"
 )
 
-func (db *Db) SaveGroupWithPolicy(group types.GroupWithPolicy) error {
-	_, err := db.Sql.Exec(
+func (db *Db) SaveGroupWithPolicy(group *types.GroupWithPolicy) error {
+	if _, err := db.Sql.Exec(
 		`INSERT INTO group_with_policy
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT DO NOTHING`,
 		group.ID, group.Address, group.GroupMetadata, group.PolicyMetadata,
 		group.Threshold, group.VotingPeriod, group.MinExecutionPeriod,
-	)
-	if err != nil {
+	); err != nil {
 		return err
 	}
 
@@ -27,45 +26,46 @@ func (db *Db) SaveGroupWithPolicy(group types.GroupWithPolicy) error {
 }
 
 func (db *Db) SaveGroupMembers(
-	members *[]group.MemberRequest,
+	members []group.MemberRequest,
 	groupID uint64,
 ) error {
 	stmt := "INSERT INTO group_member VALUES "
+
 	var params []interface{}
-	var deleteMembers = make([]string, 0)
+	var removedMembers = make([]string, 0)
+
 	count := -1
-	for _, m := range *members {
+	for _, m := range members {
 		if m.Weight == "0" {
-			deleteMembers = append(deleteMembers, m.Address)
+			removedMembers = append(removedMembers, m.Address)
 			continue
 		}
+
 		count++
 		n := count * 4
 		stmt += fmt.Sprintf("($%d, $%d, $%d, $%d),", n+1, n+2, n+3, n+4)
 		weight, _ := strconv.ParseUint(m.Weight, 10, 64)
 		params = append(params, groupID, m.Address, weight, m.Metadata)
 	}
+
 	stmt = stmt[:len(stmt)-1]
 	stmt += `
 	ON CONFLICT (group_id, address) DO UPDATE 
     SET weight = excluded.weight,
     member_metadata = excluded.member_metadata`
 
-	_, err := db.Sql.Exec(stmt, params...)
-	if err != nil {
+	if _, err := db.Sql.Exec(stmt, params...); err != nil {
 		return err
 	}
 
-	// todo test if pq.Array works properly
-	if len(deleteMembers) > 0 {
-		_, err = db.Sql.Exec(
+	if len(removedMembers) > 0 {
+		if _, err := db.Sql.Exec(
 			`DELETE FROM group_member
 			WHERE group_id = $1
 			AND address = ANY($2)`,
 			groupID,
-			pq.Array(&deleteMembers),
-		)
-		if err != nil {
+			pq.Array(&removedMembers),
+		); err != nil {
 			return err
 		}
 	}
@@ -73,21 +73,20 @@ func (db *Db) SaveGroupMembers(
 	return nil
 }
 
-func (db *Db) GetGroupID(groupAddress string) (uint64, error) {
-	var groupRows []dbtypes.GroupWithPolicyRow
-	err := db.Sqlx.Select(
-		&groupRows,
+func (db *Db) GetGroupIdByGroupAddress(groupAddress string) uint64 {
+	var groupID uint64
+
+	_ = db.Sqlx.QueryRow(
 		`SELECT id
 		FROM group_with_policy 
 		WHERE address = $1`,
-		groupAddress)
-	if err != nil {
-		return 0, err
-	}
-	return groupRows[0].ID, nil
+		groupAddress,
+	).Scan(&groupID)
+
+	return groupID
 }
 
-func (db *Db) SaveGroupProposal(proposal types.GroupProposal) error {
+func (db *Db) SaveGroupProposal(proposal *types.GroupProposal) error {
 	_, err := db.Sql.Exec(
 		`INSERT INTO group_proposal
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, null)
@@ -96,23 +95,35 @@ func (db *Db) SaveGroupProposal(proposal types.GroupProposal) error {
 		proposal.Proposer, proposal.SubmitTime, proposal.Status,
 		proposal.ExecutorResult, proposal.Messages,
 	)
+
 	return err
 }
 
-func (db *Db) SaveGroupProposalVote(vote types.GroupProposalVote) error {
-	proposal, err := db.GetGroupProposal(vote.ProposalID)
-	if err != nil {
-		return err
-	}
+func (db *Db) SaveGroupProposalVote(vote *types.GroupProposalVote) error {
+	groupID := db.getGroupIdByProposal(vote.ProposalID)
 
-	_, err = db.Sql.Exec(
+	_, err := db.Sql.Exec(
 		`INSERT INTO group_proposal_vote
 		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT DO NOTHING`,
-		vote.ProposalID, proposal.GroupID, vote.Voter,
+		vote.ProposalID, groupID, vote.Voter,
 		vote.VoteOption, vote.VoteMetadata, vote.SubmitTime,
 	)
+
 	return err
+}
+
+func (db *Db) getGroupIdByProposal(proposalID uint64) uint64 {
+	var groupID uint64
+
+	_ = db.Sqlx.QueryRow(
+		`SELECT group_id
+		FROM group_proposal
+		WHERE id = $1`,
+		proposalID,
+	).Scan(&groupID)
+
+	return groupID
 }
 
 func (db *Db) UpdateGroupProposalStatus(proposalID uint64, status string) error {
@@ -122,6 +133,7 @@ func (db *Db) UpdateGroupProposalStatus(proposalID uint64, status string) error 
 		WHERE id = $2`,
 		status, proposalID,
 	)
+
 	return err
 }
 
@@ -138,6 +150,7 @@ func (db *Db) UpdateGroupProposalExecResult(
 		WHERE id = $3`,
 		executorResult, txHash, proposalID,
 	)
+
 	return err
 }
 
@@ -151,25 +164,21 @@ func (db *Db) UpdateGroupProposalsExpiration(blockTime time.Time) error {
 		AND g.voting_period < EXTRACT(EPOCH FROM ($1 - p.submit_time))`,
 		blockTime,
 	)
+
 	return err
 }
 
 func (db *Db) UpdateGroupProposalTallyResult(proposalID uint64) error {
-	proposal, err := db.GetGroupProposal(proposalID)
-	if err != nil {
-		return err
-	}
+	groupID := db.getGroupIdByProposal(proposalID)
 
-	_, err = db.Sql.Exec(
+	_, err := db.Sql.Exec(
 		`UPDATE group_proposal
 		SET status = 
 		CASE
 			WHEN yes = threshold 
 			THEN 'PROPOSAL_STATUS_ACCEPTED'
-
 			WHEN (total - yes) > (members - threshold) 
 			THEN 'PROPOSAL_STATUS_REJECTED'
-
 			ELSE status
 		END
 		FROM (
@@ -182,25 +191,24 @@ func (db *Db) UpdateGroupProposalTallyResult(proposalID uint64) error {
 			WHERE proposal_id = $2
 		) _
 		WHERE id = $2 AND status = 'PROPOSAL_STATUS_SUBMITTED'`,
-		proposal.GroupID,
+		groupID,
 		proposalID,
 	)
+
 	return err
 }
 
-func (db *Db) GetGroupProposal(proposalID uint64) (dbtypes.GroupProposalRow, error) {
-	var proposalRows []dbtypes.GroupProposalRow
-	err := db.Sqlx.Select(
-		&proposalRows,
-		`SELECT group_id 
+func (db *Db) GetGroupProposal(proposalID uint64) (*dbtypes.GroupProposalRow, error) {
+	var proposal *dbtypes.GroupProposalRow
+
+	err := db.Sqlx.QueryRow(
+		`SELECT *
 		FROM group_proposal 
 		WHERE id = $1`,
 		proposalID,
-	)
-	if err != nil {
-		return dbtypes.GroupProposalRow{}, err
-	}
-	return proposalRows[0], nil
+	).Scan(proposal)
+
+	return proposal, err
 }
 
 func (db *Db) UpdateGroupMetadata(groupID uint64, metadata string) error {
@@ -210,6 +218,7 @@ func (db *Db) UpdateGroupMetadata(groupID uint64, metadata string) error {
 		WHERE id = $2`,
 		metadata, groupID,
 	)
+
 	return err
 }
 
@@ -220,6 +229,7 @@ func (db *Db) UpdateGroupPolicyMetadata(groupID uint64, metadata string) error {
 		WHERE id = $2`,
 		metadata, groupID,
 	)
+
 	return err
 }
 
@@ -238,5 +248,6 @@ func (db *Db) UpdateGroupPolicy(
 		policy.Windows.MinExecutionPeriod,
 		groupID,
 	)
+
 	return err
 }

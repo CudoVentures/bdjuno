@@ -6,24 +6,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/group"
 )
 
-// type GroupMember struct {
-// 	Address        string
-// 	Weight         uint64
-// 	MemberMetadata string
-// }
-
-// func NewGroupMember(address string, weight uint64, memberMetadata string) *GroupMember {
-// 	return &GroupMember{
-// 		Address:        address,
-// 		Weight:         weight,
-// 		MemberMetadata: memberMetadata,
-// 	}
-// }
-
 type GroupWithPolicy struct {
 	ID                 uint64
 	Address            string
-	Members            *[]group.MemberRequest
+	Members            []group.MemberRequest
 	GroupMetadata      string
 	PolicyMetadata     string
 	Threshold          uint64
@@ -34,7 +20,7 @@ type GroupWithPolicy struct {
 func NewGroupWithPolicy(
 	id uint64,
 	address string,
-	members *[]group.MemberRequest,
+	members []group.MemberRequest,
 	groupMetadata string,
 	policyMetadata string,
 	threshold uint64,
