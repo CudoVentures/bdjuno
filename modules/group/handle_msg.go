@@ -96,7 +96,7 @@ func (m *Module) handleMsgSubmitProposal(
 	)
 	proposalID, _ := strconv.ParseUint(proposalIDAttr, 10, 64)
 
-	groupID := m.db.GetGroupIdByGroupAddress(msg.GroupPolicyAddress)
+	groupID := m.db.GetGroupIDByGroupAddress(msg.GroupPolicyAddress)
 	timestamp, _ := time.Parse(time.RFC3339, tx.Timestamp)
 	executorResult := group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN.String()
 	status := group.PROPOSAL_STATUS_SUBMITTED.String()

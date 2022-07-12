@@ -1,18 +1,12 @@
 package database_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
-	"github.com/forbole/juno/v2/cmd/parse"
-	dbconfig "github.com/forbole/juno/v2/database/config"
-	"github.com/forbole/juno/v2/logging"
-
-	junodb "github.com/forbole/juno/v2/database"
-
 	"github.com/forbole/bdjuno/v2/database"
 	"github.com/forbole/bdjuno/v2/types"
+	"github.com/forbole/bdjuno/v2/utils"
 
 	juno "github.com/forbole/juno/v2/types"
 
@@ -21,7 +15,6 @@ import (
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -36,44 +29,11 @@ type DbTestSuite struct {
 }
 
 func (suite *DbTestSuite) SetupTest() {
-	// Create the codec
-	codec := simapp.MakeTestEncodingConfig()
-
-	// Build the database
-	dbCfg := dbconfig.NewDatabaseConfig(
-		"bdjuno",
-		"localhost",
-		6433,
-		"bdjuno",
-		"password",
-		"",
-		"public",
-		-1,
-		-1,
-	)
-	db, err := database.Builder(junodb.NewContext(dbCfg, &codec, logging.DefaultLogger()))
-	suite.Require().NoError(err)
-
-	bigDipperDb, ok := (db).(*database.Db)
-	suite.Require().True(ok)
-
-	// Delete the public schema
-	_, err = bigDipperDb.Sql.Exec(`DROP SCHEMA public CASCADE;`)
-	suite.Require().NoError(err)
-
-	// Re-create the schema
-	_, err = bigDipperDb.Sql.Exec(`CREATE SCHEMA public;`)
-	suite.Require().NoError(err)
-
-	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancelFunc()
-
-	suite.Require().NoError(database.ExecuteMigrations(ctx, &parse.Context{
-		Database: db,
-	}))
-
-	suite.database = bigDipperDb
+	db, _ := utils.NewTestDb(&suite.Suite, "dbTest")
+	suite.database = db
 }
+
+// TODO TEST IF STILL CAUSING ISSUES WITHOUT IT
 
 // getBlock builds, stores and returns a block for the provided height
 func (suite *DbTestSuite) getBlock(height int64) *juno.Block {

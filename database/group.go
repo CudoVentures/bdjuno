@@ -73,7 +73,7 @@ func (db *Db) SaveGroupMembers(
 	return nil
 }
 
-func (db *Db) GetGroupIdByGroupAddress(groupAddress string) uint64 {
+func (db *Db) GetGroupIDByGroupAddress(groupAddress string) uint64 {
 	var groupID uint64
 
 	_ = db.Sqlx.QueryRow(
@@ -100,7 +100,7 @@ func (db *Db) SaveGroupProposal(proposal *types.GroupProposal) error {
 }
 
 func (db *Db) SaveGroupProposalVote(vote *types.GroupProposalVote) error {
-	groupID := db.getGroupIdByProposal(vote.ProposalID)
+	groupID := db.getGroupIDByProposal(vote.ProposalID)
 
 	_, err := db.Sql.Exec(
 		`INSERT INTO group_proposal_vote
@@ -113,7 +113,7 @@ func (db *Db) SaveGroupProposalVote(vote *types.GroupProposalVote) error {
 	return err
 }
 
-func (db *Db) getGroupIdByProposal(proposalID uint64) uint64 {
+func (db *Db) getGroupIDByProposal(proposalID uint64) uint64 {
 	var groupID uint64
 
 	_ = db.Sqlx.QueryRow(
@@ -169,7 +169,7 @@ func (db *Db) UpdateGroupProposalsExpiration(blockTime time.Time) error {
 }
 
 func (db *Db) UpdateGroupProposalTallyResult(proposalID uint64) error {
-	groupID := db.getGroupIdByProposal(proposalID)
+	groupID := db.getGroupIDByProposal(proposalID)
 
 	_, err := db.Sql.Exec(
 		`UPDATE group_proposal
