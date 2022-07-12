@@ -9,6 +9,7 @@ chain:
         - gov
         - slashing 
         - staking
+        - history
         - pricefeed
         - cosmwasm
         - gravity
