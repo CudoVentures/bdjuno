@@ -22,8 +22,7 @@ import (
 func (m *Module) RegisterPeriodicOperations(scheduler *gocron.Scheduler) error {
 	log.Debug().Str("module", "cudomint").Msg("setting up periodic tasks")
 
-	// // Setup a cron job to run every midnight
-	// if _, err := scheduler.Every(1).Minute().Do(func() {
+	// Setup a cron job to run every midnight
 	if _, err := scheduler.Every(1).Day().At("00:00").Do(func() {
 		utils.WatchMethod(m.calculateInflation)
 		utils.WatchMethod(m.calculateAPR)
@@ -51,7 +50,7 @@ func (m *Module) calculateAPR() error {
 		return fmt.Errorf("failed to get last block height %s", err)
 	}
 
-	mintAmountInt, err := m.calculateMintedTokensSinceHeight(lastBlockHeight, 30*12)
+	mintAmountInt, err := m.calculateMintedTokensSinceHeight(lastBlockHeight, 30.43)
 	if err != nil {
 		return fmt.Errorf("failed to calculated minted tokens: %s", err)
 	}
@@ -61,7 +60,7 @@ func (m *Module) calculateAPR() error {
 		return fmt.Errorf("failed to get bonded_tokens: %s", err)
 	}
 
-	apr := mintAmountInt.ToDec().Quo(bondedTokens.ToDec())
+	apr := mintAmountInt.ToDec().Quo(bondedTokens.ToDec()).MulInt64(int64(12))
 
 	if err := m.db.SaveAPR(apr, lastBlockHeight); err != nil {
 		return fmt.Errorf("failed to save apr: %s", err)
@@ -118,7 +117,7 @@ func (m *Module) calculateInflation() error {
 		inflationSinceDays--
 	}
 
-	mintAmountInt, err := m.calculateMintedTokensSinceHeight(startBlockHeight, inflationSinceDays)
+	mintAmountInt, err := m.calculateMintedTokensSinceHeight(startBlockHeight, float64(inflationSinceDays))
 	if err != nil {
 		return fmt.Errorf("failed to calculated minted tokens: %s", err)
 	}
@@ -188,7 +187,7 @@ func getEthAccountsBalanceAtBlock(client *ethclient.Client, tokenAddress string,
 	return totalBalance, nil
 }
 
-func (m *Module) calculateMintedTokensSinceHeight(sinceBlock, periodDays int64) (sdk.Int, error) {
+func (m *Module) calculateMintedTokensSinceHeight(sinceBlock int64, periodDays float64) (sdk.Int, error) {
 	genesis, err := m.db.GetGenesis()
 	if err != nil {
 		return sdk.Int{}, fmt.Errorf("failed to get genesis: %s", err)
@@ -209,7 +208,7 @@ func (m *Module) calculateMintedTokensSinceHeight(sinceBlock, periodDays int64) 
 	minter.NormTimePassed = updateNormTimePassed(mintParams, genesis.InitialHeight, sinceBlock)
 
 	mintAmountInt := sdk.NewInt(0)
-	totalBlocks := mintParams.Params.BlocksPerDay.Int64() * periodDays
+	totalBlocks := int64(float64(mintParams.Params.BlocksPerDay.Int64()) * periodDays)
 
 	for height := int64(1); height <= totalBlocks; height++ {
 		if minter.NormTimePassed.GT(finalNormTimePassed) {
@@ -219,7 +218,7 @@ func (m *Module) calculateMintedTokensSinceHeight(sinceBlock, periodDays int64) 
 		incr := normalizeBlockHeightInc(params.BlocksPerDay)
 		mintAmountDec := calculateMintedCoins(minter, incr)
 		mintAmountInt = mintAmountInt.Add(mintAmountDec.TruncateInt())
-		minter.NormTimePassed.Add(incr)
+		minter.NormTimePassed = minter.NormTimePassed.Add(incr)
 	}
 
 	return mintAmountInt, nil
@@ -240,7 +239,7 @@ func updateNormTimePassed(mintParams types.MintParams, initialBlockHeight, lastB
 
 	for initialBlockHeight < lastBlockHeight {
 		inc := normalizeBlockHeightInc(mintParams.Params.BlocksPerDay)
-		mintParams.Minter.NormTimePassed.Add(inc)
+		mintParams.Minter.NormTimePassed = mintParams.Minter.NormTimePassed.Add(inc)
 		initialBlockHeight++
 	}
 

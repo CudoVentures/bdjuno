@@ -16,6 +16,7 @@ import (
 	"github.com/forbole/bdjuno/v2/modules/cosmwasm"
 	"github.com/forbole/bdjuno/v2/modules/gravity"
 	"github.com/forbole/bdjuno/v2/modules/history"
+	"github.com/forbole/bdjuno/v2/modules/nft"
 	"github.com/forbole/bdjuno/v2/modules/slashing"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -117,6 +118,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	govModule := gov.NewModule(sources.GovSource, authModule, distrModule, slashingModule, stakingModule, cdc, db)
 	cosmwasmModule := cosmwasm.NewModule(cdc, db)
 	gravityModule := gravity.NewModule(cdc, db)
+	nftModule := nft.NewModule(cdc, db)
 
 	return []jmodules.Module{
 		messages.NewModule(r.parser, cdc, ctx.Database),
@@ -137,6 +139,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		stakingModule,
 		cosmwasmModule,
 		gravityModule,
+		nftModule,
 	}
 }
 
