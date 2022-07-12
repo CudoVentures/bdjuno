@@ -9,7 +9,9 @@ chain:
         - consensus
         - gov
         - slashing 
-        - staking 
+        - staking
+        - history
+        - pricefeed
         - cosmwasm
         - gravity
         - cudomint
