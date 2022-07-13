@@ -1,6 +1,10 @@
 package utils
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"strings"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 func GetValueFromLogs(index uint32, logs sdk.ABCIMessageLogs, eventType, attributeKey string) string {
 	for _, log := range logs {
@@ -15,7 +19,7 @@ func GetValueFromLogs(index uint32, logs sdk.ABCIMessageLogs, eventType, attribu
 
 			for _, attr := range event.Attributes {
 				if attr.Key == attributeKey {
-					return attr.Value
+					return strings.ReplaceAll(attr.Value, "\"", "")
 				}
 			}
 		}
