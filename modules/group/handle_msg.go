@@ -57,18 +57,20 @@ func (m *Module) handleMsgCreateGroupWithPolicy(
 	decisionPolicy, _ := msg.DecisionPolicy.GetCachedValue().(*group.ThresholdDecisionPolicy)
 	threshold, _ := strconv.ParseUint(decisionPolicy.Threshold, 10, 64)
 
-	return m.db.SaveGroupWithPolicy(
+	if err := m.db.SaveGroupWithPolicy(
 		types.NewGroupWithPolicy(
 			groupID,
 			address,
-			msg.Members,
 			msg.GroupMetadata,
 			msg.GroupPolicyMetadata,
 			threshold,
 			uint64(decisionPolicy.Windows.VotingPeriod.Seconds()),
 			uint64(decisionPolicy.Windows.MinExecutionPeriod.Seconds()),
 		),
-	)
+	); err != nil {
+		return err
+	}
+	return m.db.SaveGroupMembers(msg.Members, groupID)
 }
 
 func (m *Module) handleMsgSubmitProposal(
@@ -190,9 +192,7 @@ func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error 
 	for _, message := range msgs {
 		switch message.TypeUrl {
 		case "cosmos.group.v1.MsgUpdateGroupMembers":
-			var msg group.MsgUpdateGroupMembers
-			_ = json.Unmarshal(message.Value, &msg)
-			return m.db.SaveGroupMembers(msg.MemberUpdates, msg.GroupId)
+			return m.handleMsgUpdateGroupMembers(message)
 		case "cosmos.group.v1.MsgUpdateGroupMetadata":
 			var msg group.MsgUpdateGroupMetadata
 			_ = json.Unmarshal(message.Value, &msg)
@@ -211,6 +211,27 @@ func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error 
 	}
 
 	return nil
+}
+
+func (m *Module) handleMsgUpdateGroupMembers(message *codectypes.Any) error {
+	var msg group.MsgUpdateGroupMembers
+	_ = json.Unmarshal(message.Value, &msg)
+
+	updateMembers := make([]group.MemberRequest, 0)
+	deleteMembers := make([]string, 0)
+	for _, m := range msg.MemberUpdates {
+		if m.Weight == "0" {
+			deleteMembers = append(deleteMembers, m.Address)
+		} else {
+			updateMembers = append(updateMembers, m)
+		}
+	}
+
+	if err := m.db.SaveGroupMembers(updateMembers, msg.GroupId); err != nil {
+		return err
+	}
+
+	return m.db.DeleteGroupMembers(deleteMembers, msg.GroupId)
 }
 
 func (m *Module) handleMsgWithdrawProposal(proposalID uint64) error {

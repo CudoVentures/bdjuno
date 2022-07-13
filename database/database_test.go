@@ -33,8 +33,6 @@ func (suite *DbTestSuite) SetupTest() {
 	suite.database = db
 }
 
-// TODO TEST IF STILL CAUSING ISSUES WITHOUT IT
-
 // getBlock builds, stores and returns a block for the provided height
 func (suite *DbTestSuite) getBlock(height int64) *juno.Block {
 	validator := suite.getValidator(

@@ -12,7 +12,7 @@ import (
 )
 
 func (db *Db) SaveGroupWithPolicy(group *types.GroupWithPolicy) error {
-	if _, err := db.Sql.Exec(
+	_, err := db.Sql.Exec(
 		`INSERT INTO group_with_policy
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT DO NOTHING`,
@@ -23,11 +23,8 @@ func (db *Db) SaveGroupWithPolicy(group *types.GroupWithPolicy) error {
 		group.Threshold,
 		group.VotingPeriod,
 		group.MinExecutionPeriod,
-	); err != nil {
-		return err
-	}
-
-	return db.SaveGroupMembers(group.Members, group.ID)
+	)
+	return err
 }
 
 func (db *Db) SaveGroupMembers(
@@ -45,9 +42,9 @@ func (db *Db) SaveGroupMembers(
 
 	stmt = stmt[:len(stmt)-1]
 	stmt += `
-ON CONFLICT (group_id, address) DO UPDATE 
-SET weight = excluded.weight,
-	member_metadata = excluded.member_metadata`
+	ON CONFLICT (group_id, address) DO UPDATE 
+	SET weight = excluded.weight,
+		member_metadata = excluded.member_metadata`
 
 	_, err := db.Sql.Exec(stmt, params...)
 	return err
@@ -176,12 +173,13 @@ func (db *Db) UpdateGroupProposalTallyResult(proposalID uint64) error {
 }
 
 func (db *Db) GetGroupProposal(proposalID uint64) (*dbtypes.GroupProposalRow, error) {
-	var proposal *dbtypes.GroupProposalRow
-	err := db.Sqlx.QueryRow(
+	var proposals []*dbtypes.GroupProposalRow
+	err := db.Sqlx.Select(
+		&proposals,
 		`SELECT * FROM group_proposal WHERE id = $1`,
 		proposalID,
-	).Scan(proposal)
-	return proposal, err
+	)
+	return proposals[0], err
 }
 
 func (db *Db) UpdateGroupMetadata(groupID uint64, metadata string) error {
