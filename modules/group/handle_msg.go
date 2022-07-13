@@ -37,35 +37,25 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 }
 
 func (m *Module) handleMsgCreateGroupWithPolicy(
-	tx *juno.Tx,
-	index int,
-	msg *group.MsgCreateGroupWithPolicy,
+	tx *juno.Tx, index int, msg *group.MsgCreateGroupWithPolicy,
 ) error {
-	groupIDAttr := strings.ReplaceAll(
-		utils.GetValueFromLogs(
-			uint32(index),
-			tx.Logs,
-			"cosmos.group.v1.EventCreateGroup",
-			"group_id",
-		), "\"", "",
+	groupIDAttr := utils.GetValueFromLogs(
+		uint32(index),
+		tx.Logs,
+		"cosmos.group.v1.EventCreateGroup",
+		"group_id",
 	)
 	groupID, _ := strconv.ParseUint(groupIDAttr, 10, 64)
 
-	address := strings.ReplaceAll(
-		utils.GetValueFromLogs(
-			uint32(index),
-			tx.Logs,
-			"cosmos.group.v1.EventCreateGroupPolicy",
-			"address",
-		), "\"", "",
+	address := utils.GetValueFromLogs(
+		uint32(index),
+		tx.Logs,
+		"cosmos.group.v1.EventCreateGroupPolicy",
+		"address",
 	)
 
-	decisionPolicy, _ := msg.DecisionPolicy.
-		GetCachedValue().(*group.ThresholdDecisionPolicy)
-
+	decisionPolicy, _ := msg.DecisionPolicy.GetCachedValue().(*group.ThresholdDecisionPolicy)
 	threshold, _ := strconv.ParseUint(decisionPolicy.Threshold, 10, 64)
-	votingPeriod := uint64(decisionPolicy.Windows.VotingPeriod.Seconds())
-	minExecutionPeriod := uint64(decisionPolicy.Windows.MinExecutionPeriod.Seconds())
 
 	return m.db.SaveGroupWithPolicy(
 		types.NewGroupWithPolicy(
@@ -75,45 +65,35 @@ func (m *Module) handleMsgCreateGroupWithPolicy(
 			msg.GroupMetadata,
 			msg.GroupPolicyMetadata,
 			threshold,
-			votingPeriod,
-			minExecutionPeriod,
+			uint64(decisionPolicy.Windows.VotingPeriod.Seconds()),
+			uint64(decisionPolicy.Windows.MinExecutionPeriod.Seconds()),
 		),
 	)
 }
 
 func (m *Module) handleMsgSubmitProposal(
-	tx *juno.Tx,
-	index int,
-	msg *group.MsgSubmitProposal,
+	tx *juno.Tx, index int, msg *group.MsgSubmitProposal,
 ) error {
-	proposalIDAttr := strings.ReplaceAll(
-		utils.GetValueFromLogs(
-			uint32(index),
-			tx.Logs,
-			"cosmos.group.v1.EventSubmitProposal",
-			"proposal_id",
-		), "\"", "",
+	proposalIDAttr := utils.GetValueFromLogs(
+		uint32(index),
+		tx.Logs,
+		"cosmos.group.v1.EventSubmitProposal",
+		"proposal_id",
 	)
 	proposalID, _ := strconv.ParseUint(proposalIDAttr, 10, 64)
-
-	groupID := m.db.GetGroupIDByGroupAddress(msg.GroupPolicyAddress)
 	timestamp, _ := time.Parse(time.RFC3339, tx.Timestamp)
-	executorResult := group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN.String()
-	status := group.PROPOSAL_STATUS_SUBMITTED.String()
-
 	msgBytes, _ := json.Marshal(msg.Messages)
-	msgs := utils.SanitizeUTF8(string(msgBytes))
 
 	if err := m.db.SaveGroupProposal(
 		types.NewGroupProposal(
 			proposalID,
-			groupID,
+			m.db.GetGroupIDByGroupAddress(msg.GroupPolicyAddress),
 			msg.Metadata,
 			msg.Proposers[0],
 			timestamp,
-			status,
-			executorResult,
-			msgs,
+			group.PROPOSAL_STATUS_SUBMITTED.String(),
+			group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN.String(),
+			utils.SanitizeUTF8(string(msgBytes)),
 		),
 	); err != nil {
 		return err
@@ -151,23 +131,25 @@ func (m *Module) handleMsgVote(tx *juno.Tx, index int, msg *group.MsgVote) error
 		return err
 	}
 
+	if err := m.db.UpdateGroupProposalTallyResult(msg.ProposalId); err != nil {
+		return err
+	}
+
 	if msg.Exec == group.Exec_EXEC_TRY {
 		if err := m.handleMsgExec(tx, index, msg.ProposalId); err != nil {
 			return err
 		}
 	}
 
-	return m.db.UpdateGroupProposalTallyResult(msg.ProposalId)
+	return nil
 }
 
 func (m *Module) handleMsgExec(tx *juno.Tx, index int, proposalID uint64) error {
-	executorResult := strings.ReplaceAll(
-		utils.GetValueFromLogs(
-			uint32(index),
-			tx.Logs,
-			"cosmos.group.v1.EventExec",
-			"result",
-		), "\"", "",
+	executorResult := utils.GetValueFromLogs(
+		uint32(index),
+		tx.Logs,
+		"cosmos.group.v1.EventExec",
+		"result",
 	)
 	if executorResult == "" {
 		return nil
@@ -185,7 +167,9 @@ func (m *Module) handleMsgExec(tx *juno.Tx, index int, proposalID uint64) error 
 		proposal, err := m.db.GetGroupProposal(proposalID)
 		if err != nil {
 			return err
-		} else if strings.Contains(proposal.Messages, "MsgUpdateGroup") {
+		}
+
+		if strings.Contains(proposal.Messages, "MsgUpdateGroup") {
 			return m.handleMsgUpdateGroup(proposal)
 		}
 	}
@@ -231,8 +215,5 @@ func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error 
 }
 
 func (m *Module) handleMsgWithdrawProposal(proposalID uint64) error {
-	return m.db.UpdateGroupProposalStatus(
-		proposalID,
-		group.PROPOSAL_STATUS_WITHDRAWN.String(),
-	)
+	return m.db.UpdateGroupProposalStatus(proposalID, group.PROPOSAL_STATUS_WITHDRAWN.String())
 }
