@@ -81,7 +81,6 @@ func (m *Module) handleMsgSubmitProposal(
 		"proposal_id",
 	)
 	proposalID, _ := strconv.ParseUint(proposalIDAttr, 10, 64)
-	timestamp, _ := time.Parse(time.RFC3339, tx.Timestamp)
 	msgBytes, _ := json.Marshal(msg.Messages)
 
 	if err := m.db.SaveGroupProposal(
@@ -90,10 +89,10 @@ func (m *Module) handleMsgSubmitProposal(
 			m.db.GetGroupIDByGroupAddress(msg.GroupPolicyAddress),
 			msg.Metadata,
 			msg.Proposers[0],
-			timestamp,
 			group.PROPOSAL_STATUS_SUBMITTED.String(),
 			group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN.String(),
 			utils.SanitizeUTF8(string(msgBytes)),
+			tx.Height,
 		),
 	); err != nil {
 		return err

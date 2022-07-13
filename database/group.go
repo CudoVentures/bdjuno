@@ -75,16 +75,16 @@ func (db *Db) GetGroupIDByGroupAddress(groupAddress string) uint64 {
 func (db *Db) SaveGroupProposal(proposal *types.GroupProposal) error {
 	_, err := db.Sql.Exec(
 		`INSERT INTO group_proposal
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, '')
+		VALUES ($1, $2, $3, $4, $5, $6, $7, null, $8)
 		ON CONFLICT DO NOTHING`,
 		proposal.ID,
 		proposal.GroupID,
 		proposal.ProposalMetadata,
 		proposal.Proposer,
-		proposal.SubmitTime,
 		proposal.Status,
 		proposal.ExecutorResult,
 		proposal.Messages,
+		proposal.BlockHeight,
 	)
 	return err
 }

@@ -36,15 +36,16 @@ CREATE TYPE PROPOSAL_EXECUTOR_RESULT AS ENUM
 
 CREATE TABLE group_proposal
 (
-    id                INT                         NOT NULL PRIMARY KEY,
-    group_id          INT                         NOT NULL REFERENCES group_with_policy (id),
-    proposal_metadata TEXT                        NULL,
-    proposer          TEXT                        NOT NULL,
-    submit_time       TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    status            PROPOSAL_STATUS             NOT NULL,
-    executor_result   PROPOSAL_EXECUTOR_RESULT    NOT NULL,
-    messages          JSONB                       NOT NULL DEFAULT '{}'::JSONB,
-    transaction_hash  TEXT                        NULL REFERENCES transaction (hash)
+    id                INT                      NOT NULL PRIMARY KEY,
+    group_id          INT                      NOT NULL REFERENCES group_with_policy (id),
+    proposal_metadata TEXT                     NULL,
+    proposer          TEXT                     NOT NULL,
+    status            PROPOSAL_STATUS          NOT NULL,
+    executor_result   PROPOSAL_EXECUTOR_RESULT NOT NULL,
+    messages          JSONB                    NOT NULL DEFAULT '{}'::JSONB,
+    transaction_hash  TEXT                     NULL REFERENCES transaction (hash),
+    height            BIGINT                   NOT NULL REFERENCES block (height)
+
 );
 
 CREATE TYPE VOTE_OPTION AS ENUM

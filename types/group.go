@@ -48,6 +48,7 @@ type GroupProposal struct {
 	Status           string
 	ExecutorResult   string
 	Messages         string
+	BlockHeight      int64
 }
 
 func NewGroupProposal(
@@ -55,20 +56,20 @@ func NewGroupProposal(
 	groupID uint64,
 	proposalMetadata string,
 	proposer string,
-	submitTime time.Time,
 	status string,
 	executorResult string,
 	messages string,
+	height int64,
 ) *GroupProposal {
 	return &GroupProposal{
 		ID:               id,
 		GroupID:          groupID,
 		ProposalMetadata: proposalMetadata,
 		Proposer:         proposer,
-		SubmitTime:       submitTime,
 		Status:           status,
 		ExecutorResult:   executorResult,
 		Messages:         messages,
+		BlockHeight:      height,
 	}
 }
 
