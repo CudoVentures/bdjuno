@@ -32,7 +32,9 @@ func (suite *GroupModuleTestSuite) SetupTest() {
 	suite.module = NewModule(cdc, db)
 }
 
-func (suite *GroupModuleTestSuite) TestGroup_CreateGroupWithPolicy() {
+func (suite *GroupModuleTestSuite) TestGroup_MsgCreateGroupWithPolicy() {
+	tx := suite.newTestTx("1", "", 1, "1", 0, 0)
+
 	decisionPolicy, err := codectypes.NewAnyWithValue(
 		group.NewThresholdDecisionPolicy("1", time.Hour, 0),
 	)
@@ -48,8 +50,6 @@ func (suite *GroupModuleTestSuite) TestGroup_CreateGroupWithPolicy() {
 		GroupPolicyAsAdmin:  true,
 		DecisionPolicy:      decisionPolicy,
 	}
-
-	tx := suite.newTestTx("1", "", 1, "1", 0, 0)
 
 	err = suite.module.HandleMsg(0, &msg, tx)
 	suite.Require().NoError(err)
@@ -85,14 +85,12 @@ func (suite *GroupModuleTestSuite) TestGroup_CreateGroupWithPolicy() {
 	}, memberRows[0])
 }
 
-func (suite *GroupModuleTestSuite) TestGroup_CreateGroupProposal() {
-	err := suite.insertTestData(1)
-	suite.Require().NoError(err)
-
-	proposal := suite.newTestProposalMsg(0)
+func (suite *GroupModuleTestSuite) TestGroup_HandleMsgSubmitProposal() {
+	suite.insertTestData(1, time.Now())
 	tx := suite.newTestTx("1", "", 0, "", 1, 0)
+	msg := suite.newTestMsgProposal(0)
 
-	err = suite.module.HandleMsg(0, &proposal, tx)
+	err := suite.module.HandleMsg(0, &msg, tx)
 	suite.Require().NoError(err)
 
 	expectedMsg :=
@@ -117,43 +115,122 @@ func (suite *GroupModuleTestSuite) TestGroup_CreateGroupProposal() {
 		BlockHeight:      1,
 	}, proposalRows[0])
 
-	var votesCount int
+	suite.assertVotesCount(0)
+}
+
+func (suite *GroupModuleTestSuite) TestGroup_HandleMsgSubmitProposal_TryExec() {
+	suite.insertTestData(1, time.Now())
+	tx := suite.newTestTx("1", time.Now().Format(time.RFC3339), 1, "", 1, 0)
+	msg := suite.newTestMsgProposal(group.Exec_EXEC_TRY)
+
+	err := suite.module.HandleMsg(0, &msg, tx)
+	suite.Require().NoError(err)
+
+	suite.assertVotesCount(1)
+}
+
+func (suite *GroupModuleTestSuite) TestGroup_HandleMsgVote_OnlySubmittedStatus() {
+	suite.insertTestData(1, time.Now())
+	suite.insertTestProposal(group.PROPOSAL_STATUS_REJECTED)
+	tx := suite.newTestTx("1", "", 0, "", 0, 0)
+	msg := suite.newTestMsgVote(0, 0)
+
+	err := suite.module.HandleMsg(0, &msg, tx)
+	suite.Require().NotNil(err)
+	suite.Require().Equal("error while voting - proposal status is not PROPOSAL_STATUS_SUBMITTED", err.Error())
+
+	suite.assertVotesCount(0)
+}
+
+func (suite *GroupModuleTestSuite) TestGroup_HandleMsgVote_UpdateTallyAccepted_TryExec() {
+	timestamp := time.Date(2022, time.January, 1, 1, 1, 1, 0, time.FixedZone("", 0))
+	suite.insertTestData(1, timestamp)
+	suite.insertTestProposal(group.PROPOSAL_STATUS_SUBMITTED)
+	tx := suite.newTestTx("1", timestamp.Format(time.RFC3339), 0, "", 0, group.PROPOSAL_EXECUTOR_RESULT_SUCCESS)
+	msg := suite.newTestMsgVote(group.VOTE_OPTION_YES, group.Exec_EXEC_TRY)
+
+	err := suite.module.HandleMsg(0, &msg, tx)
+	suite.Require().NoError(err)
+
+	var voteRows []dbtypes.GroupProposalVoteRow
+	err = suite.module.db.Sqlx.Select(
+		&voteRows,
+		`SELECT * FROM group_proposal_vote where proposal_id = 1`,
+	)
+	suite.Require().NoError(err)
+	suite.Require().Len(voteRows, 1)
+	suite.Require().Equal(dbtypes.GroupProposalVoteRow{
+		ProposalID:   1,
+		GroupID:      1,
+		Voter:        "1",
+		VoteOption:   group.VOTE_OPTION_YES.String(),
+		VoteMetadata: "1",
+		SubmitTime:   timestamp,
+	}, voteRows[0])
+
+	var proposalStatus string
+	var executorResult string
 	err = suite.module.db.Sqlx.QueryRow(
-		`SELECT COUNT(*) from group_proposal_vote`,
-	).Scan(&votesCount)
+		`SELECT status, executor_result from group_proposal WHERE id = 1`,
+	).Scan(&proposalStatus, &executorResult)
 	suite.Require().NoError(err)
-	suite.Require().Equal(0, votesCount)
+	suite.Require().Equal(group.PROPOSAL_STATUS_ACCEPTED.String(), proposalStatus)
+	suite.Require().Equal(group.PROPOSAL_EXECUTOR_RESULT_SUCCESS.String(), executorResult)
 }
 
-func (suite *GroupModuleTestSuite) TestGroup_CreateGroupProposal_TryExec() {
-	err := suite.insertTestData(1)
+func (suite *GroupModuleTestSuite) TestGroup_UpdateProposalTallyResult_Rejected() {
+	suite.insertTestData(1, time.Now())
+	suite.insertTestProposal(group.PROPOSAL_STATUS_SUBMITTED)
+	tx := suite.newTestTx("1", time.Now().Format(time.RFC3339), 0, "", 0, 0)
+	msg := suite.newTestMsgVote(group.VOTE_OPTION_NO, 0)
+
+	err := suite.module.HandleMsg(0, &msg, tx)
 	suite.Require().NoError(err)
 
-	proposalMsg := suite.newTestProposalMsg(group.Exec_EXEC_TRY)
-	tx := suite.newTestTx("1", time.Now().Local().Format(time.RFC3339), 1, "", 1, 0)
-
-	err = suite.module.HandleMsg(0, &proposalMsg, tx)
-	suite.Require().NoError(err)
-
-	var votesCount int
+	var voteOption string
 	err = suite.module.db.Sqlx.QueryRow(
-		`SELECT COUNT(*) from group_proposal_vote`,
-	).Scan(&votesCount)
+		`SELECT vote_option from group_proposal_vote WHERE proposal_id = 1`,
+	).Scan(&voteOption)
 	suite.Require().NoError(err)
-	suite.Require().Equal(1, votesCount)
+	suite.Require().Equal(group.VOTE_OPTION_NO.String(), voteOption)
+
+	var proposalStatus string
+	err = suite.module.db.Sqlx.QueryRow(
+		`SELECT status from group_proposal WHERE id = 1`,
+	).Scan(&proposalStatus)
+	suite.Require().NoError(err)
+	suite.Require().Equal(group.PROPOSAL_STATUS_REJECTED.String(), proposalStatus)
 }
 
-func (suite *GroupModuleTestSuite) TestGroup_CreateGroupProposalVote() {
+func (suite *GroupModuleTestSuite) TestGroup_HandleMsgWithdrawProposal() {
 
 }
 
-func (suite *GroupModuleTestSuite) TestGroup_CreateGroupProposalVote_TryExecEnoughThreshold() {
+func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec_OnlyAcceptedStatus() {
 
 }
 
-func (suite *GroupModuleTestSuite) TestGroup_CreateGroupProposalVote_TryExecNotEnoughThreshold() {
+func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec_OnlyPassedMinExecutionTime() {
 
 }
+
+func (suite *GroupModuleTestSuite) TestGroup_HandleMsgUpdateGroupMembers() {
+
+}
+
+func (suite *GroupModuleTestSuite) TestGroup_HandleMsgUpgateGroupMetadata() {
+
+}
+
+func (suite *GroupModuleTestSuite) TestGroup_HandleMsgUpdateGroupPolicyMetadata() {
+
+}
+
+func (suite *GroupModuleTestSuite) TestGroup_HandleMsgUpdateGroupDecisionPolicy() {
+
+}
+
+// todo test periodic operation
 
 func (suite *GroupModuleTestSuite) newTestTx(
 	txHash string,
@@ -215,33 +292,7 @@ func (suite *GroupModuleTestSuite) newTestTx(
 	return &juno.Tx{TxResponse: &txResponse}
 }
 
-func (suite *GroupModuleTestSuite) insertTestData(threshold uint64) error {
-	_, err := suite.module.db.Sql.Exec(
-		`INSERT INTO block (height, hash, timestamp) VALUES (1, '1', NOW())`,
-	)
-	suite.Require().NoError(err)
-
-	_, err = suite.module.db.Sql.Exec(
-		`INSERT INTO transaction (hash, height, success, signatures)
-		 VALUES ('1', 1, true, '{"1"}')`,
-	)
-	suite.Require().NoError(err)
-
-	_, err = suite.module.db.Sql.Exec(
-		`INSERT INTO group_with_policy VALUES (1, '1', '', '', $1, 1, 0)`,
-		threshold,
-	)
-	suite.Require().NoError(err)
-
-	_, err = suite.module.db.Sql.Exec(
-		`INSERT INTO group_member VALUES (1, '1', '1', '1')`,
-	)
-	suite.Require().NoError(err)
-
-	return nil
-}
-
-func (suite *GroupModuleTestSuite) newTestProposalMsg(tryExec group.Exec) group.MsgSubmitProposal {
+func (suite *GroupModuleTestSuite) newTestMsgProposal(tryExec group.Exec) group.MsgSubmitProposal {
 	proposalJson := `{
 		"group_policy_address": "1",
 		"proposers": [
@@ -263,4 +314,57 @@ func (suite *GroupModuleTestSuite) newTestProposalMsg(tryExec group.Exec) group.
 
 	proposal.Exec = tryExec
 	return proposal
+}
+
+func (*GroupModuleTestSuite) newTestMsgVote(voteOption group.VoteOption, tryExec group.Exec) group.MsgVote {
+	return group.MsgVote{
+		ProposalId: 1,
+		Voter:      "1",
+		Option:     voteOption,
+		Metadata:   "1",
+		Exec:       tryExec,
+	}
+}
+
+func (suite *GroupModuleTestSuite) insertTestData(threshold uint64, timestamp time.Time) {
+	_, err := suite.module.db.Sql.Exec(
+		`INSERT INTO block (height, hash, timestamp) VALUES (1, '1', $1)`,
+		timestamp,
+	)
+	suite.Require().NoError(err)
+
+	_, err = suite.module.db.Sql.Exec(
+		`INSERT INTO transaction (hash, height, success, signatures)
+		 VALUES ('1', 1, true, '{"1"}')`,
+	)
+	suite.Require().NoError(err)
+
+	_, err = suite.module.db.Sql.Exec(
+		`INSERT INTO group_with_policy VALUES (1, '1', '', '', $1, 1, 0)`,
+		threshold,
+	)
+	suite.Require().NoError(err)
+
+	_, err = suite.module.db.Sql.Exec(
+		`INSERT INTO group_member VALUES (1, '1', '1', '1')`,
+	)
+	suite.Require().NoError(err)
+}
+
+func (suite *GroupModuleTestSuite) insertTestProposal(status group.ProposalStatus) {
+	_, err := suite.module.db.Sql.Exec(
+		`INSERT INTO group_proposal
+		VALUES (1, 1, '1', '1', $1, 'PROPOSAL_EXECUTOR_RESULT_NOT_RUN', '1', '1', null)`,
+		status.String(),
+	)
+	suite.Require().NoError(err)
+}
+
+func (suite *GroupModuleTestSuite) assertVotesCount(expectedCount int) {
+	var votesCount int
+	err := suite.module.db.Sqlx.QueryRow(
+		`SELECT COUNT(*) from group_proposal_vote`,
+	).Scan(&votesCount)
+	suite.Require().NoError(err)
+	suite.Require().Equal(expectedCount, votesCount)
 }

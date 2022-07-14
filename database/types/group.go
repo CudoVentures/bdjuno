@@ -1,6 +1,9 @@
 package types
 
-import "database/sql"
+import (
+	"database/sql"
+	"time"
+)
 
 type GroupWithPolicyRow struct {
 	ID                 uint64 `db:"id"`
@@ -29,4 +32,13 @@ type GroupMemberRow struct {
 	GroupID        uint64 `db:"group_id"`
 	Weight         uint64 `db:"weight"`
 	MemberMetadata string `db:"member_metadata"`
+}
+
+type GroupProposalVoteRow struct {
+	ProposalID   uint64    `db:"proposal_id"`
+	GroupID      uint64    `db:"group_id"`
+	Voter        string    `db:"voter"`
+	VoteOption   string    `db:"vote_option"`
+	VoteMetadata string    `db:"vote_metadata"`
+	SubmitTime   time.Time `db:"submit_time"`
 }
