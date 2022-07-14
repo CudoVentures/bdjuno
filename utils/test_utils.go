@@ -27,8 +27,8 @@ func NewTestDb(suite *suite.Suite, schema string) (*database.Db, codec.Codec) {
 		"password",
 		"",
 		schema,
-		10,
-		10,
+		-1,
+		-1,
 	)
 
 	cdc := simapp.MakeTestEncodingConfig()

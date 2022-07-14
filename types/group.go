@@ -39,7 +39,6 @@ type GroupProposal struct {
 	GroupID          uint64
 	ProposalMetadata string
 	Proposer         string
-	SubmitTime       time.Time
 	Status           string
 	ExecutorResult   string
 	Messages         string
@@ -70,6 +69,7 @@ func NewGroupProposal(
 
 type GroupProposalVote struct {
 	ProposalID   uint64
+	GroupID      uint64
 	Voter        string
 	VoteOption   string
 	VoteMetadata string
@@ -78,6 +78,7 @@ type GroupProposalVote struct {
 
 func NewGroupProposalVote(
 	proposalID uint64,
+	groupID uint64,
 	voter string,
 	voteOption string,
 	voteMetadata string,
@@ -85,9 +86,57 @@ func NewGroupProposalVote(
 ) *GroupProposalVote {
 	return &GroupProposalVote{
 		ProposalID:   proposalID,
+		GroupID:      groupID,
 		Voter:        voter,
 		VoteOption:   voteOption,
 		VoteMetadata: voteMetadata,
 		SubmitTime:   submitTime,
+	}
+}
+
+type GroupProposalDecisionPolicy struct {
+	ID                 uint64
+	Status             string
+	VotingPeriod       int
+	MinExecutionPeriod int
+	SubmitTime         time.Time
+}
+
+type GroupDecisionPolicy struct {
+	ID                 uint64
+	Threshold          uint64
+	VotingPeriod       uint64
+	MinExecutionPeriod uint64
+}
+
+func NewGroupDecisionPolicy(
+	id uint64,
+	threshold uint64,
+	votingPeriod uint64,
+	minExecutionPeriod uint64,
+) *GroupDecisionPolicy {
+	return &GroupDecisionPolicy{
+		ID:                 id,
+		Threshold:          threshold,
+		VotingPeriod:       votingPeriod,
+		MinExecutionPeriod: minExecutionPeriod,
+	}
+}
+
+type GroupMember struct {
+	Address  string
+	Weight   uint64
+	Metadata string
+}
+
+func NewGroupMember(
+	address string,
+	weight uint64,
+	metadata string,
+) *GroupMember {
+	return &GroupMember{
+		Address:  address,
+		Weight:   weight,
+		Metadata: metadata,
 	}
 }

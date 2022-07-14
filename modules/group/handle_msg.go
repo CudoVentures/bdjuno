@@ -2,6 +2,7 @@ package group
 
 import (
 	"encoding/json"
+	"errors"
 	"strconv"
 	"strings"
 	"time"
@@ -9,6 +10,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/group"
+	"github.com/forbole/bdjuno/v2/database"
 	dbtypes "github.com/forbole/bdjuno/v2/database/types"
 	"github.com/forbole/bdjuno/v2/modules/utils"
 	"github.com/forbole/bdjuno/v2/types"
@@ -20,44 +22,58 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 		return nil
 	}
 
-	switch cosmosMsg := msg.(type) {
-	case *group.MsgCreateGroupWithPolicy:
-		return m.handleMsgCreateGroupWithPolicy(tx, index, cosmosMsg)
-	case *group.MsgSubmitProposal:
-		return m.handleMsgSubmitProposal(tx, index, cosmosMsg)
-	case *group.MsgVote:
-		return m.handleMsgVote(tx, index, cosmosMsg)
-	case *group.MsgExec:
-		return m.handleMsgExec(tx, index, cosmosMsg.ProposalId)
-	case *group.MsgWithdrawProposal:
-		return m.handleMsgWithdrawProposal(cosmosMsg.ProposalId)
-	}
+	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
+		m.dbTx = dbTx
 
-	return nil
+		switch cosmosMsg := msg.(type) {
+		case *group.MsgCreateGroupWithPolicy:
+			return m.handleMsgCreateGroupWithPolicy(tx, index, cosmosMsg)
+		case *group.MsgSubmitProposal:
+			return m.handleMsgSubmitProposal(tx, index, cosmosMsg)
+		case *group.MsgVote:
+			return m.handleMsgVote(tx, index, cosmosMsg)
+		case *group.MsgExec:
+			return m.handleMsgExec(tx, index, cosmosMsg.ProposalId)
+		case *group.MsgWithdrawProposal:
+			return m.handleMsgWithdrawProposal(cosmosMsg.ProposalId)
+		}
+
+		return nil
+	})
+
 }
 
-func (m *Module) handleMsgCreateGroupWithPolicy(
-	tx *juno.Tx, index int, msg *group.MsgCreateGroupWithPolicy,
-) error {
+func (m *Module) handleMsgCreateGroupWithPolicy(tx *juno.Tx, index int, msg *group.MsgCreateGroupWithPolicy) error {
 	groupIDAttr := utils.GetValueFromLogs(
-		uint32(index),
-		tx.Logs,
-		"cosmos.group.v1.EventCreateGroup",
-		"group_id",
+		uint32(index), tx.Logs, "cosmos.group.v1.EventCreateGroup", "group_id",
 	)
-	groupID, _ := strconv.ParseUint(groupIDAttr, 10, 64)
+	if groupIDAttr == "" {
+		return errors.New("error while getting groupID from tx.Logs")
+	}
+
+	groupID, err := strconv.ParseUint(groupIDAttr, 10, 64)
+	if err != nil {
+		return err
+	}
 
 	address := utils.GetValueFromLogs(
-		uint32(index),
-		tx.Logs,
-		"cosmos.group.v1.EventCreateGroupPolicy",
-		"address",
+		uint32(index), tx.Logs, "cosmos.group.v1.EventCreateGroupPolicy", "address",
 	)
+	if address == "" {
+		return errors.New("error while getting address from tx.Logs")
+	}
 
-	decisionPolicy, _ := msg.DecisionPolicy.GetCachedValue().(*group.ThresholdDecisionPolicy)
-	threshold, _ := strconv.ParseUint(decisionPolicy.Threshold, 10, 64)
+	decisionPolicy, ok := msg.DecisionPolicy.GetCachedValue().(*group.ThresholdDecisionPolicy)
+	if !ok {
+		return errors.New("error while parsing decision policy")
+	}
 
-	if err := m.db.SaveGroupWithPolicy(
+	threshold, err := strconv.ParseUint(decisionPolicy.Threshold, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	if err := m.dbTx.SaveGroupWithPolicy(
 		types.NewGroupWithPolicy(
 			groupID,
 			address,
@@ -70,25 +86,45 @@ func (m *Module) handleMsgCreateGroupWithPolicy(
 	); err != nil {
 		return err
 	}
-	return m.db.SaveGroupMembers(msg.Members, groupID)
+
+	members := make([]*types.GroupMember, 0)
+	for _, m := range msg.Members {
+		weight, err := strconv.ParseUint(m.Weight, 10, 64)
+		if err != nil {
+			return err
+		}
+
+		members = append(members, types.NewGroupMember(m.Address, weight, m.Metadata))
+	}
+	return m.dbTx.SaveGroupMembers(groupID, members)
 }
 
-func (m *Module) handleMsgSubmitProposal(
-	tx *juno.Tx, index int, msg *group.MsgSubmitProposal,
-) error {
+func (m *Module) handleMsgSubmitProposal(tx *juno.Tx, index int, msg *group.MsgSubmitProposal) error {
 	proposalIDAttr := utils.GetValueFromLogs(
-		uint32(index),
-		tx.Logs,
-		"cosmos.group.v1.EventSubmitProposal",
-		"proposal_id",
+		uint32(index), tx.Logs, "cosmos.group.v1.EventSubmitProposal", "proposal_id",
 	)
-	proposalID, _ := strconv.ParseUint(proposalIDAttr, 10, 64)
-	msgBytes, _ := json.Marshal(msg.Messages)
+	if proposalIDAttr == "" {
+		return errors.New("error while getting proposalID from tx.Logs")
+	}
 
-	if err := m.db.SaveGroupProposal(
+	proposalID, err := strconv.ParseUint(proposalIDAttr, 10, 64)
+	if err != nil {
+		return err
+	}
+	msgBytes, err := json.Marshal(msg.Messages)
+	if err != nil {
+		return err
+	}
+
+	groupID, err := m.dbTx.GetGroupIDByGroupAddress(msg.GroupPolicyAddress)
+	if err != nil {
+		return err
+	}
+
+	if err := m.dbTx.SaveGroupProposal(
 		types.NewGroupProposal(
 			proposalID,
-			m.db.GetGroupIDByGroupAddress(msg.GroupPolicyAddress),
+			groupID,
 			msg.Metadata,
 			msg.Proposers[0],
 			group.PROPOSAL_STATUS_SUBMITTED.String(),
@@ -118,11 +154,22 @@ func (m *Module) handleMsgSubmitProposal(
 }
 
 func (m *Module) handleMsgVote(tx *juno.Tx, index int, msg *group.MsgVote) error {
-	timestamp, _ := time.Parse(time.RFC3339, tx.Timestamp)
+	proposal, err := m.dbTx.GetGroupProposal(msg.ProposalId)
+	if err != nil {
+		return err
+	} else if proposal.Status != group.PROPOSAL_STATUS_SUBMITTED.String() {
+		return errors.New("error while voting - proposal status is not PROPOSAL_STATUS_SUBMITTED")
+	}
 
-	if err := m.db.SaveGroupProposalVote(
+	timestamp, err := time.Parse(time.RFC3339, tx.Timestamp)
+	if err != nil {
+		return err
+	}
+
+	if err := m.dbTx.SaveGroupProposalVote(
 		types.NewGroupProposalVote(
 			msg.ProposalId,
+			proposal.GroupID,
 			msg.Voter,
 			msg.Option.String(),
 			msg.Metadata,
@@ -132,7 +179,7 @@ func (m *Module) handleMsgVote(tx *juno.Tx, index int, msg *group.MsgVote) error
 		return err
 	}
 
-	if err := m.db.UpdateGroupProposalTallyResult(msg.ProposalId); err != nil {
+	if err := m.updateProposalTallyResult(msg.ProposalId, proposal.GroupID); err != nil {
 		return err
 	}
 
@@ -145,27 +192,85 @@ func (m *Module) handleMsgVote(tx *juno.Tx, index int, msg *group.MsgVote) error
 	return nil
 }
 
+func (m *Module) updateProposalTallyResult(proposalID uint64, groupID uint64) error {
+	threshold, err := m.dbTx.GetGroupThreshold(groupID)
+	if err != nil {
+		return err
+	}
+
+	votes, err := m.dbTx.GetGroupProposalVotes(proposalID)
+	if err != nil {
+		return err
+	}
+
+	votesTotal := len(votes)
+	votesYes := 0
+	for _, v := range votes {
+		if v == group.VOTE_OPTION_YES.String() {
+			votesYes++
+		}
+	}
+
+	if votesYes == threshold {
+		return m.dbTx.UpdateGroupProposalStatus(
+			[]uint64{proposalID}, group.PROPOSAL_STATUS_ACCEPTED.String(),
+		)
+	}
+
+	totalPower, err := m.dbTx.GetGroupTotalVotingPower(groupID)
+	if err != nil {
+		return err
+	}
+
+	votesRemaining := totalPower - votesTotal
+	maxPossibleYesCount := votesYes + votesRemaining
+	if maxPossibleYesCount < threshold {
+		return m.dbTx.UpdateGroupProposalStatus(
+			[]uint64{proposalID}, group.PROPOSAL_STATUS_REJECTED.String(),
+		)
+	}
+
+	return nil
+}
+
+func (m *Module) handleMsgWithdrawProposal(proposalID uint64) error {
+	return m.dbTx.UpdateGroupProposalStatus(
+		[]uint64{proposalID}, group.PROPOSAL_STATUS_WITHDRAWN.String(),
+	)
+}
+
 func (m *Module) handleMsgExec(tx *juno.Tx, index int, proposalID uint64) error {
+	policy, err := m.dbTx.GetGroupProposalDecisionPolicy(proposalID)
+	if err != nil {
+		return err
+	} else if policy.Status != group.PROPOSAL_STATUS_ACCEPTED.String() {
+		return errors.New("error while executing proposal - proposal status is not PROPOSAL_STATUS_ACCEPTED")
+	}
+
+	block, err := m.db.GetLastBlock()
+	if err != nil {
+		return err
+	}
+	minExecutionPeriod := time.Second * time.Duration(policy.MinExecutionPeriod)
+	if policy.SubmitTime.Add(minExecutionPeriod).Before(block.Timestamp) {
+		return errors.New("error while executing proposal - min_execution_time has not passed")
+	}
+
 	executorResult := utils.GetValueFromLogs(
-		uint32(index),
-		tx.Logs,
-		"cosmos.group.v1.EventExec",
-		"result",
+		uint32(index), tx.Logs, "cosmos.group.v1.EventExec", "result",
 	)
 	if executorResult == "" {
 		return nil
 	}
 
-	if err := m.db.UpdateGroupProposalExecResult(
-		proposalID,
-		executorResult,
-		tx.TxHash,
+	if err := m.dbTx.UpdateGroupProposalExecutorResult(
+		proposalID, executorResult, tx.TxHash,
 	); err != nil {
 		return err
 	}
 
 	if executorResult == "PROPOSAL_EXECUTOR_RESULT_SUCCESS" {
-		proposal, err := m.db.GetGroupProposal(proposalID)
+		proposal, err := m.dbTx.GetGroupProposal(proposalID)
 		if err != nil {
 			return err
 		}
@@ -179,34 +284,27 @@ func (m *Module) handleMsgExec(tx *juno.Tx, index int, proposalID uint64) error 
 }
 
 func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error {
-	if err := m.db.UpdateGroupProposalStatus(
-		proposal.ID,
-		group.PROPOSAL_STATUS_ABORTED.String(),
+	if err := m.dbTx.UpdateGroupProposalStatus(
+		[]uint64{proposal.ID}, group.PROPOSAL_STATUS_ABORTED.String(),
 	); err != nil {
 		return err
 	}
 
 	var msgs []*codectypes.Any
-	json.Unmarshal([]byte(proposal.Messages), &msgs)
+	if err := json.Unmarshal([]byte(proposal.Messages), &msgs); err != nil {
+		return err
+	}
 
 	for _, message := range msgs {
 		switch message.TypeUrl {
 		case "cosmos.group.v1.MsgUpdateGroupMembers":
 			return m.handleMsgUpdateGroupMembers(message)
 		case "cosmos.group.v1.MsgUpdateGroupMetadata":
-			var msg group.MsgUpdateGroupMetadata
-			_ = json.Unmarshal(message.Value, &msg)
-			return m.db.UpdateGroupMetadata(proposal.GroupID, msg.Metadata)
+			return m.handleMsgUpgateGroupMetadata(message, proposal)
 		case "cosmos.group.v1.MsgUpdateGroupPolicyMetadata":
-			var msg group.MsgUpdateGroupPolicyMetadata
-			_ = json.Unmarshal(message.Value, &msg)
-			return m.db.UpdateGroupPolicyMetadata(proposal.GroupID, msg.Metadata)
+			return m.handleMsgUpdateGroupPolicyMetadata(message, proposal)
 		case "cosmos.group.v1.MsgUpdateGroupPolicyDecisionPolicy":
-			var msg group.MsgUpdateGroupPolicyDecisionPolicy
-			_ = json.Unmarshal(message.Value, &msg)
-			decisionPolicy, _ := msg.DecisionPolicy.
-				GetCachedValue().(*group.ThresholdDecisionPolicy)
-			return m.db.UpdateGroupPolicy(proposal.GroupID, decisionPolicy)
+			return m.handleMsgUpdateGroupDecisionPolicy(message, proposal)
 		}
 	}
 
@@ -215,25 +313,75 @@ func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error 
 
 func (m *Module) handleMsgUpdateGroupMembers(message *codectypes.Any) error {
 	var msg group.MsgUpdateGroupMembers
-	_ = json.Unmarshal(message.Value, &msg)
+	err := json.Unmarshal(message.Value, &msg)
+	if err != nil {
+		return err
+	}
 
-	updateMembers := make([]group.MemberRequest, 0)
+	updateMembers := make([]*types.GroupMember, 0)
 	deleteMembers := make([]string, 0)
 	for _, m := range msg.MemberUpdates {
 		if m.Weight == "0" {
 			deleteMembers = append(deleteMembers, m.Address)
 		} else {
-			updateMembers = append(updateMembers, m)
+			weight, err := strconv.ParseUint(m.Weight, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			member := types.NewGroupMember(m.Address, weight, m.Metadata)
+			updateMembers = append(updateMembers, member)
 		}
 	}
 
-	if err := m.db.SaveGroupMembers(updateMembers, msg.GroupId); err != nil {
+	if err := m.dbTx.SaveGroupMembers(msg.GroupId, updateMembers); err != nil {
 		return err
 	}
 
-	return m.db.DeleteGroupMembers(deleteMembers, msg.GroupId)
+	return m.dbTx.DeleteGroupMembers(deleteMembers, msg.GroupId)
 }
 
-func (m *Module) handleMsgWithdrawProposal(proposalID uint64) error {
-	return m.db.UpdateGroupProposalStatus(proposalID, group.PROPOSAL_STATUS_WITHDRAWN.String())
+func (m *Module) handleMsgUpgateGroupMetadata(message *codectypes.Any, proposal *dbtypes.GroupProposalRow) error {
+	var msg group.MsgUpdateGroupMetadata
+	if err := json.Unmarshal(message.Value, &msg); err != nil {
+		return err
+	}
+
+	return m.dbTx.UpdateGroupMetadata(proposal.GroupID, msg.Metadata)
+}
+
+func (m *Module) handleMsgUpdateGroupPolicyMetadata(message *codectypes.Any, proposal *dbtypes.GroupProposalRow) error {
+	var msg group.MsgUpdateGroupPolicyMetadata
+	if err := json.Unmarshal(message.Value, &msg); err != nil {
+		return err
+	}
+
+	return m.dbTx.UpdateGroupPolicyMetadata(proposal.GroupID, msg.Metadata)
+}
+
+func (m *Module) handleMsgUpdateGroupDecisionPolicy(message *codectypes.Any, proposal *dbtypes.GroupProposalRow) error {
+	var msg group.MsgUpdateGroupPolicyDecisionPolicy
+	if err := json.Unmarshal(message.Value, &msg); err != nil {
+		return err
+	}
+
+	policy, ok := msg.DecisionPolicy.GetCachedValue().(*group.ThresholdDecisionPolicy)
+	if !ok {
+		return errors.New("error while parsing decision policy")
+	}
+
+	threshold, err := strconv.ParseUint(policy.Threshold, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	return m.dbTx.UpdateGroupPolicy(
+		proposal.GroupID,
+		types.NewGroupDecisionPolicy(
+			proposal.GroupID,
+			threshold,
+			uint64(policy.Windows.VotingPeriod.Seconds()),
+			uint64(policy.Windows.MinExecutionPeriod.Seconds()),
+		),
+	)
 }

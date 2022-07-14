@@ -1,6 +1,10 @@
 package group
 
 import (
+	"time"
+
+	"github.com/cosmos/cosmos-sdk/x/group"
+	"github.com/forbole/bdjuno/v2/database"
 	"github.com/forbole/bdjuno/v2/modules/utils"
 
 	"github.com/go-co-op/gocron"
@@ -20,10 +24,27 @@ func (m *Module) RegisterPeriodicOperations(scheduler *gocron.Scheduler) error {
 }
 
 func (m *Module) checkForExpiredGroupProposals() error {
-	block, err := m.db.GetLastBlock()
-	if err != nil {
-		return err
-	}
+	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
+		proposals, err := dbTx.GetActiveGroupProposalsDecisionPolicies()
+		if err != nil {
+			return err
+		}
 
-	return m.db.UpdateGroupProposalsExpiration(block.Timestamp)
+		expiredProposals := make([]uint64, 0)
+
+		for _, p := range proposals {
+			block, err := m.db.GetLastBlock()
+			if err != nil {
+				return err
+			}
+			votingPeriod := time.Second * time.Duration(p.VotingPeriod)
+			if p.SubmitTime.Add(votingPeriod).After(block.Timestamp) {
+				expiredProposals = append(expiredProposals, p.ID)
+			}
+		}
+
+		return dbTx.UpdateGroupProposalStatus(
+			expiredProposals, group.PROPOSAL_STATUS_REJECTED.String(),
+		)
+	})
 }
