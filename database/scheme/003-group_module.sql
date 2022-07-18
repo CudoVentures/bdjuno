@@ -10,14 +10,20 @@ CREATE TABLE group_with_policy
 );
 
 CREATE TABLE group_member
-(
-    group_id        INT  NOT NULL REFERENCES group_with_policy (id),
-    address         TEXT NOT NULL,
-    weight          INT  NOT NULL,
-    member_metadata TEXT NULL,
-    PRIMARY KEY(group_id, address)
+(   
+    group_id INT     NOT NULL REFERENCES group_with_policy (id),
+    address  TEXT    NOT NULL,
+    weight   INT     NOT NULL,
+    metadata TEXT    NULL,
+    removed  BOOLEAN NOT NULL DEFAULT false,
+    PRIMARY KEY (group_id, address)
 );
 
+CREATE INDEX group_member_removed_index ON group_member (group_id) WHERE NOT removed;
+CREATE INDEX group_member_group_id_index ON group_member (group_id);
+-- CREATE VIEW group_member_active AS SELECT * FROM group_member WHERE NOT removed;
+
+    
 CREATE TYPE PROPOSAL_STATUS AS ENUM
 (
     'PROPOSAL_STATUS_SUBMITTED',
@@ -36,16 +42,21 @@ CREATE TYPE PROPOSAL_EXECUTOR_RESULT AS ENUM
 
 CREATE TABLE group_proposal
 (
-    id                INT                         NOT NULL PRIMARY KEY,
-    group_id          INT                         NOT NULL REFERENCES group_with_policy (id),
-    proposal_metadata TEXT                        NULL,
-    proposer          TEXT                        NOT NULL,
-    status            PROPOSAL_STATUS             NOT NULL,
-    executor_result   PROPOSAL_EXECUTOR_RESULT    NOT NULL,
-    messages          JSONB                       NOT NULL DEFAULT '{}'::JSONB,
-    height            BIGINT                      NOT NULL REFERENCES block (height),
-    transaction_hash  TEXT                        NULL REFERENCES transaction (hash)
+    id               INT                         NOT NULL PRIMARY KEY,
+    group_id         INT                         NOT NULL REFERENCES group_with_policy (id),
+    metadata         TEXT                        NULL,
+    proposer         TEXT                        NOT NULL,
+    status           PROPOSAL_STATUS             NOT NULL,
+    executor_result  PROPOSAL_EXECUTOR_RESULT    NOT NULL,
+    messages         JSONB                       NOT NULL,
+    height           BIGINT                      NOT NULL REFERENCES block (height),
+    submit_time      TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    transaction_hash TEXT                        NULL REFERENCES transaction (hash)
 );
+
+CREATE INDEX group_proposal_status_index ON group_proposal (status);
+CREATE INDEX group_proposal_group_id_index ON group_proposal (group_id);
+CREATE INDEX group_proposal_submit_time_index ON group_proposal (submit_time);
 
 CREATE TYPE VOTE_OPTION AS ENUM
 (
@@ -64,5 +75,7 @@ CREATE TABLE group_proposal_vote
     vote_metadata TEXT                        NULL,
     submit_time   TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     FOREIGN KEY (group_id, voter) REFERENCES group_member (group_id, address),
-    PRIMARY KEY(proposal_id, voter)
+    PRIMARY KEY (proposal_id, voter)
 );
+
+CREATE INDEX group_proposal_vote_proposal_id_index ON group_proposal_vote (proposal_id);

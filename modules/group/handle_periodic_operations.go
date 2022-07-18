@@ -15,7 +15,7 @@ func (m *Module) RegisterPeriodicOperations(scheduler *gocron.Scheduler) error {
 	log.Debug().Str("module", "group").Msg("setting up periodic tasks")
 
 	if _, err := scheduler.Every(1).Hour().Do(func() {
-		utils.WatchMethod(m.checkForExpiredGroupProposals)
+		utils.WatchMethod(m.checkProposalExpirations)
 	}); err != nil {
 		return err
 	}
@@ -23,28 +23,27 @@ func (m *Module) RegisterPeriodicOperations(scheduler *gocron.Scheduler) error {
 	return nil
 }
 
-func (m *Module) checkForExpiredGroupProposals() error {
+func (m *Module) checkProposalExpirations() error {
 	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
-		proposals, err := dbTx.GetActiveGroupProposalsDecisionPolicies()
+		proposals, err := dbTx.GetAllActiveProposals()
+		if err != nil {
+			return err
+		}
+
+		block, err := m.db.GetLastBlock()
 		if err != nil {
 			return err
 		}
 
 		expiredProposals := make([]uint64, 0)
-
 		for _, p := range proposals {
-			block, err := m.db.GetLastBlock()
-			if err != nil {
-				return err
-			}
+
 			votingPeriod := time.Second * time.Duration(p.VotingPeriod)
-			if p.SubmitTime.Add(votingPeriod).After(block.Timestamp) {
+			if block.Timestamp.After(p.SubmitTime.Add(votingPeriod)) {
 				expiredProposals = append(expiredProposals, p.ID)
 			}
 		}
 
-		return dbTx.UpdateGroupProposalStatus(
-			expiredProposals, group.PROPOSAL_STATUS_REJECTED.String(),
-		)
+		return dbTx.UpdateProposalStatuses(expiredProposals, group.PROPOSAL_STATUS_REJECTED.String())
 	})
 }

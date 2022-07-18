@@ -12,7 +12,7 @@ func (db *Db) ExecuteTx(callback func(*DbTx) error) error {
 		return err
 	}
 
-	if err = callback(&DbTx{tx}); err != nil {
+	if err := callback(&DbTx{tx}); err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			return rollbackErr
 		}

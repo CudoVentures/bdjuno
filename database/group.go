@@ -8,23 +8,16 @@ import (
 	"github.com/lib/pq"
 )
 
-func (dbTx *DbTx) SaveGroupWithPolicy(group *types.GroupWithPolicy) error {
+func (dbTx *DbTx) SaveGroup(group *types.Group) error {
 	_, err := dbTx.Exec(
-		`INSERT INTO group_with_policy
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		ON CONFLICT DO NOTHING`,
-		group.ID,
-		group.Address,
-		group.GroupMetadata,
-		group.PolicyMetadata,
-		group.Threshold,
-		group.VotingPeriod,
-		group.MinExecutionPeriod,
+		`INSERT INTO group_with_policy VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING`,
+		group.ID, group.Address, group.GroupMetadata, group.PolicyMetadata,
+		group.Threshold, group.VotingPeriod, group.MinExecutionPeriod,
 	)
 	return err
 }
 
-func (dbTx *DbTx) SaveGroupMembers(groupID uint64, members []*types.GroupMember) error {
+func (dbTx *DbTx) SaveMembers(groupID uint64, members []*types.Member) error {
 	stmt := "INSERT INTO group_member VALUES "
 	var params []interface{}
 	for i, m := range members {
@@ -36,54 +29,45 @@ func (dbTx *DbTx) SaveGroupMembers(groupID uint64, members []*types.GroupMember)
 	stmt = stmt[:len(stmt)-1]
 	stmt += `
 	ON CONFLICT (group_id, address) DO UPDATE 
-	SET weight = excluded.weight,
-		member_metadata = excluded.member_metadata`
+	SET weight = excluded.weight, metadata = excluded.metadata, removed = false`
 
 	_, err := dbTx.Exec(stmt, params...)
 	return err
 }
 
-func (dbTx *DbTx) DeleteGroupMembers(members []string, groupID uint64) error {
+func (dbTx *DbTx) RemoveMembers(groupID uint64, members []string) error {
 	_, err := dbTx.Exec(
-		`DELETE FROM group_member WHERE group_id = $1 AND address = ANY($2)`,
+		`UPDATE group_member SET removed = true WHERE group_id = $1 AND address = ANY($2)`,
 		groupID, pq.Array(&members),
 	)
 	return err
 }
 
-func (dbTx *DbTx) SaveGroupProposal(proposal *types.GroupProposal) error {
+func (dbTx *DbTx) SaveProposal(proposal *types.GroupProposal) error {
 	_, err := dbTx.Exec(
-		`INSERT INTO group_proposal
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, null)
-		ON CONFLICT DO NOTHING`,
-		proposal.ID,
-		proposal.GroupID,
-		proposal.ProposalMetadata,
-		proposal.Proposer,
-		proposal.Status,
-		proposal.ExecutorResult,
-		proposal.Messages,
-		proposal.BlockHeight,
+		`INSERT INTO group_proposal VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, null) ON CONFLICT DO NOTHING`,
+		proposal.ID, proposal.GroupID, proposal.Metadata, proposal.Proposer, proposal.Status,
+		proposal.ExecutorResult, proposal.Messages, proposal.BlockHeight, proposal.SubmitTime,
 	)
 	return err
 }
 
-func (dbTx *DbTx) SaveGroupProposalVote(vote *types.GroupProposalVote) error {
+func (dbTx *DbTx) SaveProposalVote(vote *types.ProposalVote) error {
 	_, err := dbTx.Exec(
-		`INSERT INTO group_proposal_vote
-		VALUES ($1, $2, $3, $4, $5, $6)
-		ON CONFLICT DO NOTHING`,
-		vote.ProposalID,
-		vote.GroupID,
-		vote.Voter,
-		vote.VoteOption,
-		vote.VoteMetadata,
-		vote.SubmitTime,
+		`INSERT INTO group_proposal_vote VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING`,
+		vote.ProposalID, vote.GroupID, vote.Voter, vote.VoteOption, vote.VoteMetadata, vote.SubmitTime,
 	)
 	return err
 }
 
-func (dbTx *DbTx) UpdateGroupProposalStatus(proposalIDs []uint64, status string) error {
+func (dbTx *DbTx) UpdateProposalStatus(proposalID uint64, status string) error {
+	_, err := dbTx.Exec(
+		`UPDATE group_proposal SET status = $1 WHERE id = $2`,
+		status, proposalID,
+	)
+	return err
+}
+func (dbTx *DbTx) UpdateProposalStatuses(proposalIDs []uint64, status string) error {
 	_, err := dbTx.Exec(
 		`UPDATE group_proposal SET status = $1 WHERE id = ANY($2)`,
 		status, pq.Array(proposalIDs),
@@ -91,12 +75,17 @@ func (dbTx *DbTx) UpdateGroupProposalStatus(proposalIDs []uint64, status string)
 	return err
 }
 
-func (dbTx *DbTx) UpdateGroupProposalExecutorResult(proposalID uint64, executorResult string, txHash string) error {
+func (dbTx *DbTx) UpdateActiveProposalStatusesByGroup(groupID uint64, status string) error {
 	_, err := dbTx.Exec(
-		`UPDATE group_proposal
-		SET executor_result = $1,
-			transaction_hash = $2
-		WHERE id = $3`,
+		`UPDATE group_proposal SET status = $1 WHERE group_id = $2 AND status = 'PROPOSAL_STATUS_SUBMITTED'`,
+		status, groupID,
+	)
+	return err
+}
+
+func (dbTx *DbTx) UpdateProposalExecutorResult(proposalID uint64, executorResult string, txHash string) error {
+	_, err := dbTx.Exec(
+		`UPDATE group_proposal SET executor_result = $1, transaction_hash = $2 WHERE id = $3`,
 		executorResult, txHash, proposalID,
 	)
 	return err
@@ -118,46 +107,25 @@ func (dbTx *DbTx) UpdateGroupPolicyMetadata(groupID uint64, metadata string) err
 	return err
 }
 
-func (dbTx *DbTx) UpdateGroupPolicy(groupID uint64, policy *types.GroupDecisionPolicy) error {
+func (dbTx *DbTx) UpdateDecisionPolicy(groupID uint64, policy *types.ThresholdDecisionPolicy) error {
 	_, err := dbTx.Exec(
-		`UPDATE group_with_policy
-		SET threshold = $1,
-			voting_period = $2,
-			min_execution_period = $3
-		WHERE id = $4`,
-		policy.Threshold,
-		policy.VotingPeriod,
-		policy.MinExecutionPeriod,
-		groupID,
+		`UPDATE group_with_policy SET threshold = $1, voting_period = $2, min_execution_period = $3 WHERE id = $4`,
+		policy.Threshold, policy.Windows.VotingPeriod, policy.Windows.MinExecutionPeriod, groupID,
 	)
 	return err
 }
 
 func (dbTx *DbTx) GetGroupIDByGroupAddress(groupAddress string) (uint64, error) {
 	var groupID uint64
-	err := dbTx.QueryRow(
-		`SELECT id FROM group_with_policy WHERE address = $1`,
-		groupAddress,
-	).Scan(&groupID)
-
+	err := dbTx.QueryRow(`SELECT id FROM group_with_policy WHERE address = $1`, groupAddress).Scan(&groupID)
 	return groupID, err
 }
 
-func (dbTx *DbTx) GetGroupProposal(proposalID uint64) (*dbtypes.GroupProposalRow, error) {
+func (dbTx *DbTx) GetProposal(proposalID uint64) (*dbtypes.GroupProposalRow, error) {
 	var p dbtypes.GroupProposalRow
-	err := dbTx.QueryRow(
-		`SELECT * FROM group_proposal WHERE id = $1`,
-		proposalID,
-	).Scan(
-		&p.ID,
-		&p.GroupID,
-		&p.ProposalMetadata,
-		&p.Proposer,
-		&p.Status,
-		&p.ExecutorResult,
-		&p.Messages,
-		&p.BlockHeight,
-		&p.TxHash,
+	err := dbTx.QueryRow(`SELECT * FROM group_proposal WHERE id = $1`, proposalID).Scan(
+		&p.ID, &p.GroupID, &p.ProposalMetadata, &p.Proposer, &p.Status,
+		&p.ExecutorResult, &p.Messages, &p.BlockHeight, &p.SubmitTime, &p.TxHash,
 	)
 
 	return &p, err
@@ -165,60 +133,43 @@ func (dbTx *DbTx) GetGroupProposal(proposalID uint64) (*dbtypes.GroupProposalRow
 
 func (dbTx *DbTx) GetGroupThreshold(groupID uint64) (int, error) {
 	var threshold int
-	err := dbTx.QueryRow(
-		`SELECT threshold FROM group_with_policy WHERE id = $1`,
-		groupID,
-	).Scan(&threshold)
-
+	err := dbTx.QueryRow(`SELECT threshold FROM group_with_policy WHERE id = $1`, groupID).Scan(&threshold)
 	return threshold, err
 }
 
-func (dbTx *DbTx) GetGroupProposalVotes(proposalID uint64) ([]string, error) {
-	rows, err := dbTx.Query(
-		`SELECT vote_option FROM group_proposal_vote WHERE proposal_id = $1`,
-		proposalID,
-	)
+func (dbTx *DbTx) GetProposalVotes(proposalID uint64) ([]string, error) {
+	rows, err := dbTx.Query(`SELECT vote_option FROM group_proposal_vote WHERE proposal_id = $1`, proposalID)
 	if err != nil {
 		return nil, err
 	}
 
 	defer rows.Close()
-	var votes []string
 
+	var votes []string
 	for rows.Next() {
 		var vote string
-		err = rows.Scan(&vote)
-		if err != nil {
+		if err := rows.Scan(&vote); err != nil {
 			return nil, err
 		}
 
 		votes = append(votes, vote)
 	}
 
-	err = rows.Err()
-	if err != nil {
-		return nil, err
-	}
-
-	return votes, nil
+	return votes, rows.Err()
 }
 
 func (dbTx *DbTx) GetGroupTotalVotingPower(groupID uint64) (int, error) {
 	var power int
-	err := dbTx.QueryRow(
-		`SELECT SUM(weight) FROM group_member WHERE group_id = $1`,
-		groupID,
-	).Scan(&power)
+	err := dbTx.QueryRow(`SELECT SUM(weight) FROM group_member WHERE group_id = $1 AND NOT removed`, groupID).Scan(&power)
 
 	return power, err
 }
 
-func (dbTx *DbTx) GetActiveGroupProposalsDecisionPolicies() ([]*types.GroupProposalDecisionPolicy, error) {
+func (dbTx *DbTx) GetAllActiveProposals() ([]*types.ProposalDecisionPolicy, error) {
 	rows, err := dbTx.Query(
-		`SELECT p.id, g.voting_period, g.min_execution_period, b.timestamp
+		`SELECT p.id, g.voting_period, g.min_execution_period, p.submit_time
 		FROM group_proposal p
 		JOIN group_with_policy g ON g.id = p.group_id
-		JOIN block b ON b.height = p.height
 		WHERE p.status = 'PROPOSAL_STATUS_SUBMITTED'`,
 	)
 	if err != nil {
@@ -226,33 +177,26 @@ func (dbTx *DbTx) GetActiveGroupProposalsDecisionPolicies() ([]*types.GroupPropo
 	}
 
 	defer rows.Close()
-	proposals := make([]*types.GroupProposalDecisionPolicy, 0)
 
+	proposals := make([]*types.ProposalDecisionPolicy, 0)
 	for rows.Next() {
-		var p types.GroupProposalDecisionPolicy
-		err = rows.Scan(&p.ID, &p.SubmitTime, &p.VotingPeriod)
-		if err != nil {
+		var p types.ProposalDecisionPolicy
+		if err := rows.Scan(&p.ID, &p.SubmitTime, &p.VotingPeriod); err != nil {
 			return nil, err
 		}
 
 		proposals = append(proposals, &p)
 	}
 
-	err = rows.Err()
-	if err != nil {
-		return nil, err
-	}
-
-	return proposals, nil
+	return proposals, rows.Err()
 }
 
-func (dbTx *DbTx) GetGroupProposalDecisionPolicy(proposalID uint64) (*types.GroupProposalDecisionPolicy, error) {
-	var p types.GroupProposalDecisionPolicy
+func (dbTx *DbTx) GetProposalDecisionPolicy(proposalID uint64) (*types.ProposalDecisionPolicy, error) {
+	var p types.ProposalDecisionPolicy
 	err := dbTx.QueryRow(
-		`SELECT p.id, p.status, g.voting_period, g.min_execution_period, b.timestamp
+		`SELECT p.id, p.status, g.voting_period, g.min_execution_period, p.submit_time
 		FROM group_proposal p
 		JOIN group_with_policy g ON g.id = p.group_id
-		JOIN block b ON b.height = p.height
 		WHERE p.id = $1`,
 		proposalID,
 	).Scan(&p.ID, &p.Status, &p.VotingPeriod, &p.MinExecutionPeriod, &p.SubmitTime)

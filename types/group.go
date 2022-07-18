@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type GroupWithPolicy struct {
+type Group struct {
 	ID                 uint64
 	Address            string
 	GroupMetadata      string
@@ -14,7 +14,7 @@ type GroupWithPolicy struct {
 	MinExecutionPeriod uint64
 }
 
-func NewGroupWithPolicy(
+func NewGroup(
 	id uint64,
 	address string,
 	groupMetadata string,
@@ -22,8 +22,8 @@ func NewGroupWithPolicy(
 	threshold uint64,
 	votingPeriod uint64,
 	minExecutionPeriod uint64,
-) *GroupWithPolicy {
-	return &GroupWithPolicy{
+) *Group {
+	return &Group{
 		ID:                 id,
 		Address:            address,
 		GroupMetadata:      groupMetadata,
@@ -35,39 +35,42 @@ func NewGroupWithPolicy(
 }
 
 type GroupProposal struct {
-	ID               uint64
-	GroupID          uint64
-	ProposalMetadata string
-	Proposer         string
-	Status           string
-	ExecutorResult   string
-	Messages         string
-	BlockHeight      int64
+	ID             uint64
+	GroupID        uint64
+	Metadata       string
+	Proposer       string
+	Status         string
+	ExecutorResult string
+	Messages       string
+	BlockHeight    int64
+	SubmitTime     time.Time
 }
 
 func NewGroupProposal(
 	id uint64,
 	groupID uint64,
-	proposalMetadata string,
+	metadata string,
 	proposer string,
 	status string,
 	executorResult string,
 	messages string,
 	height int64,
+	submitTime time.Time,
 ) *GroupProposal {
 	return &GroupProposal{
-		ID:               id,
-		GroupID:          groupID,
-		ProposalMetadata: proposalMetadata,
-		Proposer:         proposer,
-		Status:           status,
-		ExecutorResult:   executorResult,
-		Messages:         messages,
-		BlockHeight:      height,
+		ID:             id,
+		GroupID:        groupID,
+		Metadata:       metadata,
+		Proposer:       proposer,
+		Status:         status,
+		ExecutorResult: executorResult,
+		Messages:       messages,
+		BlockHeight:    height,
+		SubmitTime:     submitTime,
 	}
 }
 
-type GroupProposalVote struct {
+type ProposalVote struct {
 	ProposalID   uint64
 	GroupID      uint64
 	Voter        string
@@ -76,15 +79,15 @@ type GroupProposalVote struct {
 	SubmitTime   time.Time
 }
 
-func NewGroupProposalVote(
+func NewProposalVote(
 	proposalID uint64,
 	groupID uint64,
 	voter string,
 	voteOption string,
 	voteMetadata string,
 	submitTime time.Time,
-) *GroupProposalVote {
-	return &GroupProposalVote{
+) *ProposalVote {
+	return &ProposalVote{
 		ProposalID:   proposalID,
 		GroupID:      groupID,
 		Voter:        voter,
@@ -94,47 +97,51 @@ func NewGroupProposalVote(
 	}
 }
 
-type GroupProposalDecisionPolicy struct {
+type ProposalDecisionPolicy struct {
 	ID                 uint64
+	GroupID            uint64
 	Status             string
 	VotingPeriod       int
 	MinExecutionPeriod int
 	SubmitTime         time.Time
 }
 
-type GroupDecisionPolicy struct {
-	ID                 uint64
-	Threshold          uint64
-	VotingPeriod       uint64
-	MinExecutionPeriod uint64
+type MsgType struct {
+	TypeURL string `json:"@type,omitempty"`
 }
 
-func NewGroupDecisionPolicy(
-	id uint64,
-	threshold uint64,
-	votingPeriod uint64,
-	minExecutionPeriod uint64,
-) *GroupDecisionPolicy {
-	return &GroupDecisionPolicy{
-		ID:                 id,
-		Threshold:          threshold,
-		VotingPeriod:       votingPeriod,
-		MinExecutionPeriod: minExecutionPeriod,
-	}
+type MsgUpdateDecisionPolicy struct {
+	GroupPolicyAddress string                   `json:"group_policy_address,omitempty"`
+	DecisionPolicy     *ThresholdDecisionPolicy `json:"decision_policy,omitempty"`
 }
 
-type GroupMember struct {
-	Address  string
-	Weight   uint64
-	Metadata string
+type ThresholdDecisionPolicy struct {
+	Threshold uint64                 `json:"threshold,omitempty,string"`
+	Windows   *DecisionPolicyWindows `json:"windows,omitempty"`
 }
 
-func NewGroupMember(
+type DecisionPolicyWindows struct {
+	VotingPeriod       uint64 `json:"voting_period,omitempty,string"`
+	MinExecutionPeriod uint64 `json:"min_execution_period,omitempty,string"`
+}
+
+type MsgUpdateMembers struct {
+	GroupID       uint64   `json:"group_id,omitempty,string"`
+	MemberUpdates []Member `json:"member_updates"`
+}
+
+type Member struct {
+	Address  string `json:"address,omitempty"`
+	Weight   uint64 `json:"weight,omitempty,string"`
+	Metadata string `json:"metadata,omitempty"`
+}
+
+func NewMember(
 	address string,
 	weight uint64,
 	metadata string,
-) *GroupMember {
-	return &GroupMember{
+) *Member {
+	return &Member{
 		Address:  address,
 		Weight:   weight,
 		Metadata: metadata,

@@ -23,6 +23,6 @@ select_permissions:
     - group_id
     - address
     - weight
-    - member_metadata
+    - metadata
     filter: {}
   role: anonymous

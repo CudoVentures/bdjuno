@@ -5,9 +5,6 @@ object_relationships:
   - name: group_with_policy
     using:
       foreign_key_constraint_on: group_id
-  - name: block
-    using:
-      foreign_key_constraint_on: height
 array_relationships:
   - name: group_proposal_votes
     using:
@@ -22,12 +19,13 @@ select_permissions:
     columns:
     - id
     - group_id
-    - proposal_metadata
+    - metadata
     - proposer
     - status
     - executor_result
     - messages
-    - transaction_hash
     - height
+    - submit_time
+    - transaction_hash
     filter: {}
   role: anonymous
