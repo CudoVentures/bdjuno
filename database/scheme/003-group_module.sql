@@ -15,11 +15,10 @@ CREATE TABLE group_member
     address  TEXT NOT NULL,
     weight   INT  NOT NULL,
     metadata TEXT NULL,
-    removed  BIT  NOT NULL DEFAULT B'0',
     PRIMARY KEY (group_id, address)
 );
 
-CREATE INDEX group_member_removed_index ON group_member (group_id) WHERE removed = B'0';
+CREATE INDEX group_member_weight_index ON group_member (group_id) WHERE weight > 0;
 CREATE INDEX group_member_group_id_index ON group_member (group_id);
 
     

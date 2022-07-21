@@ -199,6 +199,7 @@ func (m *Module) updateProposalStatus(proposalID uint64, groupID uint64) (group.
 		err := m.dbTx.UpdateProposalStatus(proposalID, group.PROPOSAL_STATUS_ACCEPTED.String())
 		return group.PROPOSAL_STATUS_ACCEPTED, err
 	}
+
 	totalPower, err := m.dbTx.GetGroupTotalVotingPower(groupID)
 	if err != nil {
 		return 0, err
@@ -265,17 +266,18 @@ func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error 
 			if err := json.Unmarshal(msgs[i], &msg); err != nil {
 				return err
 			}
-			err := m.handleMsgUpdateGroupMembers(&msg)
-			if err != nil {
+			if err := m.dbTx.SaveMembers(msg.GroupID, msg.MemberUpdates); err != nil {
 				return err
 			}
+
+			return nil
 		case "/cosmos.group.v1.MsgUpdateGroupMetadata":
 			var msg group.MsgUpdateGroupMetadata
 			if err := json.Unmarshal(msgs[i], &msg); err != nil {
 				return err
 			}
-			err := m.dbTx.UpdateGroupMetadata(proposal.GroupID, msg.Metadata)
-			if err != nil {
+
+			if err := m.dbTx.UpdateGroupMetadata(proposal.GroupID, msg.Metadata); err != nil {
 				return err
 			}
 		case "/cosmos.group.v1.MsgUpdateGroupPolicyMetadata":
@@ -283,8 +285,8 @@ func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error 
 			if err := json.Unmarshal(msgs[i], &msg); err != nil {
 				return err
 			}
-			err := m.dbTx.UpdateGroupPolicyMetadata(proposal.GroupID, msg.Metadata)
-			if err != nil {
+
+			if err := m.dbTx.UpdateGroupPolicyMetadata(proposal.GroupID, msg.Metadata); err != nil {
 				return err
 			}
 		case "/cosmos.group.v1.MsgUpdateGroupPolicyDecisionPolicy":
@@ -292,8 +294,7 @@ func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error 
 			if err := json.Unmarshal(msgs[i], &msg); err != nil {
 				return err
 			}
-			err := m.dbTx.UpdateDecisionPolicy(proposal.GroupID, msg.DecisionPolicy)
-			if err != nil {
+			if err := m.dbTx.UpdateDecisionPolicy(proposal.GroupID, msg.DecisionPolicy); err != nil {
 				return err
 			}
 		}
@@ -303,21 +304,7 @@ func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error 
 }
 
 func (m *Module) handleMsgUpdateGroupMembers(msg *types.MsgUpdateMembers) error {
-	updateMembers := make([]*types.Member, 0)
-	deleteMembers := make([]string, 0)
-	for i, m := range msg.MemberUpdates {
-		if m.Weight == 0 {
-			deleteMembers = append(deleteMembers, m.Address)
-		} else {
-			updateMembers = append(updateMembers, &msg.MemberUpdates[i])
-		}
-	}
 
-	if err := m.dbTx.SaveMembers(msg.GroupID, updateMembers); err != nil {
-		return err
-	}
-
-	return m.dbTx.RemoveMembers(msg.GroupID, deleteMembers)
 }
 
 func (m *Module) handleMsgWithdrawProposal(tx *juno.Tx, index int, proposalID uint64) error {

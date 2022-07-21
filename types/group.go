@@ -126,8 +126,8 @@ type DecisionPolicyWindows struct {
 }
 
 type MsgUpdateMembers struct {
-	GroupID       uint64   `json:"group_id,omitempty,string"`
-	MemberUpdates []Member `json:"member_updates"`
+	GroupID       uint64    `json:"group_id,omitempty,string"`
+	MemberUpdates []*Member `json:"member_updates"`
 }
 
 type Member struct {

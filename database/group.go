@@ -29,17 +29,9 @@ func (dbTx *DbTx) SaveMembers(groupID uint64, members []*types.Member) error {
 	stmt = stmt[:len(stmt)-1]
 	stmt += `
 	ON CONFLICT (group_id, address) DO UPDATE 
-	SET weight = excluded.weight, metadata = excluded.metadata, removed = B'0'`
+	SET weight = excluded.weight, metadata = excluded.metadata`
 
 	_, err := dbTx.Exec(stmt, params...)
-	return err
-}
-
-func (dbTx *DbTx) RemoveMembers(groupID uint64, members []string) error {
-	_, err := dbTx.Exec(
-		`UPDATE group_member SET removed = B'1' WHERE group_id = $1 AND address = ANY($2)`,
-		groupID, pq.Array(&members),
-	)
 	return err
 }
 
@@ -160,7 +152,7 @@ func (dbTx *DbTx) GetProposalVotes(proposalID uint64) ([]string, error) {
 
 func (dbTx *DbTx) GetGroupTotalVotingPower(groupID uint64) (int, error) {
 	var power int
-	err := dbTx.QueryRow(`SELECT SUM(weight) FROM group_member WHERE group_id = $1 AND removed = B'0'`, groupID).Scan(&power)
+	err := dbTx.QueryRow(`SELECT SUM(weight) FROM group_member WHERE weight > 0 AND group_id = $1`, groupID).Scan(&power)
 
 	return power, err
 }
