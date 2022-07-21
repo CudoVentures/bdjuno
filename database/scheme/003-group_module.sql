@@ -15,7 +15,7 @@ CREATE TABLE group_member
     address  TEXT NOT NULL,
     weight   INT  NOT NULL,
     metadata TEXT NULL,
-    removed  BIT  NOT NULL,
+    removed  BIT  NOT NULL DEFAULT B'0',
     PRIMARY KEY (group_id, address)
 );
 
