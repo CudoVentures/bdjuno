@@ -252,7 +252,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec_HandleMsgUpdateGroup(
 	}, groupRows[0])
 
 	var memberRows []dbtypes.GroupMemberRow
-	err = suite.db.Sqlx.Select(&memberRows, `SELECT address, group_id, weight, metadata FROM group_member where group_id = 1 AND NOT removed`)
+	err = suite.db.Sqlx.Select(&memberRows, `SELECT address, group_id, weight, metadata FROM group_member where group_id = 1 AND removed = 0`)
 	suite.Require().NoError(err)
 	suite.Require().Len(memberRows, 1)
 	suite.Require().Equal(dbtypes.GroupMemberRow{

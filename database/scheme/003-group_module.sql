@@ -11,17 +11,16 @@ CREATE TABLE group_with_policy
 
 CREATE TABLE group_member
 (   
-    group_id INT     NOT NULL REFERENCES group_with_policy (id),
-    address  TEXT    NOT NULL,
-    weight   INT     NOT NULL,
-    metadata TEXT    NULL,
-    removed  BOOLEAN NOT NULL DEFAULT false,
+    group_id INT  NOT NULL REFERENCES group_with_policy (id),
+    address  TEXT NOT NULL,
+    weight   INT  NOT NULL,
+    metadata TEXT NULL,
+    removed  BIT  NOT NULL,
     PRIMARY KEY (group_id, address)
 );
 
-CREATE INDEX group_member_removed_index ON group_member (group_id) WHERE NOT removed;
+CREATE INDEX group_member_removed_index ON group_member (group_id) WHERE removed = 0;
 CREATE INDEX group_member_group_id_index ON group_member (group_id);
--- CREATE VIEW group_member_active AS SELECT * FROM group_member WHERE NOT removed;
 
     
 CREATE TYPE PROPOSAL_STATUS AS ENUM
