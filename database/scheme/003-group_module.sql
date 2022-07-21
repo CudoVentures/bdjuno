@@ -19,7 +19,7 @@ CREATE TABLE group_member
     PRIMARY KEY (group_id, address)
 );
 
-CREATE INDEX group_member_removed_index ON group_member (group_id) WHERE removed = 0;
+CREATE INDEX group_member_removed_index ON group_member (group_id) WHERE removed = B'0';
 CREATE INDEX group_member_group_id_index ON group_member (group_id);
 
     
