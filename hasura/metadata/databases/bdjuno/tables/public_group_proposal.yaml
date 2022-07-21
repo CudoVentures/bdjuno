@@ -5,6 +5,12 @@ object_relationships:
   - name: group_with_policy
     using:
       foreign_key_constraint_on: group_id
+  - name: transaction
+    using:
+      foreign_key_constraint_on: transaction_hash
+  - name: block
+    using:
+      foreign_key_constraint_on: height
 array_relationships:
   - name: group_proposal_votes
     using:
