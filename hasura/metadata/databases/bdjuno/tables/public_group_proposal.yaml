@@ -29,6 +29,8 @@ select_permissions:
     - proposer
     - status
     - executor_result
+    - executor
+    - execution_time
     - messages
     - height
     - submit_time

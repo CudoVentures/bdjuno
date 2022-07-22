@@ -32,7 +32,7 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 		case *group.MsgVote:
 			return m.handleMsgVote(tx, index, cosmosMsg)
 		case *group.MsgExec:
-			return m.handleMsgExec(tx, index, cosmosMsg.ProposalId)
+			return m.handleMsgExec(tx, index, cosmosMsg)
 		case *group.MsgWithdrawProposal:
 			return m.handleMsgWithdrawProposal(tx, index, cosmosMsg.ProposalId)
 		}
@@ -169,7 +169,7 @@ func (m *Module) handleMsgVote(tx *juno.Tx, index int, msg *group.MsgVote) error
 	}
 
 	if msg.Exec == group.Exec_EXEC_TRY && status == group.PROPOSAL_STATUS_ACCEPTED {
-		if err := m.handleMsgExec(tx, index, msg.ProposalId); err != nil {
+		if err := m.handleMsgExec(tx, index, &group.MsgExec{ProposalId: msg.ProposalId, Executor: msg.Voter}); err != nil {
 			return err
 		}
 	}
@@ -215,17 +215,23 @@ func (m *Module) updateProposalStatus(proposalID uint64, groupID uint64) (group.
 	return 0, nil
 }
 
-func (m *Module) handleMsgExec(tx *juno.Tx, index int, proposalID uint64) error {
+func (m *Module) handleMsgExec(tx *juno.Tx, index int, msg *group.MsgExec) error {
 	executorResult := utils.GetValueFromLogs(uint32(index), tx.Logs, "cosmos.group.v1.EventExec", "result")
 	if executorResult == "" {
 		return errors.New("error while getting EventExec")
 	}
 
-	if err := m.dbTx.UpdateProposalExecutorResult(proposalID, executorResult, tx.TxHash); err != nil {
+	timestamp, err := time.Parse(time.RFC3339, tx.Timestamp)
+	if err != nil {
 		return err
 	}
 
-	proposal, err := m.dbTx.GetProposal(proposalID)
+	executionResult := types.NewExecutionResult(msg.ProposalId, executorResult, msg.Executor, timestamp, tx.TxHash)
+	if err := m.dbTx.UpdateProposalExecutorResult(executionResult); err != nil {
+		return err
+	}
+
+	proposal, err := m.dbTx.GetProposal(msg.ProposalId)
 	if err != nil {
 		return err
 	}
@@ -266,11 +272,10 @@ func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error 
 			if err := json.Unmarshal(msgs[i], &msg); err != nil {
 				return err
 			}
+
 			if err := m.dbTx.SaveMembers(msg.GroupID, msg.MemberUpdates); err != nil {
 				return err
 			}
-
-			return nil
 		case "/cosmos.group.v1.MsgUpdateGroupMetadata":
 			var msg group.MsgUpdateGroupMetadata
 			if err := json.Unmarshal(msgs[i], &msg); err != nil {
@@ -294,6 +299,7 @@ func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error 
 			if err := json.Unmarshal(msgs[i], &msg); err != nil {
 				return err
 			}
+
 			if err := m.dbTx.UpdateDecisionPolicy(proposal.GroupID, msg.DecisionPolicy); err != nil {
 				return err
 			}
@@ -301,10 +307,6 @@ func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error 
 	}
 
 	return nil
-}
-
-func (m *Module) handleMsgUpdateGroupMembers(msg *types.MsgUpdateMembers) error {
-
 }
 
 func (m *Module) handleMsgWithdrawProposal(tx *juno.Tx, index int, proposalID uint64) error {

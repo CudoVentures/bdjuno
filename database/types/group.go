@@ -22,6 +22,8 @@ type GroupProposalRow struct {
 	Proposer         string         `db:"proposer"`
 	Status           string         `db:"status"`
 	ExecutorResult   string         `db:"executor_result"`
+	Executor         sql.NullString `db:"executor"`
+	ExecutionTime    sql.NullTime   `db:"execution_time"`
 	Messages         string         `db:"messages"`
 	TxHash           sql.NullString `db:"transaction_hash"`
 	BlockHeight      int64          `db:"height"`

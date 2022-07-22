@@ -147,3 +147,27 @@ func NewMember(
 		Metadata: metadata,
 	}
 }
+
+type ExecutionResult struct {
+	ProposalID    uint64
+	Result        string
+	Executor      string
+	ExecutionTime time.Time
+	TxHash        string
+}
+
+func NewExecutionResult(
+	proposalID uint64,
+	result string,
+	executor string,
+	executionTime time.Time,
+	txHash string,
+) *ExecutionResult {
+	return &ExecutionResult{
+		ProposalID:    proposalID,
+		Result:        result,
+		Executor:      executor,
+		ExecutionTime: executionTime,
+		TxHash:        txHash,
+	}
+}

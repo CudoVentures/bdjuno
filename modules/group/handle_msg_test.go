@@ -102,6 +102,8 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgSubmitProposal() {
 		Proposer:         "1",
 		Status:           group.PROPOSAL_STATUS_SUBMITTED.String(),
 		ExecutorResult:   group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN.String(),
+		Executor:         dbtypes.ToNullString(""),
+		ExecutionTime:    sql.NullTime{},
 		Messages:         expectedMsg,
 		TxHash:           dbtypes.ToNullString(""),
 		BlockHeight:      1,
@@ -168,9 +170,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgVote_TryExec_UpdateStatusT
 
 	var proposalStatus string
 	var executorResult string
-	err = suite.db.Sqlx.QueryRow(
-		`SELECT status, executor_result from group_proposal WHERE id = 1`,
-	).Scan(&proposalStatus, &executorResult)
+	err = suite.db.Sqlx.QueryRow(`SELECT status, executor_result from group_proposal WHERE id = 1`).Scan(&proposalStatus, &executorResult)
 	suite.Require().NoError(err)
 	suite.Require().Equal(group.PROPOSAL_STATUS_ACCEPTED.String(), proposalStatus)
 	suite.Require().Equal(group.PROPOSAL_EXECUTOR_RESULT_SUCCESS.String(), executorResult)
@@ -188,16 +188,12 @@ func (suite *GroupModuleTestSuite) TestGroup_HangleMsgVote_UpdateStatusToRejecte
 	suite.Require().NoError(err)
 
 	var voteOption string
-	err = suite.db.Sqlx.QueryRow(
-		`SELECT vote_option from group_proposal_vote WHERE proposal_id = 1`,
-	).Scan(&voteOption)
+	err = suite.db.Sqlx.QueryRow(`SELECT vote_option from group_proposal_vote WHERE proposal_id = 1`).Scan(&voteOption)
 	suite.Require().NoError(err)
 	suite.Require().Equal(group.VOTE_OPTION_NO.String(), voteOption)
 
 	var proposalStatus string
-	err = suite.db.Sqlx.QueryRow(
-		`SELECT status from group_proposal WHERE id = 1`,
-	).Scan(&proposalStatus)
+	err = suite.db.Sqlx.QueryRow(`SELECT status from group_proposal WHERE id = 1`).Scan(&proposalStatus)
 	suite.Require().NoError(err)
 	suite.Require().Equal(group.PROPOSAL_STATUS_REJECTED.String(), proposalStatus)
 }
@@ -230,9 +226,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec_HandleMsgUpdateGroup(
 
 	var txHash sql.NullString
 	var executorResult string
-	err = suite.db.Sqlx.QueryRow(
-		`SELECT transaction_hash, executor_result from group_proposal WHERE id = 1`,
-	).Scan(&txHash, &executorResult)
+	err = suite.db.Sqlx.QueryRow(`SELECT transaction_hash, executor_result from group_proposal WHERE id = 1`).Scan(&txHash, &executorResult)
 	suite.Require().NoError(err)
 	suite.Require().Equal(dbtypes.ToNullString("1"), txHash)
 	suite.Require().Equal(group.PROPOSAL_EXECUTOR_RESULT_SUCCESS.String(), executorResult)
@@ -399,7 +393,7 @@ func (suite *GroupModuleTestSuite) insertTestBlockAndTx(height int, timestamp ti
 
 func (suite *GroupModuleTestSuite) insertTestProposal(status group.ProposalStatus) {
 	_, err := suite.db.Sql.Exec(
-		`INSERT INTO group_proposal VALUES (1, 1, '1', '1', $1, 'PROPOSAL_EXECUTOR_RESULT_NOT_RUN', '1', '1', NOW(), null)`,
+		`INSERT INTO group_proposal VALUES (1, 1, '1', '1', $1, 'PROPOSAL_EXECUTOR_RESULT_NOT_RUN', null, null, '1', '1', NOW(), null)`,
 		status.String(),
 	)
 	suite.Require().NoError(err)
