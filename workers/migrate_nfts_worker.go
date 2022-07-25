@@ -17,7 +17,7 @@ type migrateNftsWorker struct {
 }
 
 func (mnw migrateNftsWorker) Name() string {
-	return "migrate_nfts_worker"
+	return "migrate_nfts_worker_1"
 }
 
 func (mnw migrateNftsWorker) Start(ctx context.Context, parseCfg *parse.Config, parseCtx *parse.Context, storage keyValueStorage, interval time.Duration) {
@@ -72,7 +72,7 @@ func (mnw migrateNftsWorker) migrateNfts(parseCfg *parse.Config, parseCtx *parse
 
 	nftModule := nft.NewModule(parseCtx.EncodingConfig.Marshaler, database.Cast(parseCtx.Database))
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10000; i++ {
 		if err := mnw.processBlock(nftModule, parseCtx, currentHeight); err != nil {
 			return fmt.Errorf("error while processing block at height '%d': %s", currentHeight, err)
 		}

@@ -52,3 +52,4 @@
 - "!include public_apr_history.yaml"
 - "!include public_apr.yaml"
 - "!include public_nft_mint.yaml"
+- "!include public_nft_issue_denom.yaml"
