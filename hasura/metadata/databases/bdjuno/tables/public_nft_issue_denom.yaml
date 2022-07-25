@@ -1,0 +1,15 @@
+table:
+  name: nft_issue_denom
+  schema: public
+object_relationships:
+- name: transaction
+  using:
+    foreign_key_constraint_on: transaction_hash
+select_permissions:
+- permission:
+    allow_aggregations: true
+    columns:
+    - transaction_hash
+    - denom_id
+    filter: {}
+  role: anonymous

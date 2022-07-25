@@ -19,9 +19,20 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 	switch msg.(type) {
 	case *nftTypes.MsgMintNFT:
 		return m.handleMsgMintNFT(index, tx)
+	case *nftTypes.MsgIssueDenom:
+		return m.handleMsgIssueDenom(index, tx)
 	default:
 		return nil
 	}
+}
+
+func (m *Module) handleMsgIssueDenom(index int, tx *juno.Tx) error {
+	denomID := utils.GetValueFromLogs(uint32(index), tx.Logs, nftTypes.EventTypeIssueDenom, nftTypes.AttributeKeyDenomID)
+	if denomID == "" {
+		return fmt.Errorf("denom id not found in tx %s", tx.TxHash)
+	}
+
+	return m.db.SaveMsgIssueDenom(tx.TxHash, denomID)
 }
 
 func (m *Module) handleMsgMintNFT(index int, tx *juno.Tx) error {
