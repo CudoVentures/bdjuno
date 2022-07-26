@@ -41,7 +41,7 @@ func (suite *GroupModuleTestSuite) SetupTest() {
 func (suite *GroupModuleTestSuite) TestGroup_MsgCreateGroupWithPolicy() {
 	decisionPolicy, err := codectypes.NewAnyWithValue(group.NewThresholdDecisionPolicy("1", time.Hour, 0))
 	suite.Require().NoError(err)
-	tx := suite.newTestTx("1", "", 1, "1", 0, 0, false)
+	tx := suite.newTestTx("1", "", 1, "1", 0, 0, false, false)
 	msg := group.MsgCreateGroupWithPolicy{
 		Admin:               "admin",
 		Members:             []group.MemberRequest{{Address: "1", Weight: "1", Metadata: "1"}},
@@ -85,13 +85,14 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgSubmitProposal() {
 	suite.insertTestBlockAndTx(1, time.Now())
 
 	timestamp := time.Date(2022, time.January, 1, 1, 1, 1, 0, time.FixedZone("", 0))
-	tx := suite.newTestTx("1", timestamp.Format(time.RFC3339), 0, "", 1, 0, false)
+	tx := suite.newTestTx("1", timestamp.Format(time.RFC3339), 0, "", 1, 0, false, false)
 	msg := suite.newTestMsgProposal(0)
 
 	err := suite.module.HandleMsg(0, &msg, tx)
 	suite.Require().NoError(err)
 
 	expectedMsg := "[{\"@type\": \"/cosmos.group.v1.MsgUpdateGroupMetadata\", \"admin\": \"1\", \"group_id\": 1, \"metadata\": \"2\"}, {\"@type\": \"/cosmos.group.v1.MsgUpdateGroupPolicyMetadata\", \"admin\": \"1\", \"group_id\": 1, \"metadata\": \"2\"}, {\"@type\": \"/cosmos.group.v1.MsgUpdateGroupMembers\", \"admin\": \"1\", \"group_id\": \"1\", \"member_updates\": [{\"weight\": \"0\", \"address\": \"1\", \"metadata\": \"2\"}, {\"weight\": \"2\", \"address\": \"2\", \"metadata\": \"2\"}]}, {\"@type\": \"/cosmos.group.v1.MsgUpdateGroupPolicyDecisionPolicy\", \"admin\": \"1\", \"group_id\": 1, \"decision_policy\": {\"@type\": \"/cosmos.group.v1.ThresholdDecisionPolicy\", \"windows\": {\"voting_period\": \"2\", \"min_execution_period\": \"2\"}, \"threshold\": \"2\"}}]"
+
 	var proposalRows []dbtypes.GroupProposalRow
 	err = suite.db.Sqlx.Select(&proposalRows, `SELECT * FROM group_proposal where group_id = 1`)
 	suite.Require().NoError(err)
@@ -119,7 +120,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgSubmitProposal_TryExec() {
 	suite.insertTestGroup(2)
 	suite.insertTestBlockAndTx(1, timestamp)
 
-	tx := suite.newTestTx("1", timestamp.Format(time.RFC3339), 1, "", 1, 0, true)
+	tx := suite.newTestTx("1", timestamp.Format(time.RFC3339), 1, "", 1, 0, true, false)
 	msg := suite.newTestMsgProposal(group.Exec_EXEC_TRY)
 
 	err := suite.module.HandleMsg(0, &msg, tx)
@@ -128,29 +129,13 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgSubmitProposal_TryExec() {
 	suite.assertVotesCount(1)
 }
 
-func (suite *GroupModuleTestSuite) TestGroup_HandleMsgVote_RequireEventEmit() {
-	timestamp := time.Now()
-	suite.insertTestGroup(1)
-	suite.insertTestBlockAndTx(1, timestamp)
-	suite.insertTestProposal(group.PROPOSAL_STATUS_SUBMITTED)
-
-	tx := suite.newTestTx("1", timestamp.Format(time.RFC3339), 0, "", 0, 0, false)
-	msg := suite.newTestMsgVote(0, 0)
-
-	err := suite.module.HandleMsg(0, &msg, tx)
-	suite.Require().NotNil(err)
-	suite.Require().Equal("error while getting EventVote", err.Error())
-
-	suite.assertVotesCount(0)
-}
-
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgVote_TryExec_UpdateStatusToAccepted() {
 	timestamp := time.Date(2022, time.January, 1, 1, 1, 1, 0, time.FixedZone("", 0))
 	suite.insertTestGroup(1)
 	suite.insertTestBlockAndTx(1, timestamp)
-	suite.insertTestProposal(group.PROPOSAL_STATUS_SUBMITTED)
+	suite.insertTestProposal(group.PROPOSAL_STATUS_SUBMITTED, time.Now())
 
-	tx := suite.newTestTx("1", timestamp.Format(time.RFC3339), 0, "", 0, group.PROPOSAL_EXECUTOR_RESULT_SUCCESS, true)
+	tx := suite.newTestTx("1", timestamp.Format(time.RFC3339), 0, "", 0, group.PROPOSAL_EXECUTOR_RESULT_SUCCESS, true, false)
 	msg := suite.newTestMsgVote(group.VOTE_OPTION_YES, group.Exec_EXEC_TRY)
 
 	err := suite.module.HandleMsg(0, &msg, tx)
@@ -180,9 +165,9 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgVote_TryExec_UpdateStatusT
 func (suite *GroupModuleTestSuite) TestGroup_HangleMsgVote_UpdateStatusToRejected() {
 	suite.insertTestGroup(1)
 	suite.insertTestBlockAndTx(1, time.Now())
-	suite.insertTestProposal(group.PROPOSAL_STATUS_SUBMITTED)
+	suite.insertTestProposal(group.PROPOSAL_STATUS_SUBMITTED, time.Now())
 
-	tx := suite.newTestTx("1", time.Now().Format(time.RFC3339), 0, "", 0, 0, true)
+	tx := suite.newTestTx("1", time.Now().Format(time.RFC3339), 0, "", 0, 0, true, false)
 	msg := suite.newTestMsgVote(group.VOTE_OPTION_NO, 0)
 
 	err := suite.module.HandleMsg(0, &msg, tx)
@@ -199,19 +184,53 @@ func (suite *GroupModuleTestSuite) TestGroup_HangleMsgVote_UpdateStatusToRejecte
 	suite.Require().Equal(group.PROPOSAL_STATUS_REJECTED.String(), proposalStatus)
 }
 
-func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec_RequireEvent() {
+func (suite *GroupModuleTestSuite) TestGroup_HandleMsgVote_RequireEventEmit() {
 	timestamp := time.Now()
 	suite.insertTestGroup(1)
 	suite.insertTestBlockAndTx(1, timestamp)
-	suite.insertTestProposal(group.PROPOSAL_STATUS_ABORTED)
-	suite.insertTestBlockAndTx(2, timestamp.Add(time.Hour+time.Second))
+	suite.insertTestProposal(group.PROPOSAL_STATUS_SUBMITTED, time.Now())
 
-	tx := suite.newTestTx("1", "", 0, "", 0, 0, false)
-	msg := group.MsgExec{ProposalId: 1, Executor: "1"}
+	tx := suite.newTestTx("1", timestamp.Format(time.RFC3339), 0, "", 0, 0, false, false)
+	msg := suite.newTestMsgVote(0, 0)
 
 	err := suite.module.HandleMsg(0, &msg, tx)
 	suite.Require().NotNil(err)
-	suite.Require().Equal("error while getting EventExec", err.Error())
+	suite.Require().Equal("error while getting EventVote", err.Error())
+
+	suite.assertVotesCount(0)
+}
+
+func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec() {
+	timestamp := time.Date(2022, time.January, 1, 1, 1, 1, 0, time.FixedZone("", 0))
+	suite.insertTestGroup(1)
+	suite.insertTestBlockAndTx(1, timestamp)
+	suite.insertTestBlockAndTx(2, timestamp.Add(time.Hour))
+	suite.insertTestProposal(group.PROPOSAL_STATUS_ACCEPTED, timestamp)
+
+	tx := suite.newTestTx("1", timestamp.Format(time.RFC3339), 0, "", 1, group.PROPOSAL_EXECUTOR_RESULT_SUCCESS, true, false)
+	msg := group.MsgExec{ProposalId: 1, Executor: "1"}
+
+	err := suite.module.HandleMsg(0, &msg, tx)
+	suite.Require().NoError(err)
+
+	var proposalRows []dbtypes.GroupProposalRow
+	err = suite.db.Sqlx.Select(&proposalRows, `SELECT * FROM group_proposal WHERE ID = 1`)
+	suite.Require().NoError(err)
+	suite.Require().Equal(dbtypes.GroupProposalRow{
+		ID:               1,
+		GroupID:          1,
+		ProposalMetadata: "1",
+		Proposer:         "1",
+		Status:           group.PROPOSAL_STATUS_ACCEPTED.String(),
+		ExecutorResult:   group.PROPOSAL_EXECUTOR_RESULT_SUCCESS.String(),
+		Executor:         dbtypes.ToNullString("1"),
+		ExecutionTime:    sql.NullTime{Time: timestamp, Valid: true},
+		ExecutionLog:     dbtypes.ToNullString("1"),
+		Messages:         "1",
+		TxHash:           dbtypes.ToNullString("1"),
+		BlockHeight:      1,
+		SubmitTime:       timestamp,
+	}, proposalRows[0])
 }
 
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec_HandleMsgUpdateGroup() {
@@ -219,18 +238,11 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec_HandleMsgUpdateGroup(
 	suite.insertTestGroup(1)
 	suite.insertTestBlockAndTx(1, timestamp)
 	suite.insertTestBlockAndTx(2, timestamp.Add(time.Hour))
-	tx := suite.newTestTx("1", timestamp.Format(time.RFC3339), 0, "", 1, group.PROPOSAL_EXECUTOR_RESULT_SUCCESS, true)
+	tx := suite.newTestTx("1", timestamp.Format(time.RFC3339), 0, "", 1, group.PROPOSAL_EXECUTOR_RESULT_SUCCESS, true, false)
 	msg := suite.newTestMsgProposal(group.Exec_EXEC_TRY)
 
 	err := suite.module.HandleMsg(0, &msg, tx)
 	suite.Require().NoError(err)
-
-	var txHash sql.NullString
-	var executorResult string
-	err = suite.db.Sqlx.QueryRow(`SELECT transaction_hash, executor_result from group_proposal WHERE id = 1`).Scan(&txHash, &executorResult)
-	suite.Require().NoError(err)
-	suite.Require().Equal(dbtypes.ToNullString("1"), txHash)
-	suite.Require().Equal(group.PROPOSAL_EXECUTOR_RESULT_SUCCESS.String(), executorResult)
 
 	var groupRows []dbtypes.GroupRow
 	err = suite.db.Sqlx.Select(&groupRows, `SELECT * FROM group_with_policy where id = 1`)
@@ -258,13 +270,57 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec_HandleMsgUpdateGroup(
 	}, memberRows[0])
 }
 
+func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec_RequireEventEmit() {
+	timestamp := time.Now()
+	suite.insertTestGroup(1)
+	suite.insertTestBlockAndTx(1, timestamp)
+	suite.insertTestProposal(group.PROPOSAL_STATUS_SUBMITTED, timestamp)
+	// todo remove this logic after periodic test is done
+	suite.insertTestBlockAndTx(2, timestamp.Add(time.Hour+time.Second))
+
+	tx := suite.newTestTx("1", "", 0, "", 0, 0, false, false)
+	msg := group.MsgExec{ProposalId: 1, Executor: "1"}
+
+	err := suite.module.HandleMsg(0, &msg, tx)
+	suite.Require().NotNil(err)
+	suite.Require().Equal("error while getting EventExec", err.Error())
+}
+
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgWithdrawProposal() {
-	// todo
+	suite.insertTestGroup(1)
+	suite.insertTestBlockAndTx(1, time.Now())
+	suite.insertTestProposal(group.PROPOSAL_STATUS_SUBMITTED, time.Now())
+	suite.insertTestBlockAndTx(2, time.Now())
+
+	tx := suite.newTestTx("1", "", 0, "", 0, 0, false, true)
+	msg := group.MsgWithdrawProposal{ProposalId: 1, Address: "1"}
+
+	err := suite.module.HandleMsg(0, &msg, tx)
+	suite.Require().NoError(err)
+
+	var status string
+	err = suite.db.Sqlx.QueryRow(`SELECT status FROM group_proposal WHERE id = 1`).Scan(&status)
+	suite.Require().NoError(err)
+	suite.Require().Equal(group.PROPOSAL_STATUS_WITHDRAWN.String(), status)
+}
+
+func (suite *GroupModuleTestSuite) TestGroup_HandleMsgWithdrawProposal_RequireEventEmit() {
+	suite.insertTestGroup(1)
+	suite.insertTestBlockAndTx(1, time.Now())
+	suite.insertTestProposal(group.PROPOSAL_STATUS_SUBMITTED, time.Now())
+	suite.insertTestBlockAndTx(2, time.Now())
+
+	tx := suite.newTestTx("1", "", 0, "", 0, 0, false, false)
+	msg := group.MsgWithdrawProposal{ProposalId: 1, Address: "1"}
+
+	err := suite.module.HandleMsg(0, &msg, tx)
+	suite.Require().NotNil(err)
+	suite.Require().Equal("error while getting EventWithdraw", err.Error())
 }
 
 func (suite *GroupModuleTestSuite) newTestTx(
-	txHash string, timestamp string, groupID uint64, groupAddress string,
-	proposalID uint64, executorResult group.ProposalExecutorResult, voteEvent bool,
+	txHash string, timestamp string, groupID uint64, groupAddress string, proposalID uint64,
+	executorResult group.ProposalExecutorResult, voteEvent bool, withdrawEvent bool,
 ) *juno.Tx {
 	events := make([]abcitypes.Event, 0)
 
@@ -287,7 +343,7 @@ func (suite *GroupModuleTestSuite) newTestTx(
 	}
 
 	if executorResult != group.PROPOSAL_EXECUTOR_RESULT_UNSPECIFIED {
-		eventExec, err := sdk.TypedEventToEvent(&group.EventExec{Result: executorResult})
+		eventExec, err := sdk.TypedEventToEvent(&group.EventExec{Result: executorResult, Logs: "1"})
 		suite.Require().NoError(err)
 
 		events = append(events, abcitypes.Event(eventExec))
@@ -297,6 +353,12 @@ func (suite *GroupModuleTestSuite) newTestTx(
 		eventVote, err := sdk.TypedEventToEvent(&group.EventVote{ProposalId: 1})
 		suite.Require().NoError(err)
 		events = append(events, abcitypes.Event(eventVote))
+	}
+
+	if withdrawEvent {
+		eventWithdraw, err := sdk.TypedEventToEvent(&group.EventWithdrawProposal{ProposalId: 1})
+		suite.Require().NoError(err)
+		events = append(events, abcitypes.Event(eventWithdraw))
 	}
 
 	txLog := sdk.ABCIMessageLogs{{MsgIndex: 0, Events: sdk.StringifyEvents(events)}}
@@ -392,10 +454,10 @@ func (suite *GroupModuleTestSuite) insertTestBlockAndTx(height int, timestamp ti
 	suite.Require().NoError(err)
 }
 
-func (suite *GroupModuleTestSuite) insertTestProposal(status group.ProposalStatus) {
+func (suite *GroupModuleTestSuite) insertTestProposal(status group.ProposalStatus, timestamp time.Time) {
 	_, err := suite.db.Sql.Exec(
-		`INSERT INTO group_proposal VALUES (1, 1, '1', '1', $1, 'PROPOSAL_EXECUTOR_RESULT_NOT_RUN', null, null, null, '1', '1', NOW(), null)`,
-		status.String(),
+		`INSERT INTO group_proposal VALUES (1, 1, '1', '1', $1, 'PROPOSAL_EXECUTOR_RESULT_NOT_RUN', null, null, null, '1', '1', $2, null)`,
+		status.String(), timestamp,
 	)
 	suite.Require().NoError(err)
 }
