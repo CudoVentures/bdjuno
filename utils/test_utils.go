@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/forbole/juno/v2/cmd/parse"
 	dbconfig "github.com/forbole/juno/v2/database/config"
 	"github.com/forbole/juno/v2/logging"
@@ -18,7 +17,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-func NewTestDb(suite *suite.Suite, schema string) (*database.Db, codec.Codec) {
+func NewTestDb(suite *suite.Suite, schema string) *database.Db {
 	dbCfg := dbconfig.NewDatabaseConfig(
 		"bdjuno",
 		"localhost",
@@ -53,5 +52,5 @@ func NewTestDb(suite *suite.Suite, schema string) (*database.Db, codec.Codec) {
 	err = database.ExecuteMigrations(ctx, &parse.Context{Database: db})
 	suite.Require().NoError(err)
 
-	return bigDipperDb, cdc.Marshaler
+	return bigDipperDb
 }

@@ -12,6 +12,7 @@ import (
 	juno "github.com/forbole/juno/v2/types"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/group"
 
@@ -32,8 +33,8 @@ func TestGroupModuleTestSuite(t *testing.T) {
 }
 
 func (suite *GroupModuleTestSuite) SetupTest() {
-	db, cdc := testutils.NewTestDb(&suite.Suite, "groupTest")
-	suite.module = NewModule(cdc, db)
+	db := testutils.NewTestDb(&suite.Suite, "groupTest")
+	suite.module = NewModule(simapp.MakeTestEncodingConfig().Marshaler, db)
 	suite.db = db
 }
 

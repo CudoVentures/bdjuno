@@ -29,7 +29,7 @@ type DbTestSuite struct {
 }
 
 func (suite *DbTestSuite) SetupTest() {
-	db, _ := utils.NewTestDb(&suite.Suite, "dbTest")
+	db := utils.NewTestDb(&suite.Suite, "dbTest")
 	suite.database = db
 }
 

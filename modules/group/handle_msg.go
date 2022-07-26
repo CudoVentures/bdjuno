@@ -22,19 +22,17 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 	}
 
 	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
-		m.dbTx = dbTx
-
 		switch cosmosMsg := msg.(type) {
 		case *group.MsgCreateGroupWithPolicy:
-			return m.handleMsgCreateGroupWithPolicy(tx, index, cosmosMsg)
+			return m.handleMsgCreateGroupWithPolicy(dbTx, tx, index, cosmosMsg)
 		case *group.MsgSubmitProposal:
-			return m.handleMsgSubmitProposal(tx, index, cosmosMsg)
+			return m.handleMsgSubmitProposal(dbTx, tx, index, cosmosMsg)
 		case *group.MsgVote:
-			return m.handleMsgVote(tx, index, cosmosMsg)
+			return m.handleMsgVote(dbTx, tx, index, cosmosMsg)
 		case *group.MsgExec:
-			return m.handleMsgExec(tx, index, cosmosMsg)
+			return m.handleMsgExec(dbTx, tx, index, cosmosMsg)
 		case *group.MsgWithdrawProposal:
-			return m.handleMsgWithdrawProposal(tx, index, cosmosMsg.ProposalId)
+			return m.handleMsgWithdrawProposal(dbTx, tx, index, cosmosMsg.ProposalId)
 		}
 
 		return nil
@@ -42,7 +40,7 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 
 }
 
-func (m *Module) handleMsgCreateGroupWithPolicy(tx *juno.Tx, index int, msg *group.MsgCreateGroupWithPolicy) error {
+func (m *Module) handleMsgCreateGroupWithPolicy(dbTx *database.DbTx, tx *juno.Tx, index int, msg *group.MsgCreateGroupWithPolicy) error {
 	groupIDAttr := utils.GetValueFromLogs(uint32(index), tx.Logs, "cosmos.group.v1.EventCreateGroup", "group_id")
 	if groupIDAttr == "" {
 		return errors.New("error while getting EventCreateGroup")
@@ -72,7 +70,7 @@ func (m *Module) handleMsgCreateGroupWithPolicy(tx *juno.Tx, index int, msg *gro
 	minExecutionPeriod := uint64(decisionPolicy.Windows.MinExecutionPeriod.Seconds())
 	group := types.NewGroup(groupID, address, msg.GroupMetadata, msg.GroupPolicyMetadata, threshold, votingPeriod, minExecutionPeriod)
 
-	if err := m.dbTx.SaveGroup(group); err != nil {
+	if err := dbTx.SaveGroup(group); err != nil {
 		return err
 	}
 
@@ -86,10 +84,10 @@ func (m *Module) handleMsgCreateGroupWithPolicy(tx *juno.Tx, index int, msg *gro
 		members[i] = types.NewMember(m.Address, weight, m.Metadata)
 	}
 
-	return m.dbTx.SaveMembers(groupID, members)
+	return dbTx.SaveMembers(groupID, members)
 }
 
-func (m *Module) handleMsgSubmitProposal(tx *juno.Tx, index int, msg *group.MsgSubmitProposal) error {
+func (m *Module) handleMsgSubmitProposal(dbTx *database.DbTx, tx *juno.Tx, index int, msg *group.MsgSubmitProposal) error {
 	proposalIDAttr := utils.GetValueFromLogs(uint32(index), tx.Logs, "cosmos.group.v1.EventSubmitProposal", "proposal_id")
 	if proposalIDAttr == "" {
 		return errors.New("error while getting EventSubmitProposal")
@@ -105,7 +103,7 @@ func (m *Module) handleMsgSubmitProposal(tx *juno.Tx, index int, msg *group.MsgS
 		return err
 	}
 
-	groupID, err := m.dbTx.GetGroupIDByGroupAddress(msg.GroupPolicyAddress)
+	groupID, err := dbTx.GetGroupIDByGroupAddress(msg.GroupPolicyAddress)
 	if err != nil {
 		return err
 	}
@@ -121,7 +119,7 @@ func (m *Module) handleMsgSubmitProposal(tx *juno.Tx, index int, msg *group.MsgS
 
 	proposal := types.NewGroupProposal(proposalID, groupID, msg.Metadata, msg.Proposers[0], status, result, msgs, tx.Height, timestamp)
 
-	if err := m.dbTx.SaveProposal(proposal); err != nil {
+	if err := dbTx.SaveProposal(proposal); err != nil {
 		return err
 	}
 
@@ -134,7 +132,7 @@ func (m *Module) handleMsgSubmitProposal(tx *juno.Tx, index int, msg *group.MsgS
 			Exec:       group.Exec_EXEC_TRY,
 		}
 
-		if err := m.handleMsgVote(tx, index, &msgVote); err != nil {
+		if err := m.handleMsgVote(dbTx, tx, index, &msgVote); err != nil {
 			return err
 		}
 	}
@@ -142,13 +140,13 @@ func (m *Module) handleMsgSubmitProposal(tx *juno.Tx, index int, msg *group.MsgS
 	return nil
 }
 
-func (m *Module) handleMsgVote(tx *juno.Tx, index int, msg *group.MsgVote) error {
+func (m *Module) handleMsgVote(dbTx *database.DbTx, tx *juno.Tx, index int, msg *group.MsgVote) error {
 	voteEvent := utils.GetValueFromLogs(uint32(index), tx.Logs, "cosmos.group.v1.EventVote", "proposal_id")
 	if voteEvent == "" {
 		return errors.New("error while getting EventVote")
 	}
 
-	proposal, err := m.dbTx.GetProposal(msg.ProposalId)
+	proposal, err := dbTx.GetProposal(msg.ProposalId)
 	if err != nil {
 		return err
 	}
@@ -159,17 +157,17 @@ func (m *Module) handleMsgVote(tx *juno.Tx, index int, msg *group.MsgVote) error
 	}
 
 	vote := types.NewProposalVote(msg.ProposalId, proposal.GroupID, msg.Voter, msg.Option.String(), msg.Metadata, timestamp)
-	if err := m.dbTx.SaveProposalVote(vote); err != nil {
+	if err := dbTx.SaveProposalVote(vote); err != nil {
 		return err
 	}
 
-	status, err := m.updateProposalStatus(msg.ProposalId, proposal.GroupID)
+	status, err := m.updateProposalStatus(dbTx, msg.ProposalId, proposal.GroupID)
 	if err != nil {
 		return err
 	}
 
 	if msg.Exec == group.Exec_EXEC_TRY && status == group.PROPOSAL_STATUS_ACCEPTED {
-		if err := m.handleMsgExec(tx, index, &group.MsgExec{ProposalId: msg.ProposalId, Executor: msg.Voter}); err != nil {
+		if err := m.handleMsgExec(dbTx, tx, index, &group.MsgExec{ProposalId: msg.ProposalId, Executor: msg.Voter}); err != nil {
 			return err
 		}
 	}
@@ -177,8 +175,8 @@ func (m *Module) handleMsgVote(tx *juno.Tx, index int, msg *group.MsgVote) error
 	return nil
 }
 
-func (m *Module) updateProposalStatus(proposalID uint64, groupID uint64) (group.ProposalStatus, error) {
-	votes, err := m.dbTx.GetProposalVotes(proposalID)
+func (m *Module) updateProposalStatus(dbTx *database.DbTx, proposalID uint64, groupID uint64) (group.ProposalStatus, error) {
+	votes, err := dbTx.GetProposalVotes(proposalID)
 	if err != nil {
 		return 0, err
 	}
@@ -190,17 +188,17 @@ func (m *Module) updateProposalStatus(proposalID uint64, groupID uint64) (group.
 		}
 	}
 
-	threshold, err := m.dbTx.GetGroupThreshold(groupID)
+	threshold, err := dbTx.GetGroupThreshold(groupID)
 	if err != nil {
 		return 0, err
 	}
 
 	if votesYes >= threshold {
-		err := m.dbTx.UpdateProposalStatus(proposalID, group.PROPOSAL_STATUS_ACCEPTED.String())
+		err := dbTx.UpdateProposalStatus(proposalID, group.PROPOSAL_STATUS_ACCEPTED.String())
 		return group.PROPOSAL_STATUS_ACCEPTED, err
 	}
 
-	totalPower, err := m.dbTx.GetGroupTotalVotingPower(groupID)
+	totalPower, err := dbTx.GetGroupTotalVotingPower(groupID)
 	if err != nil {
 		return 0, err
 	}
@@ -208,14 +206,14 @@ func (m *Module) updateProposalStatus(proposalID uint64, groupID uint64) (group.
 	votesRemaining := totalPower - len(votes)
 	maxPossibleYesCount := votesYes + votesRemaining
 	if maxPossibleYesCount < threshold {
-		err := m.dbTx.UpdateProposalStatus(proposalID, group.PROPOSAL_STATUS_REJECTED.String())
+		err := dbTx.UpdateProposalStatus(proposalID, group.PROPOSAL_STATUS_REJECTED.String())
 		return group.PROPOSAL_STATUS_REJECTED, err
 	}
 
 	return 0, nil
 }
 
-func (m *Module) handleMsgExec(tx *juno.Tx, index int, msg *group.MsgExec) error {
+func (m *Module) handleMsgExec(dbTx *database.DbTx, tx *juno.Tx, index int, msg *group.MsgExec) error {
 	executorResult := utils.GetValueFromLogs(uint32(index), tx.Logs, "cosmos.group.v1.EventExec", "result")
 	if executorResult == "" {
 		return errors.New("error while getting EventExec")
@@ -227,31 +225,31 @@ func (m *Module) handleMsgExec(tx *juno.Tx, index int, msg *group.MsgExec) error
 	}
 
 	executionResult := types.NewExecutionResult(msg.ProposalId, executorResult, msg.Executor, timestamp, tx.TxHash)
-	if err := m.dbTx.UpdateProposalExecutorResult(executionResult); err != nil {
+	if err := dbTx.UpdateProposalExecutorResult(executionResult); err != nil {
 		return err
 	}
 
-	proposal, err := m.dbTx.GetProposal(msg.ProposalId)
+	proposal, err := dbTx.GetProposal(msg.ProposalId)
 	if err != nil {
 		return err
 	}
 
 	isSuccess := executorResult == group.PROPOSAL_EXECUTOR_RESULT_SUCCESS.String()
 	if isSuccess && strings.Contains(proposal.Messages, "MsgUpdateGroup") {
-		return m.handleMsgUpdateGroup(proposal)
+		return m.handleMsgUpdateGroup(dbTx, proposal)
 	}
 
 	return nil
 
 }
 
-func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error {
+func (m *Module) handleMsgUpdateGroup(dbTx *database.DbTx, proposal *dbtypes.GroupProposalRow) error {
 	if proposal.ExecutorResult != group.PROPOSAL_EXECUTOR_RESULT_SUCCESS.String() {
 		return errors.New("error while executing handleMsgUpdateGroup")
 	}
 
 	abort := group.PROPOSAL_STATUS_ABORTED.String()
-	if err := m.dbTx.UpdateActiveProposalStatusesByGroup(proposal.GroupID, abort); err != nil {
+	if err := dbTx.UpdateActiveProposalStatusesByGroup(proposal.GroupID, abort); err != nil {
 		return err
 	}
 
@@ -273,7 +271,7 @@ func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error 
 				return err
 			}
 
-			if err := m.dbTx.SaveMembers(msg.GroupID, msg.MemberUpdates); err != nil {
+			if err := dbTx.SaveMembers(msg.GroupID, msg.MemberUpdates); err != nil {
 				return err
 			}
 		case "/cosmos.group.v1.MsgUpdateGroupMetadata":
@@ -282,7 +280,7 @@ func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error 
 				return err
 			}
 
-			if err := m.dbTx.UpdateGroupMetadata(proposal.GroupID, msg.Metadata); err != nil {
+			if err := dbTx.UpdateGroupMetadata(proposal.GroupID, msg.Metadata); err != nil {
 				return err
 			}
 		case "/cosmos.group.v1.MsgUpdateGroupPolicyMetadata":
@@ -291,7 +289,7 @@ func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error 
 				return err
 			}
 
-			if err := m.dbTx.UpdateGroupPolicyMetadata(proposal.GroupID, msg.Metadata); err != nil {
+			if err := dbTx.UpdateGroupPolicyMetadata(proposal.GroupID, msg.Metadata); err != nil {
 				return err
 			}
 		case "/cosmos.group.v1.MsgUpdateGroupPolicyDecisionPolicy":
@@ -300,7 +298,7 @@ func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error 
 				return err
 			}
 
-			if err := m.dbTx.UpdateDecisionPolicy(proposal.GroupID, msg.DecisionPolicy); err != nil {
+			if err := dbTx.UpdateDecisionPolicy(proposal.GroupID, msg.DecisionPolicy); err != nil {
 				return err
 			}
 		}
@@ -309,11 +307,11 @@ func (m *Module) handleMsgUpdateGroup(proposal *dbtypes.GroupProposalRow) error 
 	return nil
 }
 
-func (m *Module) handleMsgWithdrawProposal(tx *juno.Tx, index int, proposalID uint64) error {
+func (m *Module) handleMsgWithdrawProposal(dbTx *database.DbTx, tx *juno.Tx, index int, proposalID uint64) error {
 	executorResult := utils.GetValueFromLogs(uint32(index), tx.Logs, "cosmos.group.v1.EventWithdrawProposal", "proposal_id")
 	if executorResult == "" {
 		return errors.New("error while getting EventWithdraw")
 	}
 
-	return m.dbTx.UpdateProposalStatus(proposalID, group.PROPOSAL_STATUS_WITHDRAWN.String())
+	return dbTx.UpdateProposalStatus(proposalID, group.PROPOSAL_STATUS_WITHDRAWN.String())
 }

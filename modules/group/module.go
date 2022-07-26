@@ -15,9 +15,8 @@ var (
 )
 
 type Module struct {
-	cdc  codec.Codec
-	db   *database.Db
-	dbTx *database.DbTx
+	cdc codec.Codec
+	db  *database.Db
 }
 
 func NewModule(cdc codec.Codec, db *database.Db,
