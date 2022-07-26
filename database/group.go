@@ -77,8 +77,8 @@ func (dbTx *DbTx) UpdateActiveProposalStatusesByGroup(groupID uint64, status str
 
 func (dbTx *DbTx) UpdateProposalExecutorResult(result *types.ExecutionResult) error {
 	_, err := dbTx.Exec(
-		`UPDATE group_proposal SET executor_result = $1, transaction_hash = $2, executor = $3, execution_time = $4 WHERE id = $5`,
-		result.Result, result.TxHash, result.Executor, result.ExecutionTime, result.ProposalID,
+		`UPDATE group_proposal SET executor_result = $1, transaction_hash = $2, executor = $3, execution_time = $4, execution_log = $5 WHERE id = $6`,
+		result.Result, result.TxHash, result.Executor, result.ExecutionTime, result.ExecutionLog, result.ProposalID,
 	)
 	return err
 }

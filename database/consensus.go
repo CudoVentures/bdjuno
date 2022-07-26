@@ -25,6 +25,15 @@ func (db *Db) GetLastBlock() (*dbtypes.BlockRow, error) {
 	return &blocks[0], nil
 }
 
+func (dbTx *DbTx) GetLastBlock() (*dbtypes.BlockRow, error) {
+	var b dbtypes.BlockRow
+	err := dbTx.QueryRow(`SELECT * FROM block ORDER BY height DESC LIMIT 1`).Scan(
+		&b.Height, &b.Hash, &b.TxNum, &b.TotalGas, &b.ProposerAddress, &b.PreCommitsNum, &b.Timestamp,
+	)
+
+	return &b, err
+}
+
 // GetLastBlockHeight returns the last block height stored inside the database
 func (db *Db) GetLastBlockHeight() (int64, error) {
 	block, err := db.GetLastBlock()

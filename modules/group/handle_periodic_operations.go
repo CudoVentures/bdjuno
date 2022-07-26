@@ -30,7 +30,7 @@ func (m *Module) checkProposalExpirations() error {
 			return err
 		}
 
-		block, err := m.db.GetLastBlock()
+		block, err := dbTx.GetLastBlock()
 		if err != nil {
 			return err
 		}
