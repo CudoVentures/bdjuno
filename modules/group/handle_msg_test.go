@@ -394,7 +394,7 @@ func (suite *GroupModuleTestSuite) insertTestBlockAndTx(height int, timestamp ti
 
 func (suite *GroupModuleTestSuite) insertTestProposal(status group.ProposalStatus) {
 	_, err := suite.db.Sql.Exec(
-		`INSERT INTO group_proposal VALUES (1, 1, '1', '1', $1, 'PROPOSAL_EXECUTOR_RESULT_NOT_RUN', null, null, '1', '1', NOW(), null)`,
+		`INSERT INTO group_proposal VALUES (1, 1, '1', '1', $1, 'PROPOSAL_EXECUTOR_RESULT_NOT_RUN', null, null, null, '1', '1', NOW(), null)`,
 		status.String(),
 	)
 	suite.Require().NoError(err)

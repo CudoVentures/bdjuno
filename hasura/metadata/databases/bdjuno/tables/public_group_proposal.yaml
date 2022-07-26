@@ -31,6 +31,7 @@ select_permissions:
     - executor_result
     - executor
     - execution_time
+    - execution_log
     - messages
     - height
     - submit_time

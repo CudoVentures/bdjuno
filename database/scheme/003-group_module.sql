@@ -48,6 +48,7 @@ CREATE TABLE group_proposal
     executor_result  PROPOSAL_EXECUTOR_RESULT    NOT NULL,
     executor         TEXT                        NULL,
     execution_time   TIMESTAMP WITHOUT TIME ZONE NULL,
+    execution_log    TEXT                        NULL,
     messages         JSONB                       NOT NULL,
     height           BIGINT                      NOT NULL REFERENCES block (height),
     submit_time      TIMESTAMP WITHOUT TIME ZONE NOT NULL,

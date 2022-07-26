@@ -37,7 +37,7 @@ func (dbTx *DbTx) SaveMembers(groupID uint64, members []*types.Member) error {
 
 func (dbTx *DbTx) SaveProposal(proposal *types.GroupProposal) error {
 	_, err := dbTx.Exec(
-		`INSERT INTO group_proposal VALUES ($1, $2, $3, $4, $5, $6, null, null, $7, $8, $9, null) ON CONFLICT DO NOTHING`,
+		`INSERT INTO group_proposal VALUES ($1, $2, $3, $4, $5, $6, null, null, null, $7, $8, $9, null) ON CONFLICT DO NOTHING`,
 		proposal.ID, proposal.GroupID, proposal.Metadata, proposal.Proposer, proposal.Status,
 		proposal.ExecutorResult, proposal.Messages, proposal.BlockHeight, proposal.SubmitTime,
 	)
@@ -117,7 +117,7 @@ func (dbTx *DbTx) GetProposal(proposalID uint64) (*dbtypes.GroupProposalRow, err
 	var p dbtypes.GroupProposalRow
 	err := dbTx.QueryRow(`SELECT * FROM group_proposal WHERE id = $1`, proposalID).Scan(
 		&p.ID, &p.GroupID, &p.ProposalMetadata, &p.Proposer, &p.Status, &p.ExecutorResult,
-		&p.Executor, &p.ExecutionTime, &p.Messages, &p.BlockHeight, &p.SubmitTime, &p.TxHash,
+		&p.Executor, &p.ExecutionTime, &p.ExecutionLog, &p.Messages, &p.BlockHeight, &p.SubmitTime, &p.TxHash,
 	)
 
 	return &p, err

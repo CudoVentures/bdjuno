@@ -219,12 +219,14 @@ func (m *Module) handleMsgExec(dbTx *database.DbTx, tx *juno.Tx, index int, msg 
 		return errors.New("error while getting EventExec")
 	}
 
+	executionLog := utils.GetValueFromLogs(uint32(index), tx.Logs, "cosmos.group.v1.EventExec", "logs")
+
 	timestamp, err := time.Parse(time.RFC3339, tx.Timestamp)
 	if err != nil {
 		return err
 	}
 
-	executionResult := types.NewExecutionResult(msg.ProposalId, executorResult, msg.Executor, timestamp, tx.TxHash)
+	executionResult := types.NewExecutionResult(msg.ProposalId, executorResult, msg.Executor, timestamp, executionLog, tx.TxHash)
 	if err := dbTx.UpdateProposalExecutorResult(executionResult); err != nil {
 		return err
 	}

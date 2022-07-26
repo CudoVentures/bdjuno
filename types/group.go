@@ -153,6 +153,7 @@ type ExecutionResult struct {
 	Result        string
 	Executor      string
 	ExecutionTime time.Time
+	ExecutionLog  string
 	TxHash        string
 }
 
@@ -161,6 +162,7 @@ func NewExecutionResult(
 	result string,
 	executor string,
 	executionTime time.Time,
+	executionLog string,
 	txHash string,
 ) *ExecutionResult {
 	return &ExecutionResult{
@@ -168,6 +170,7 @@ func NewExecutionResult(
 		Result:        result,
 		Executor:      executor,
 		ExecutionTime: executionTime,
+		ExecutionLog:  executionLog,
 		TxHash:        txHash,
 	}
 }
