@@ -1,4 +1,4 @@
-package group
+package utils
 
 import (
 	"fmt"
@@ -19,16 +19,15 @@ type testTxBuilder struct {
 	timestamp time.Time
 }
 
-func newTestTx() *testTxBuilder {
-	return &testTxBuilder{}
+func NewTestTx(timestamp time.Time) *testTxBuilder {
+	return &testTxBuilder{timestamp: timestamp}
 }
 
-func (builder *testTxBuilder) WithTimestamp(timestamp time.Time) *testTxBuilder {
-	builder.timestamp = timestamp
-	return builder
-}
+func (builder *testTxBuilder) WithEventCreateGroup(groupID uint64, address string) *testTxBuilder {
+	if address == "" {
+		builder.errors = append(builder.errors, "error while building testTx: empty group address")
 
-func (builder *testTxBuilder) WithGroup(groupID uint64, address string) *testTxBuilder {
+	}
 	eventCreateGroup, err := sdk.TypedEventToEvent(&group.EventCreateGroup{GroupId: groupID})
 	if err != nil {
 		builder.errors = append(builder.errors, err.Error())
@@ -43,7 +42,7 @@ func (builder *testTxBuilder) WithGroup(groupID uint64, address string) *testTxB
 	return builder
 }
 
-func (builder *testTxBuilder) WithProposalID(proposalID uint64) *testTxBuilder {
+func (builder *testTxBuilder) WithEventSubmitProposal(proposalID uint64) *testTxBuilder {
 	eventSubmitProposal, err := sdk.TypedEventToEvent(&group.EventSubmitProposal{ProposalId: proposalID})
 	if err != nil {
 		builder.errors = append(builder.errors, err.Error())
@@ -53,7 +52,7 @@ func (builder *testTxBuilder) WithProposalID(proposalID uint64) *testTxBuilder {
 	return builder
 }
 
-func (builder *testTxBuilder) WithExecutorResult(result group.ProposalExecutorResult) *testTxBuilder {
+func (builder *testTxBuilder) WithEventExec(result group.ProposalExecutorResult) *testTxBuilder {
 	eventExec, err := sdk.TypedEventToEvent(&group.EventExec{Result: result, Logs: "1"})
 	if err != nil {
 		builder.errors = append(builder.errors, err.Error())
@@ -63,7 +62,7 @@ func (builder *testTxBuilder) WithExecutorResult(result group.ProposalExecutorRe
 	return builder
 }
 
-func (builder *testTxBuilder) WithVoteEvent() *testTxBuilder {
+func (builder *testTxBuilder) WithEventVote() *testTxBuilder {
 	eventVote, err := sdk.TypedEventToEvent(&group.EventVote{})
 	if err != nil {
 		builder.errors = append(builder.errors, err.Error())
@@ -73,7 +72,7 @@ func (builder *testTxBuilder) WithVoteEvent() *testTxBuilder {
 	return builder
 }
 
-func (builder *testTxBuilder) WithWithdrawEvent() *testTxBuilder {
+func (builder *testTxBuilder) WithEventWithdrawProposal() *testTxBuilder {
 	eventWithdraw, err := sdk.TypedEventToEvent(&group.EventWithdrawProposal{})
 	if err != nil {
 		builder.errors = append(builder.errors, err.Error())

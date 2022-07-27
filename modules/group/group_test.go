@@ -17,7 +17,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/forbole/bdjuno/v2/database"
 	dbtypes "github.com/forbole/bdjuno/v2/database/types"
-	testutils "github.com/forbole/bdjuno/v2/utils"
+	"github.com/forbole/bdjuno/v2/utils"
 )
 
 type GroupModuleTestSuite struct {
@@ -31,7 +31,7 @@ func TestGroupModuleTestSuite(t *testing.T) {
 }
 
 func (suite *GroupModuleTestSuite) SetupTest() {
-	db := testutils.NewTestDb(&suite.Suite, "groupTest")
+	db := utils.NewTestDb(&suite.Suite, "groupTest")
 	suite.module = NewModule(simapp.MakeTestEncodingConfig().Marshaler, db)
 	suite.db = db
 
@@ -54,7 +54,7 @@ func (suite *GroupModuleTestSuite) SetupTest() {
 
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgCreateGroupWithPolicy() {
 	groupID := uint64(2)
-	tx, err := newTestTx().WithTimestamp(testTimestamp()).WithGroup(groupID, "1").Build()
+	tx, err := utils.NewTestTx(testTimestamp()).WithEventCreateGroup(groupID, "1").Build()
 	suite.Require().NoError(err)
 
 	decisionPolicy, err := codectypes.NewAnyWithValue(group.NewThresholdDecisionPolicy("1", time.Hour, 0))
@@ -99,7 +99,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgCreateGroupWithPolicy() {
 
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgSubmitProposal() {
 	proposalID := uint64(2)
-	tx, err := newTestTx().WithTimestamp(testTimestamp()).WithProposalID(proposalID).Build()
+	tx, err := utils.NewTestTx(testTimestamp()).WithEventSubmitProposal(proposalID).Build()
 	suite.Require().NoError(err)
 
 	msg, err := group.NewMsgSubmitProposal("1", []string{"1"}, []types.Msg{}, "1", 0)
@@ -126,7 +126,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgSubmitProposal() {
 }
 
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgSubmitProposal_TryExec() {
-	tx, err := newTestTx().WithTimestamp(testTimestamp()).WithProposalID(1).WithExecutorResult(group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN).Build()
+	tx, err := utils.NewTestTx(testTimestamp()).WithEventSubmitProposal(1).WithEventExec(group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN).Build()
 	suite.Require().NoError(err)
 
 	msg, err := group.NewMsgSubmitProposal("1", []string{"1"}, []types.Msg{}, "1", group.Exec_EXEC_TRY)
@@ -137,7 +137,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgSubmitProposal_TryExec() {
 }
 
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgVote_UpdateStatusToAccepted() {
-	tx, err := newTestTx().WithTimestamp(testTimestamp()).WithVoteEvent().WithExecutorResult(group.PROPOSAL_EXECUTOR_RESULT_SUCCESS).Build()
+	tx, err := utils.NewTestTx(testTimestamp()).WithEventVote().WithEventExec(group.PROPOSAL_EXECUTOR_RESULT_SUCCESS).Build()
 	suite.Require().NoError(err)
 
 	proposalID := uint64(1)
@@ -160,7 +160,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgVote_UpdateStatusToAccepte
 }
 
 func (suite *GroupModuleTestSuite) TestGroup_HangleMsgVote_UpdateStatusToRejected() {
-	tx, err := newTestTx().WithTimestamp(testTimestamp()).WithVoteEvent().Build()
+	tx, err := utils.NewTestTx(testTimestamp()).WithEventVote().Build()
 	suite.Require().NoError(err)
 
 	proposalID := uint64(1)
@@ -183,7 +183,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HangleMsgVote_UpdateStatusToRejecte
 }
 
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgVote_TryExec() {
-	tx, err := newTestTx().WithTimestamp(testTimestamp()).WithExecutorResult(group.PROPOSAL_EXECUTOR_RESULT_SUCCESS).WithVoteEvent().Build()
+	tx, err := utils.NewTestTx(testTimestamp()).WithEventExec(group.PROPOSAL_EXECUTOR_RESULT_SUCCESS).WithEventVote().Build()
 	suite.Require().NoError(err)
 
 	proposalID := uint64(1)
@@ -203,7 +203,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgVote_TryExec() {
 }
 
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec() {
-	tx, err := newTestTx().WithTimestamp(testTimestamp()).WithExecutorResult(group.PROPOSAL_EXECUTOR_RESULT_SUCCESS).Build()
+	tx, err := utils.NewTestTx(testTimestamp()).WithEventExec(group.PROPOSAL_EXECUTOR_RESULT_SUCCESS).Build()
 	suite.Require().NoError(err)
 
 	proposalID := uint64(1)
@@ -235,7 +235,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec() {
 
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec_HandleMsgUpdateGroup() {
 	proposalID := uint64(2)
-	tx, err := newTestTx().WithTimestamp(testTimestamp()).WithProposalID(proposalID).WithExecutorResult(group.PROPOSAL_EXECUTOR_RESULT_SUCCESS).WithVoteEvent().Build()
+	tx, err := utils.NewTestTx(testTimestamp()).WithEventSubmitProposal(proposalID).WithEventExec(group.PROPOSAL_EXECUTOR_RESULT_SUCCESS).WithEventVote().Build()
 	suite.Require().NoError(err)
 
 	proposalJson := `{"group_policy_address": "1","proposers": ["1"],"metadata": "","messages": [{"@type": "/cosmos.group.v1.MsgUpdateGroupMetadata","admin": "1","group_id": 1,"metadata": "2"},{"@type": "/cosmos.group.v1.MsgUpdateGroupPolicyMetadata","admin": "1","group_id": 1,"metadata": "2"},{"@type": "/cosmos.group.v1.MsgUpdateGroupMembers","admin": "1","group_id": "1","member_updates": [{ "weight": "0", "address": "1", "metadata": "2" },{ "weight": "2", "address": "2", "metadata": "2" }]},{"@type": "/cosmos.group.v1.MsgUpdateGroupPolicyDecisionPolicy","admin": "1","group_id": 1,"decision_policy": {"@type":"/cosmos.group.v1.ThresholdDecisionPolicy","threshold":"2","windows": {"voting_period": "2", "min_execution_period": "2"}}}]}`
@@ -279,7 +279,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec_HandleMsgUpdateGroup(
 }
 
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgWithdrawProposal() {
-	tx, err := newTestTx().WithTimestamp(testTimestamp()).WithWithdrawEvent().Build()
+	tx, err := utils.NewTestTx(testTimestamp()).WithEventWithdrawProposal().Build()
 	suite.Require().NoError(err)
 
 	proposalID := uint64(1)
