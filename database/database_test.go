@@ -29,7 +29,8 @@ type DbTestSuite struct {
 }
 
 func (suite *DbTestSuite) SetupTest() {
-	db := utils.NewTestDb(&suite.Suite, "dbTest")
+	db, err := utils.NewTestDb("dbTest")
+	suite.Require().NoError(err)
 	suite.database = db
 }
 

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -14,10 +15,9 @@ import (
 	"github.com/forbole/bdjuno/v2/database"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/stretchr/testify/suite"
 )
 
-func NewTestDb(suite *suite.Suite, schema string) *database.Db {
+func NewTestDb(schema string) (*database.Db, error) {
 	dbCfg := dbconfig.NewDatabaseConfig(
 		"bdjuno",
 		"localhost",
@@ -32,25 +32,37 @@ func NewTestDb(suite *suite.Suite, schema string) *database.Db {
 
 	cdc := simapp.MakeTestEncodingConfig()
 
-	db, err := database.Builder(
-		junodb.NewContext(dbCfg, &cdc, logging.DefaultLogger()),
-	)
-	suite.Require().NoError(err)
+	db, err := database.Builder(junodb.NewContext(dbCfg, &cdc, logging.DefaultLogger()))
+	if err != nil {
+		return nil, err
+	}
 
 	bigDipperDb, ok := (db).(*database.Db)
-	suite.Require().True(ok)
+	if !ok {
+		return nil, errors.New("error while making new test db instance")
+	}
 
-	_, err = bigDipperDb.Sql.Exec(fmt.Sprintf(`DROP SCHEMA IF EXISTS %s CASCADE;`, schema))
-	suite.Require().NoError(err)
+	err = bigDipperDb.ExecuteTx(func(dbTx *database.DbTx) error {
+		_, err = bigDipperDb.Sql.Exec(fmt.Sprintf(`DROP SCHEMA IF EXISTS %s CASCADE;`, schema))
+		if err != nil {
+			return err
+		}
 
-	_, err = bigDipperDb.Sql.Exec(fmt.Sprintf(`CREATE SCHEMA %s;`, schema))
-	suite.Require().NoError(err)
+		_, err = bigDipperDb.Sql.Exec(fmt.Sprintf(`CREATE SCHEMA %s;`, schema))
+		if err != nil {
+			return err
+		}
 
-	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancelFunc()
+		ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancelFunc()
 
-	err = database.ExecuteMigrations(ctx, &parse.Context{Database: db})
-	suite.Require().NoError(err)
+		err = database.ExecuteMigrations(ctx, &parse.Context{Database: db})
+		if err != nil {
+			return err
+		}
 
-	return bigDipperDb
+		return nil
+	})
+
+	return bigDipperDb, err
 }

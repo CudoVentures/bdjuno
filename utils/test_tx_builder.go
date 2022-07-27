@@ -13,17 +13,17 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/group"
 )
 
-type testTxBuilder struct {
+type TestTxBuilder struct {
 	events    []abcitypes.Event
 	errors    []string
 	timestamp time.Time
 }
 
-func NewTestTx(timestamp time.Time) *testTxBuilder {
-	return &testTxBuilder{timestamp: timestamp}
+func NewTestTx(timestamp time.Time) *TestTxBuilder {
+	return &TestTxBuilder{timestamp: timestamp}
 }
 
-func (builder *testTxBuilder) WithEventCreateGroup(groupID uint64, address string) *testTxBuilder {
+func (builder *TestTxBuilder) WithEventCreateGroup(groupID uint64, address string) *TestTxBuilder {
 	if address == "" {
 		builder.errors = append(builder.errors, "error while building testTx: empty group address")
 
@@ -42,7 +42,7 @@ func (builder *testTxBuilder) WithEventCreateGroup(groupID uint64, address strin
 	return builder
 }
 
-func (builder *testTxBuilder) WithEventSubmitProposal(proposalID uint64) *testTxBuilder {
+func (builder *TestTxBuilder) WithEventSubmitProposal(proposalID uint64) *TestTxBuilder {
 	eventSubmitProposal, err := sdk.TypedEventToEvent(&group.EventSubmitProposal{ProposalId: proposalID})
 	if err != nil {
 		builder.errors = append(builder.errors, err.Error())
@@ -52,7 +52,7 @@ func (builder *testTxBuilder) WithEventSubmitProposal(proposalID uint64) *testTx
 	return builder
 }
 
-func (builder *testTxBuilder) WithEventExec(result group.ProposalExecutorResult) *testTxBuilder {
+func (builder *TestTxBuilder) WithEventExec(result group.ProposalExecutorResult) *TestTxBuilder {
 	eventExec, err := sdk.TypedEventToEvent(&group.EventExec{Result: result, Logs: "1"})
 	if err != nil {
 		builder.errors = append(builder.errors, err.Error())
@@ -62,7 +62,7 @@ func (builder *testTxBuilder) WithEventExec(result group.ProposalExecutorResult)
 	return builder
 }
 
-func (builder *testTxBuilder) WithEventVote() *testTxBuilder {
+func (builder *TestTxBuilder) WithEventVote() *TestTxBuilder {
 	eventVote, err := sdk.TypedEventToEvent(&group.EventVote{})
 	if err != nil {
 		builder.errors = append(builder.errors, err.Error())
@@ -72,7 +72,7 @@ func (builder *testTxBuilder) WithEventVote() *testTxBuilder {
 	return builder
 }
 
-func (builder *testTxBuilder) WithEventWithdrawProposal() *testTxBuilder {
+func (builder *TestTxBuilder) WithEventWithdrawProposal() *TestTxBuilder {
 	eventWithdraw, err := sdk.TypedEventToEvent(&group.EventWithdrawProposal{})
 	if err != nil {
 		builder.errors = append(builder.errors, err.Error())
@@ -82,7 +82,7 @@ func (builder *testTxBuilder) WithEventWithdrawProposal() *testTxBuilder {
 	return builder
 }
 
-func (builder *testTxBuilder) Build() (*juno.Tx, error) {
+func (builder *TestTxBuilder) Build() (*juno.Tx, error) {
 	if len(builder.errors) > 0 {
 		return &juno.Tx{}, fmt.Errorf(`error while building testTx: %s`, strings.Join(builder.errors, "\n"))
 	}

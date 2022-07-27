@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTxBuilder(t *testing.T) {
+func TestTxBuilder_Build(t *testing.T) {
 	timestamp := time.Now()
 	tx, err := NewTestTx(timestamp).WithEventCreateGroup(1, "1").WithEventSubmitProposal(1).WithEventExec(group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN).WithEventVote().WithEventWithdrawProposal().Build()
 	require.NoError(t, err)
