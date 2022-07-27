@@ -141,8 +141,8 @@ func (m *Module) handleMsgSubmitProposal(dbTx *database.DbTx, tx *juno.Tx, index
 }
 
 func (m *Module) handleMsgVote(dbTx *database.DbTx, tx *juno.Tx, index int, msg *group.MsgVote) error {
-	voteEvent := utils.GetValueFromLogs(uint32(index), tx.Logs, "cosmos.group.v1.EventVote", "proposal_id")
-	if voteEvent == "" {
+	event := utils.GetValueFromLogs(uint32(index), tx.Logs, "cosmos.group.v1.EventVote", "proposal_id")
+	if event == "" {
 		return errors.New("error while getting EventVote")
 	}
 
@@ -310,8 +310,8 @@ func (m *Module) handleMsgUpdateGroup(dbTx *database.DbTx, proposal *dbtypes.Gro
 }
 
 func (m *Module) handleMsgWithdrawProposal(dbTx *database.DbTx, tx *juno.Tx, index int, proposalID uint64) error {
-	executorResult := utils.GetValueFromLogs(uint32(index), tx.Logs, "cosmos.group.v1.EventWithdrawProposal", "proposal_id")
-	if executorResult == "" {
+	event := utils.GetValueFromLogs(uint32(index), tx.Logs, "cosmos.group.v1.EventWithdrawProposal", "proposal_id")
+	if event == "" {
 		return errors.New("error while getting EventWithdraw")
 	}
 

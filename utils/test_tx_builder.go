@@ -63,7 +63,7 @@ func (builder *TestTxBuilder) WithEventExec(result group.ProposalExecutorResult)
 }
 
 func (builder *TestTxBuilder) WithEventVote() *TestTxBuilder {
-	eventVote, err := sdk.TypedEventToEvent(&group.EventVote{})
+	eventVote, err := sdk.TypedEventToEvent(&group.EventVote{ProposalId: 1})
 	if err != nil {
 		builder.errors = append(builder.errors, err.Error())
 	}
@@ -73,7 +73,7 @@ func (builder *TestTxBuilder) WithEventVote() *TestTxBuilder {
 }
 
 func (builder *TestTxBuilder) WithEventWithdrawProposal() *TestTxBuilder {
-	eventWithdraw, err := sdk.TypedEventToEvent(&group.EventWithdrawProposal{})
+	eventWithdraw, err := sdk.TypedEventToEvent(&group.EventWithdrawProposal{ProposalId: 1})
 	if err != nil {
 		builder.errors = append(builder.errors, err.Error())
 	}
