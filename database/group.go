@@ -59,6 +59,7 @@ func (dbTx *DbTx) UpdateProposalStatus(proposalID uint64, status string) error {
 	)
 	return err
 }
+
 func (dbTx *DbTx) UpdateProposalStatuses(proposalIDs []uint64, status string) error {
 	_, err := dbTx.Exec(
 		`UPDATE group_proposal SET status = $1 WHERE id = ANY($2)`,
@@ -159,7 +160,7 @@ func (dbTx *DbTx) GetGroupTotalVotingPower(groupID uint64) (int, error) {
 
 func (dbTx *DbTx) GetAllActiveProposals() ([]*types.ProposalDecisionPolicy, error) {
 	rows, err := dbTx.Query(
-		`SELECT p.id, g.voting_period, g.min_execution_period, p.submit_time
+		`SELECT p.id, g.voting_period, p.submit_time
 		FROM group_proposal p
 		JOIN group_with_policy g ON g.id = p.group_id
 		WHERE p.status = 'PROPOSAL_STATUS_SUBMITTED'`,
@@ -173,7 +174,7 @@ func (dbTx *DbTx) GetAllActiveProposals() ([]*types.ProposalDecisionPolicy, erro
 	proposals := make([]*types.ProposalDecisionPolicy, 0)
 	for rows.Next() {
 		var p types.ProposalDecisionPolicy
-		if err := rows.Scan(&p.ID, &p.SubmitTime, &p.VotingPeriod); err != nil {
+		if err := rows.Scan(&p.ID, &p.VotingPeriod, &p.SubmitTime); err != nil {
 			return nil, err
 		}
 
@@ -181,17 +182,4 @@ func (dbTx *DbTx) GetAllActiveProposals() ([]*types.ProposalDecisionPolicy, erro
 	}
 
 	return proposals, rows.Err()
-}
-
-func (dbTx *DbTx) GetProposalDecisionPolicy(proposalID uint64) (*types.ProposalDecisionPolicy, error) {
-	var p types.ProposalDecisionPolicy
-	err := dbTx.QueryRow(
-		`SELECT p.id, p.status, g.voting_period, g.min_execution_period, p.submit_time
-		FROM group_proposal p
-		JOIN group_with_policy g ON g.id = p.group_id
-		WHERE p.id = $1`,
-		proposalID,
-	).Scan(&p.ID, &p.Status, &p.VotingPeriod, &p.MinExecutionPeriod, &p.SubmitTime)
-
-	return &p, err
 }

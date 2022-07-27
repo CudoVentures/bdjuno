@@ -98,12 +98,9 @@ func NewProposalVote(
 }
 
 type ProposalDecisionPolicy struct {
-	ID                 uint64
-	GroupID            uint64
-	Status             string
-	VotingPeriod       int
-	MinExecutionPeriod int
-	SubmitTime         time.Time
+	ID           uint64
+	VotingPeriod int
+	SubmitTime   time.Time
 }
 
 type MsgType struct {

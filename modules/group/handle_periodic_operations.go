@@ -37,9 +37,8 @@ func (m *Module) checkProposalExpirations() error {
 
 		expiredProposals := make([]uint64, 0)
 		for _, p := range proposals {
-
-			votingPeriod := time.Second * time.Duration(p.VotingPeriod)
-			if block.Timestamp.After(p.SubmitTime.Add(votingPeriod)) {
+			votingPeriod := p.SubmitTime.Add(time.Second * time.Duration(p.VotingPeriod))
+			if block.Timestamp.After(votingPeriod) {
 				expiredProposals = append(expiredProposals, p.ID)
 			}
 		}

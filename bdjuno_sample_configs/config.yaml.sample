@@ -13,6 +13,7 @@ chain:
         - cosmwasm
         - gravity
         - cudomint
+        - group
 node:
     type: remote
     config:
