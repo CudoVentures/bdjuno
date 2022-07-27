@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGroup_TestTxBuilder(t *testing.T) {
+func TestTxBuilder(t *testing.T) {
 	timestamp := time.Now()
 	tx, err := NewTestTx(timestamp).WithEventCreateGroup(1, "1").WithEventSubmitProposal(1).WithEventExec(group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN).WithEventVote().WithEventWithdrawProposal().Build()
 	require.NoError(t, err)
@@ -30,7 +30,7 @@ func TestGroup_TestTxBuilder(t *testing.T) {
 	require.Equal(t, expectedHeight, actualHeight)
 }
 
-func TestGroup_TestTxBuilder_Error(t *testing.T) {
+func TestTxBuilder_Error(t *testing.T) {
 	timestamp := time.Now()
 	_, err := NewTestTx(timestamp).WithEventCreateGroup(1, "").WithEventSubmitProposal(1).WithEventExec(group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN).WithEventVote().WithEventWithdrawProposal().Build()
 	expectedError := "error while building testTx: error while building testTx: empty group address"

@@ -9,6 +9,8 @@ CREATE TABLE group_with_policy
     min_execution_period BIGINT NOT NULL
 );
 
+CREATE INDEX group_with_policy_address_index ON group_with_policy (address);
+
 CREATE TABLE group_member
 (   
     group_id INT  NOT NULL REFERENCES group_with_policy (id),
@@ -20,6 +22,7 @@ CREATE TABLE group_member
 
 CREATE INDEX group_member_weight_index ON group_member (group_id) WHERE weight > 0;
 CREATE INDEX group_member_group_id_index ON group_member (group_id);
+CREATE INDEX group_member_address_index ON group_member (address);
 
     
 CREATE TYPE PROPOSAL_STATUS AS ENUM
@@ -55,9 +58,9 @@ CREATE TABLE group_proposal
     transaction_hash TEXT                        NULL REFERENCES transaction (hash)
 );
 
-CREATE INDEX group_proposal_status_index ON group_proposal (status);
+CREATE INDEX group_proposal_status_index ON group_proposal (group_id) WHERE status = 'PROPOSAL_STATUS_SUBMITTED';
 CREATE INDEX group_proposal_group_id_index ON group_proposal (group_id);
-CREATE INDEX group_proposal_submit_time_index ON group_proposal (submit_time);
+CREATE INDEX group_proposal_submit_time_index ON group_proposal (submit_time DESC);
 
 CREATE TYPE VOTE_OPTION AS ENUM
 (

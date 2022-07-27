@@ -70,7 +70,7 @@ func (dbTx *DbTx) UpdateProposalStatuses(proposalIDs []uint64, status string) er
 
 func (dbTx *DbTx) UpdateActiveProposalStatusesByGroup(groupID uint64, status string) error {
 	_, err := dbTx.Exec(
-		`UPDATE group_proposal SET status = $1 WHERE group_id = $2 AND status = 'PROPOSAL_STATUS_SUBMITTED'`,
+		`UPDATE group_proposal SET status = $1 WHERE status = 'PROPOSAL_STATUS_SUBMITTED' AND group_id = $2`,
 		status, groupID,
 	)
 	return err
