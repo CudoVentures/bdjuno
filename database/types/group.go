@@ -32,10 +32,11 @@ type GroupProposalRow struct {
 }
 
 type GroupMemberRow struct {
-	Address  string `db:"address"`
-	GroupID  uint64 `db:"group_id"`
-	Weight   uint64 `db:"weight"`
-	Metadata string `db:"metadata"`
+	Address  string    `db:"address"`
+	GroupID  uint64    `db:"group_id"`
+	Weight   uint64    `db:"weight"`
+	Metadata string    `db:"metadata"`
+	AddTime  time.Time `db:"add_time"`
 }
 
 type GroupProposalVoteRow struct {

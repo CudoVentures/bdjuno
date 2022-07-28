@@ -84,7 +84,12 @@ func (m *Module) handleMsgCreateGroupWithPolicy(dbTx *database.DbTx, tx *juno.Tx
 		members[i] = types.NewMember(m.Address, weight, m.Metadata)
 	}
 
-	return dbTx.SaveMembers(groupID, members)
+	timestamp, err := time.Parse(time.RFC3339, tx.Timestamp)
+	if err != nil {
+		return err
+	}
+
+	return dbTx.SaveMembers(groupID, members, timestamp)
 }
 
 func (m *Module) handleMsgSubmitProposal(dbTx *database.DbTx, tx *juno.Tx, index int, msg *group.MsgSubmitProposal) error {
@@ -238,14 +243,14 @@ func (m *Module) handleMsgExec(dbTx *database.DbTx, tx *juno.Tx, index int, msg 
 
 	isSuccess := executorResult == group.PROPOSAL_EXECUTOR_RESULT_SUCCESS.String()
 	if isSuccess && strings.Contains(proposal.Messages, "MsgUpdateGroup") {
-		return m.handleMsgUpdateGroup(dbTx, proposal)
+		return m.handleMsgUpdateGroup(dbTx, tx, index, proposal)
 	}
 
 	return nil
 
 }
 
-func (m *Module) handleMsgUpdateGroup(dbTx *database.DbTx, proposal *dbtypes.GroupProposalRow) error {
+func (m *Module) handleMsgUpdateGroup(dbTx *database.DbTx, tx *juno.Tx, index int, proposal *dbtypes.GroupProposalRow) error {
 	if proposal.ExecutorResult != group.PROPOSAL_EXECUTOR_RESULT_SUCCESS.String() {
 		return errors.New("error while executing handleMsgUpdateGroup")
 	}
@@ -273,7 +278,12 @@ func (m *Module) handleMsgUpdateGroup(dbTx *database.DbTx, proposal *dbtypes.Gro
 				return err
 			}
 
-			if err := dbTx.SaveMembers(msg.GroupID, msg.MemberUpdates); err != nil {
+			timestamp, err := time.Parse(time.RFC3339, tx.Timestamp)
+			if err != nil {
+				return err
+			}
+
+			if err := dbTx.SaveMembers(msg.GroupID, msg.MemberUpdates, timestamp); err != nil {
 				return err
 			}
 		case "/cosmos.group.v1.MsgUpdateGroupMetadata":

@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"time"
 
 	dbtypes "github.com/forbole/bdjuno/v2/database/types"
 	"github.com/forbole/bdjuno/v2/types"
@@ -17,13 +18,13 @@ func (dbTx *DbTx) SaveGroup(group *types.Group) error {
 	return err
 }
 
-func (dbTx *DbTx) SaveMembers(groupID uint64, members []*types.Member) error {
+func (dbTx *DbTx) SaveMembers(groupID uint64, members []*types.Member, timestamp time.Time) error {
 	stmt := "INSERT INTO group_member VALUES "
 	var params []interface{}
 	for i, m := range members {
-		n := i * 4
-		stmt += fmt.Sprintf("($%d, $%d, $%d, $%d),", n+1, n+2, n+3, n+4)
-		params = append(params, groupID, m.Address, m.Weight, m.Metadata)
+		n := i * 5
+		stmt += fmt.Sprintf("($%d, $%d, $%d, $%d, $%d),", n+1, n+2, n+3, n+4, n+5)
+		params = append(params, groupID, m.Address, m.Weight, m.Metadata, timestamp)
 	}
 
 	stmt = stmt[:len(stmt)-1]

@@ -13,10 +13,11 @@ CREATE INDEX group_with_policy_address_index ON group_with_policy (address);
 
 CREATE TABLE group_member
 (   
-    group_id INT  NOT NULL REFERENCES group_with_policy (id),
-    address  TEXT NOT NULL,
-    weight   INT  NOT NULL,
-    metadata TEXT NULL,
+    group_id INT                    NOT NULL REFERENCES group_with_policy (id),
+    address  TEXT                   NOT NULL,
+    weight   INT                    NOT NULL,
+    metadata TEXT                   NULL,
+    add_time TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     PRIMARY KEY (group_id, address)
 );
 

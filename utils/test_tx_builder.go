@@ -17,10 +17,12 @@ type TestTxBuilder struct {
 	events    []abcitypes.Event
 	errors    []string
 	timestamp time.Time
+	txHash    string
+	height    int64
 }
 
-func NewTestTx(timestamp time.Time) *TestTxBuilder {
-	return &TestTxBuilder{timestamp: timestamp}
+func NewTestTx(timestamp time.Time, txHash string, height int64) *TestTxBuilder {
+	return &TestTxBuilder{timestamp: timestamp, txHash: txHash, height: height}
 }
 
 func (builder *TestTxBuilder) WithEventCreateGroup(groupID uint64, address string) *TestTxBuilder {
@@ -88,10 +90,10 @@ func (builder *TestTxBuilder) Build() (*juno.Tx, error) {
 	}
 	txLog := sdk.ABCIMessageLogs{{MsgIndex: 0, Events: sdk.StringifyEvents(builder.events)}}
 	txResponse := sdk.TxResponse{
-		TxHash:    "1",
+		TxHash:    builder.txHash,
 		Logs:      txLog,
 		Timestamp: builder.timestamp.Format(time.RFC3339),
-		Height:    1,
+		Height:    int64(builder.height),
 	}
 
 	return &juno.Tx{TxResponse: &txResponse}, nil

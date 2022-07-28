@@ -24,5 +24,6 @@ select_permissions:
     - address
     - weight
     - metadata
+    - add_time
     filter: {}
   role: anonymous
