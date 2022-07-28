@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -62,7 +61,7 @@ func (m *Module) handleMsgStoreCode(index int, msg *wasmTypes.MsgStoreCode, tx *
 			msg.Sender,
 			index,
 			isSuccess(tx.Code),
-			sanitizeUTF8(string(instantiatePermission)),
+			utils.SanitizeUTF8(string(instantiatePermission)),
 			resultCodeID,
 		),
 	)
@@ -83,7 +82,7 @@ func (m *Module) handleMsgInstantiateContract(index int, msg *wasmTypes.MsgInsta
 			index,
 			isSuccess(tx.Code),
 			msg.Admin,
-			sanitizeUTF8(string(funds)),
+			utils.SanitizeUTF8(string(funds)),
 			msg.Label,
 			strconv.FormatUint(msg.CodeID, 10),
 			resultContractAddress,
@@ -120,8 +119,8 @@ func (m *Module) handleMsgExecuteContract(index int, msg *wasmTypes.MsgExecuteCo
 			index,
 			isSuccess(tx.Code),
 			method,
-			sanitizeUTF8(string(arguments)),
-			sanitizeUTF8(string(funds)),
+			utils.SanitizeUTF8(string(arguments)),
+			utils.SanitizeUTF8(string(funds)),
 			msg.Contract,
 		),
 	)
@@ -137,7 +136,7 @@ func (m *Module) handleMsgMigrateContract(index int, msg *wasmTypes.MsgMigrateCo
 			isSuccess(tx.Code),
 			msg.Contract,
 			strconv.FormatUint(msg.CodeID, 10),
-			sanitizeUTF8(string(msg.Msg)),
+			utils.SanitizeUTF8(string(msg.Msg)),
 		),
 	)
 }
@@ -179,8 +178,4 @@ func getPayloadMapKeys(payloadMap map[string]interface{}) []string {
 		keys = append(keys, k)
 	}
 	return keys
-}
-
-func sanitizeUTF8(s string) string {
-	return strings.ToValidUTF8(s, "")
 }

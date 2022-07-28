@@ -54,11 +54,15 @@ func (m *Module) handleMsgMintNFT(index int, tx *juno.Tx, msg *nftTypes.MsgMintN
 		return err
 	}
 
-	return m.db.SaveNFT(tx.TxHash, tokenID, msg.DenomId, msg.Name, msg.URI, msg.Data, msg.Recipient, msg.Sender, msg.ContractAddressSigner)
+	dataJSON, dataText := getData(msg.Data)
+
+	return m.db.SaveNFT(tx.TxHash, tokenID, msg.DenomId, msg.Name, msg.URI, utils.SanitizeUTF8(dataJSON), dataText, msg.Recipient, msg.Sender, msg.ContractAddressSigner)
 }
 
 func (m *Module) handleMsgEditNFT(msg *nftTypes.MsgEditNFT) error {
-	return m.db.UpdateNFT(msg.Id, msg.DenomId, msg.Name, msg.URI, msg.Data)
+	dataJSON, dataText := getData(msg.Data)
+
+	return m.db.UpdateNFT(msg.Id, msg.DenomId, msg.Name, msg.URI, utils.SanitizeUTF8(dataJSON), dataText)
 }
 
 func (m *Module) handleMsgTransferNFT(msg *nftTypes.MsgTransferNft) error {
@@ -67,4 +71,16 @@ func (m *Module) handleMsgTransferNFT(msg *nftTypes.MsgTransferNft) error {
 
 func (m *Module) handleMsgBurnNFT(msg *nftTypes.MsgBurnNFT) error {
 	return m.db.BurnNFT(msg.Id, msg.DenomId)
+}
+
+func getData(data string) (string, string) {
+	dataText := data
+	dataJSON := "{}"
+
+	if data != "" && utils.IsJSON(data) {
+		dataJSON = data
+		dataText = ""
+	}
+
+	return dataJSON, dataText
 }

@@ -11,14 +11,14 @@ func (db *Db) UpdateDenom(denomID, owner string) error {
 	return err
 }
 
-func (db *Db) SaveNFT(txHash string, tokenID uint64, denomID, name, uri, data, owner, sender, contractAddressSigner string) error {
-	_, err := db.Sql.Exec(`INSERT INTO nft_nft (transaction_hash, id, denom_id, name, uri, data, owner, sender, contract_address_signer) 
-		VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT DO NOTHING`, txHash, tokenID, denomID, name, uri, data, owner, sender, contractAddressSigner)
+func (db *Db) SaveNFT(txHash string, tokenID uint64, denomID, name, uri, dataJSON, dataText, owner, sender, contractAddressSigner string) error {
+	_, err := db.Sqlx.Exec(`INSERT INTO nft_nft (transaction_hash, id, denom_id, name, uri, owner, data_json, data_text, sender, contract_address_signer) 
+	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT DO NOTHING`, txHash, tokenID, denomID, name, uri, owner, dataJSON, dataText, sender, contractAddressSigner)
 	return err
 }
 
-func (db *Db) UpdateNFT(id, denomID, name, uri, data string) error {
-	_, err := db.Sql.Exec(`UPDATE nft_nft SET name = $1, uri = $2, data = $3 WHERE id = $4 AND denom_id = $5`, name, uri, data, id, denomID)
+func (db *Db) UpdateNFT(id, denomID, name, uri, dataJSON, dataText string) error {
+	_, err := db.Sql.Exec(`UPDATE nft_nft SET name = $1, uri = $2, data_json = $3, data_text = $4 WHERE id = $5 AND denom_id = $6`, name, uri, dataJSON, dataText, id, denomID)
 	return err
 }
 

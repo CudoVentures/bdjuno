@@ -17,7 +17,7 @@ type migrateNftsWorker struct {
 }
 
 func (mnw migrateNftsWorker) Name() string {
-	return "migrate_nfts_worker_1"
+	return "migrate_nfts_worker"
 }
 
 func (mnw migrateNftsWorker) Start(ctx context.Context, parseCfg *parse.Config, parseCtx *parse.Context, storage keyValueStorage, interval time.Duration) {
