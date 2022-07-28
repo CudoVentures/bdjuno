@@ -18,7 +18,7 @@ var (
 
 func TestTxBuilder_Build(t *testing.T) {
 	timestamp := time.Now()
-	tx, err := NewTestTx(timestamp, str, int64(num)).WithEventCreateGroup(num, str).WithEventSubmitProposal(num).WithEventExec(resultDefault).WithEventVote().WithEventWithdrawProposal().Build()
+	tx, err := NewTestTx(timestamp, str, num).WithEventCreateGroup(num, str).WithEventSubmitProposal(num).WithEventExec(resultDefault).WithEventVote().WithEventWithdrawProposal().Build()
 	require.NoError(t, err)
 
 	expectedEventCount := 6
@@ -56,7 +56,7 @@ func TestTxBuilder_Build(t *testing.T) {
 
 func TestTxBuilder_Error(t *testing.T) {
 	timestamp := time.Now()
-	_, err := NewTestTx(timestamp, str, int64(num)).WithEventCreateGroup(1, "").WithEventSubmitProposal(1).WithEventExec(group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN).WithEventVote().WithEventWithdrawProposal().Build()
+	_, err := NewTestTx(timestamp, str, num).WithEventCreateGroup(1, "").WithEventSubmitProposal(1).WithEventExec(group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN).WithEventVote().WithEventWithdrawProposal().Build()
 	expectedError := "error while building testTx: error while building testTx: empty group address"
 	require.Equal(t, expectedError, err.Error())
 }

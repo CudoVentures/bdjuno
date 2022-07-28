@@ -243,14 +243,14 @@ func (m *Module) handleMsgExec(dbTx *database.DbTx, tx *juno.Tx, index int, msg 
 
 	isSuccess := executorResult == group.PROPOSAL_EXECUTOR_RESULT_SUCCESS.String()
 	if isSuccess && strings.Contains(proposal.Messages, "MsgUpdateGroup") {
-		return m.handleMsgUpdateGroup(dbTx, tx, index, proposal)
+		return m.handleMsgUpdateGroup(dbTx, tx, proposal)
 	}
 
 	return nil
 
 }
 
-func (m *Module) handleMsgUpdateGroup(dbTx *database.DbTx, tx *juno.Tx, index int, proposal *dbtypes.GroupProposalRow) error {
+func (m *Module) handleMsgUpdateGroup(dbTx *database.DbTx, tx *juno.Tx, proposal *dbtypes.GroupProposalRow) error {
 	if proposal.ExecutorResult != group.PROPOSAL_EXECUTOR_RESULT_SUCCESS.String() {
 		return errors.New("error while executing handleMsgUpdateGroup")
 	}

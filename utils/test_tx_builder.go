@@ -18,10 +18,10 @@ type TestTxBuilder struct {
 	errors    []string
 	timestamp time.Time
 	txHash    string
-	height    int64
+	height    uint64
 }
 
-func NewTestTx(timestamp time.Time, txHash string, height int64) *TestTxBuilder {
+func NewTestTx(timestamp time.Time, txHash string, height uint64) *TestTxBuilder {
 	return &TestTxBuilder{timestamp: timestamp, txHash: txHash, height: height}
 }
 
