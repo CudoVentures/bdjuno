@@ -1,5 +1,5 @@
 table:
-  name: nft_issue_denom
+  name: nft_denom
   schema: public
 object_relationships:
 - name: transaction
@@ -10,6 +10,11 @@ select_permissions:
     allow_aggregations: true
     columns:
     - transaction_hash
-    - denom_id
+    - id
+    - name
+    - schema
+    - symbol
+    - owner
+    - contract_address_signer
     filter: {}
   role: anonymous

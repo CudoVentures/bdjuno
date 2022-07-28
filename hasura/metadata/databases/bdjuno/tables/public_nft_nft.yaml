@@ -1,5 +1,5 @@
 table:
-  name: nft_mint
+  name: nft_nft
   schema: public
 object_relationships:
 - name: transaction
@@ -10,7 +10,14 @@ select_permissions:
     allow_aggregations: true
     columns:
     - transaction_hash
-    - token_id
+    - id
     - denom_id
+    - name
+    - uri
+    - data
+    - owner
+    - sender
+    - contract_address_signer
+    - burned
     filter: {}
   role: anonymous
