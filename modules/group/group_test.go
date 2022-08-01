@@ -66,7 +66,7 @@ func (suite *GroupModuleTestSuite) SetupTest() {
 	_, err = db.Sql.Exec(`INSERT INTO transaction (hash, height, success, signatures) VALUES ($1, $2, true, $3)`, oneStr, one, pq.Array([]string{oneStr}))
 	suite.Require().NoError(err)
 
-	_, err = db.Sql.Exec(`INSERT INTO group_proposal VALUES ($1, $2, $3, $4, $5, $6, null, null, null, $7, $8, $9, null)`, one, one, oneStr, oneStr, statusDefault.String(), resultDefault.String(), oneStr, oneStr, timestamp)
+	_, err = db.Sql.Exec(`INSERT INTO group_proposal VALUES ($1, $2, $3, $4, $5, $6, null, null, null, $7, $8, $9, null, $10)`, one, one, oneStr, oneStr, statusDefault.String(), resultDefault.String(), oneStr, oneStr, timestamp, one)
 	suite.Require().NoError(err)
 
 }
@@ -136,6 +136,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgSubmitProposal() {
 		Messages:         "[]",
 		BlockHeight:      int64(one),
 		SubmitTime:       timestamp,
+		MemberCount:      int(one),
 	}}
 	var actualProposal []dbtypes.GroupProposalRow
 	err = suite.db.Sqlx.Select(&actualProposal, `SELECT * FROM group_proposal where id = $1`, two)
@@ -237,6 +238,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec() {
 		TxHash:           dbtypes.ToNullString(oneStr),
 		BlockHeight:      int64(one),
 		SubmitTime:       timestamp,
+		MemberCount:      int(one),
 	}}
 	var actualProposal []dbtypes.GroupProposalRow
 	err = suite.db.Sqlx.Select(&actualProposal, `SELECT * FROM group_proposal WHERE ID = $1`, one)
@@ -306,7 +308,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgWithdrawProposal() {
 }
 
 func (suite *GroupModuleTestSuite) TestGroup_HandlePeriodicOperations() {
-	_, err := suite.db.Sql.Exec(`INSERT INTO group_proposal VALUES ($1, $2, $3, $4, $5, $6, null, null, null, $7, $8, $9, null)`, two, one, oneStr, oneStr, statusDefault.String(), resultDefault.String(), oneStr, oneStr, timestamp.Add(time.Second))
+	_, err := suite.db.Sql.Exec(`INSERT INTO group_proposal VALUES ($1, $2, $3, $4, $5, $6, null, null, null, $7, $8, $9, null, $10)`, two, one, oneStr, oneStr, statusDefault.String(), resultDefault.String(), oneStr, oneStr, timestamp.Add(time.Second), one)
 	suite.Require().NoError(err)
 
 	_, err = suite.db.Sql.Exec(`INSERT INTO block (height, hash, timestamp) VALUES ($1, $2, $3)`, two, two, timestamp.Add(time.Second*2))

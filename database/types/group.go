@@ -29,6 +29,7 @@ type GroupProposalRow struct {
 	TxHash           sql.NullString `db:"transaction_hash"`
 	BlockHeight      int64          `db:"height"`
 	SubmitTime       time.Time      `db:"submit_time"`
+	MemberCount      int            `db:"member_count"`
 }
 
 type GroupMemberRow struct {

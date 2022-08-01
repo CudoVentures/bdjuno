@@ -44,6 +44,7 @@ type GroupProposal struct {
 	Messages       string
 	BlockHeight    int64
 	SubmitTime     time.Time
+	MemberCount    int
 }
 
 func NewGroupProposal(
@@ -56,6 +57,7 @@ func NewGroupProposal(
 	messages string,
 	height int64,
 	submitTime time.Time,
+	memberCount int,
 ) *GroupProposal {
 	return &GroupProposal{
 		ID:             id,
@@ -67,6 +69,7 @@ func NewGroupProposal(
 		Messages:       messages,
 		BlockHeight:    height,
 		SubmitTime:     submitTime,
+		MemberCount:    memberCount,
 	}
 }
 

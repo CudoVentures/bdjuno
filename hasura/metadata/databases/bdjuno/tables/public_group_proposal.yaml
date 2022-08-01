@@ -36,5 +36,6 @@ select_permissions:
     - height
     - submit_time
     - transaction_hash
+    - member_count
     filter: {}
   role: anonymous

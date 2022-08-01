@@ -38,9 +38,9 @@ func (dbTx *DbTx) SaveMembers(groupID uint64, members []*types.Member, timestamp
 
 func (dbTx *DbTx) SaveProposal(proposal *types.GroupProposal) error {
 	_, err := dbTx.Exec(
-		`INSERT INTO group_proposal VALUES ($1, $2, $3, $4, $5, $6, null, null, null, $7, $8, $9, null) ON CONFLICT DO NOTHING`,
+		`INSERT INTO group_proposal VALUES ($1, $2, $3, $4, $5, $6, null, null, null, $7, $8, $9, null, $10) ON CONFLICT DO NOTHING`,
 		proposal.ID, proposal.GroupID, proposal.Metadata, proposal.Proposer, proposal.Status,
-		proposal.ExecutorResult, proposal.Messages, proposal.BlockHeight, proposal.SubmitTime,
+		proposal.ExecutorResult, proposal.Messages, proposal.BlockHeight, proposal.SubmitTime, proposal.MemberCount,
 	)
 	return err
 }
@@ -118,8 +118,8 @@ func (dbTx *DbTx) GetGroupIDByGroupAddress(groupAddress string) (uint64, error) 
 func (dbTx *DbTx) GetProposal(proposalID uint64) (*dbtypes.GroupProposalRow, error) {
 	var p dbtypes.GroupProposalRow
 	err := dbTx.QueryRow(`SELECT * FROM group_proposal WHERE id = $1`, proposalID).Scan(
-		&p.ID, &p.GroupID, &p.ProposalMetadata, &p.Proposer, &p.Status, &p.ExecutorResult,
-		&p.Executor, &p.ExecutionTime, &p.ExecutionLog, &p.Messages, &p.BlockHeight, &p.SubmitTime, &p.TxHash,
+		&p.ID, &p.GroupID, &p.ProposalMetadata, &p.Proposer, &p.Status, &p.ExecutorResult, &p.Executor,
+		&p.ExecutionTime, &p.ExecutionLog, &p.Messages, &p.BlockHeight, &p.SubmitTime, &p.TxHash, &p.MemberCount,
 	)
 
 	return &p, err
@@ -157,6 +157,13 @@ func (dbTx *DbTx) GetGroupTotalVotingPower(groupID uint64) (int, error) {
 	err := dbTx.QueryRow(`SELECT SUM(weight) FROM group_member WHERE weight > 0 AND group_id = $1`, groupID).Scan(&power)
 
 	return power, err
+}
+
+func (dbTx *DbTx) GetGroupMemberCount(groupID uint64) (int, error) {
+	var count int
+	err := dbTx.QueryRow(`SELECT COUNT(*) FROM group_member WHERE weight > 0 AND group_id = $1`, groupID).Scan(&count)
+
+	return count, err
 }
 
 func (dbTx *DbTx) GetAllActiveProposals() ([]*types.ProposalDecisionPolicy, error) {

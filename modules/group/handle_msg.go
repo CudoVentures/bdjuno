@@ -122,7 +122,12 @@ func (m *Module) handleMsgSubmitProposal(dbTx *database.DbTx, tx *juno.Tx, index
 		return err
 	}
 
-	proposal := types.NewGroupProposal(proposalID, groupID, msg.Metadata, msg.Proposers[0], status, result, msgs, tx.Height, timestamp)
+	memberCount, err := dbTx.GetGroupMemberCount(groupID)
+	if err != nil {
+		return err
+	}
+
+	proposal := types.NewGroupProposal(proposalID, groupID, msg.Metadata, msg.Proposers[0], status, result, msgs, tx.Height, timestamp, memberCount)
 
 	if err := dbTx.SaveProposal(proposal); err != nil {
 		return err
