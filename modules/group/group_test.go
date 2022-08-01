@@ -318,7 +318,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandlePeriodicOperations() {
 	scheduler.StartAsync()
 	time.Sleep(time.Second * 5)
 
-	expectedStatuses := []string{statusDefault.String(), statusRejected.String()}
+	expectedStatuses := []string{statusDefault.String(), "PROPOSAL_STATUS_EXPIRED"}
 	var actualStatuses []string
 	err = suite.db.Sqlx.Select(&actualStatuses, `SELECT status FROM group_proposal`)
 	suite.Require().NoError(err)

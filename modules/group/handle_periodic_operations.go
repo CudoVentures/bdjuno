@@ -3,7 +3,6 @@ package group
 import (
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/x/group"
 	"github.com/forbole/bdjuno/v2/database"
 	"github.com/forbole/bdjuno/v2/modules/utils"
 
@@ -14,7 +13,7 @@ import (
 func (m *Module) RegisterPeriodicOperations(scheduler *gocron.Scheduler) error {
 	log.Debug().Str("module", "group").Msg("setting up periodic tasks")
 
-	if _, err := scheduler.Every(1).Hour().Do(func() {
+	if _, err := scheduler.Every(5).Minute().Do(func() {
 		utils.WatchMethod(m.checkProposalExpirations)
 	}); err != nil {
 		return err
@@ -43,6 +42,6 @@ func (m *Module) checkProposalExpirations() error {
 			}
 		}
 
-		return dbTx.UpdateProposalStatuses(expiredProposals, group.PROPOSAL_STATUS_REJECTED.String())
+		return dbTx.UpdateProposalStatuses(expiredProposals, "PROPOSAL_STATUS_EXPIRED")
 	})
 }
