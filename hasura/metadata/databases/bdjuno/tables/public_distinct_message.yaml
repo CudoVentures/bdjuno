@@ -1,0 +1,19 @@
+table:
+  name: distinct_message
+  schema: public
+object_relationships:
+- name: transaction
+  using:
+    foreign_key_constraint_on: transaction_hash
+select_permissions:
+- permission:
+    allow_aggregations: true
+    columns:
+    - transaction_hash
+    - height
+    - index
+    - type
+    - value
+    - involved_accounts_addresses
+    filter: {}
+  role: anonymous
