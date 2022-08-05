@@ -3,6 +3,7 @@ package workers
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/forbole/bdjuno/v2/database"
@@ -23,6 +24,7 @@ var cancelWorkersCtx context.CancelFunc
 var workers = []worker{
 	fixBlocksWorker{},
 	migrateNftsWorker{},
+	blocksMonitoringWorker{},
 }
 
 func GetStartWorkersPrerunE(origPreRunE PreRunE, parseCfg *parse.Config) PreRunE {
@@ -72,7 +74,7 @@ func startWorkers(ctx context.Context, workers []worker, cfg workersConfig, pars
 
 func getWorkerConfig(cfg workersConfig, name string) (workerConfig, error) {
 	for idx := range cfg.Workers {
-		if cfg.Workers[idx].Name == name {
+		if strings.HasPrefix(cfg.Workers[idx].Name, name) {
 			return cfg.Workers[idx], nil
 		}
 	}

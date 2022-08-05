@@ -72,7 +72,7 @@ func (mnw migrateNftsWorker) migrateNfts(parseCfg *parse.Config, parseCtx *parse
 
 	nftModule := nft.NewModule(parseCtx.EncodingConfig.Marshaler, database.Cast(parseCtx.Database))
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10000; i++ {
 		if err := mnw.processBlock(nftModule, parseCtx, currentHeight); err != nil {
 			return fmt.Errorf("error while processing block at height '%d': %s", currentHeight, err)
 		}

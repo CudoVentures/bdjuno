@@ -1,5 +1,5 @@
 table:
-  name: nft_mint
+  name: distinct_message
   schema: public
 object_relationships:
 - name: transaction
@@ -10,7 +10,10 @@ select_permissions:
     allow_aggregations: true
     columns:
     - transaction_hash
-    - token_id
-    - denom_id
+    - height
+    - index
+    - type
+    - value
+    - involved_accounts_addresses
     filter: {}
   role: anonymous
