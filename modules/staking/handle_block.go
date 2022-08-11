@@ -6,6 +6,7 @@ import (
 
 	"github.com/forbole/bdjuno/v2/types"
 
+	"github.com/cosmos/cosmos-sdk/types/query"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	juno "github.com/forbole/juno/v2/types"
 
@@ -149,7 +150,14 @@ func (m *Module) updateStakingPool(height int64) {
 
 func (m *Module) updateDelegations(height int64, validators []stakingtypes.Validator) {
 	for i := range validators {
-		response, err := m.source.GetValidatorDelegationsWithPagination(height, validators[i].OperatorAddress, nil)
+		response, err := m.source.GetValidatorDelegationsWithPagination(height, validators[i].OperatorAddress, &query.PageRequest{CountTotal: true})
+		if err != nil {
+			log.Error().Str("module", "staking").Err(err).Int64("height", height).
+				Msg("error while getting validator delegations")
+			continue
+		}
+
+		response, err = m.source.GetValidatorDelegationsWithPagination(height, validators[i].OperatorAddress, &query.PageRequest{Limit: response.Pagination.Total})
 		if err != nil {
 			log.Error().Str("module", "staking").Err(err).Int64("height", height).
 				Msg("error while getting validator delegations")
@@ -164,10 +172,15 @@ func (m *Module) updateDelegations(height int64, validators []stakingtypes.Valid
 		for _, response := range response.DelegationResponses {
 			delegator := response.Delegation.DelegatorAddress
 
-			if !m.refreshedAccounts[delegator] {
-				m.refreshedAccounts[delegator] = true
-				delegators = append(delegators, delegator)
-			}
+			func() {
+				m.refreshedAccountsMutex.Lock()
+				defer m.refreshedAccountsMutex.Unlock()
+
+				if !m.refreshedAccounts[delegator] {
+					m.refreshedAccounts[delegator] = true
+					delegators = append(delegators, delegator)
+				}
+			}()
 		}
 
 		if len(delegators) > 0 {
