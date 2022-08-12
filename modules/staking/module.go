@@ -1,6 +1,8 @@
 package staking
 
 import (
+	"sync"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/forbole/juno/v2/modules"
 
@@ -17,12 +19,13 @@ var (
 
 // Module represents the x/staking module
 type Module struct {
-	cdc               codec.Codec
-	db                *database.Db
-	source            stakingsource.Source
-	slashingModule    SlashingModule
-	authModule        AuthModule
-	refreshedAccounts map[string]bool
+	cdc                    codec.Codec
+	db                     *database.Db
+	source                 stakingsource.Source
+	slashingModule         SlashingModule
+	authModule             AuthModule
+	refreshedAccounts      map[string]bool
+	refreshedAccountsMutex sync.Mutex
 }
 
 // NewModule returns a new Module instance
