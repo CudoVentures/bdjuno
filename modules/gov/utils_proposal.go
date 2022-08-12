@@ -23,8 +23,10 @@ func (m *Module) UpdateProposal(height int64, blockVals *tmctypes.ResultValidato
 	proposal, err := m.source.Proposal(height, id)
 	if err != nil {
 		if strings.Contains(err.Error(), codes.NotFound.String()) {
+			// Temporary disable proposals deletion: CUDOS-1489
+			return nil
 			// Handle case when a proposal is deleted from the chain (did not pass deposit period)
-			return m.updateDeletedProposalStatus(id)
+			// return m.updateDeletedProposalStatus(id)
 		}
 
 		return fmt.Errorf("error while getting proposal: %s", err)
@@ -65,21 +67,21 @@ func (m *Module) UpdateProposal(height int64, blockVals *tmctypes.ResultValidato
 
 // updateDeletedProposalStatus updates the proposal having the given id by setting its status
 // to the one that represents a deleted proposal
-func (m *Module) updateDeletedProposalStatus(id uint64) error {
-	stored, err := m.db.GetProposal(id)
-	if err != nil {
-		return err
-	}
+// func (m *Module) updateDeletedProposalStatus(id uint64) error {
+// 	stored, err := m.db.GetProposal(id)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return m.db.UpdateProposal(
-		types.NewProposalUpdate(
-			stored.ProposalID,
-			types.ProposalStatusInvalid,
-			stored.VotingStartTime,
-			stored.VotingEndTime,
-		),
-	)
-}
+// 	return m.db.UpdateProposal(
+// 		types.NewProposalUpdate(
+// 			stored.ProposalID,
+// 			types.ProposalStatusInvalid,
+// 			stored.VotingStartTime,
+// 			stored.VotingEndTime,
+// 		),
+// 	)
+// }
 
 // handleParamChangeProposal updates params to the corresponding modules if a ParamChangeProposal has passed
 func (m *Module) handleParamChangeProposal(height int64, proposal govtypes.Proposal) error {
