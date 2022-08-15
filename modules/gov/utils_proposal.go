@@ -28,6 +28,7 @@ func (m *Module) UpdateProposal(height int64, blockVals *tmctypes.ResultValidato
 
 			if m.proposalNotFoundCount[id] >= 100 {
 				// Handle case when a proposal is deleted from the chain (did not pass deposit period)
+				delete(m.proposalNotFoundCount, id)
 				return m.updateDeletedProposalStatus(id)
 			}
 
