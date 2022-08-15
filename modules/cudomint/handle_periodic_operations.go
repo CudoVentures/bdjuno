@@ -66,6 +66,8 @@ func (m *Module) fetchStats() error {
 		return err
 	}
 
+	supply = supply.MulInt64(1000000000000000000)
+
 	if err := m.db.SaveAdjustedSupply(supply, stats.Supply.Height); err != nil {
 		return err
 	}
