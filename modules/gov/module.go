@@ -1,6 +1,8 @@
 package gov
 
 import (
+	"sync"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	"github.com/forbole/bdjuno/v2/database"
@@ -19,13 +21,15 @@ var (
 
 // Module represent x/gov module
 type Module struct {
-	cdc            codec.Codec
-	db             *database.Db
-	source         govsource.Source
-	authModule     AuthModule
-	distrModule    DistrModule
-	slashingModule SlashingModule
-	stakingModule  StakingModule
+	cdc                        codec.Codec
+	db                         *database.Db
+	source                     govsource.Source
+	authModule                 AuthModule
+	distrModule                DistrModule
+	slashingModule             SlashingModule
+	stakingModule              StakingModule
+	proposalNotFoundCount      map[uint64]int
+	proposalNotFoundCountMutex sync.Mutex
 }
 
 // NewModule returns a new Module instance
@@ -39,13 +43,14 @@ func NewModule(
 	db *database.Db,
 ) *Module {
 	return &Module{
-		cdc:            cdc,
-		source:         source,
-		authModule:     authModule,
-		distrModule:    distrModule,
-		slashingModule: slashingModule,
-		stakingModule:  stakingModule,
-		db:             db,
+		cdc:                   cdc,
+		source:                source,
+		authModule:            authModule,
+		distrModule:           distrModule,
+		slashingModule:        slashingModule,
+		stakingModule:         stakingModule,
+		db:                    db,
+		proposalNotFoundCount: make(map[uint64]int),
 	}
 }
 
