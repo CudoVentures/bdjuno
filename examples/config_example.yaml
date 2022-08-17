@@ -16,6 +16,7 @@ chain:
         - gravity
         - cudomint
         - nft
+        - group
 node:
     type: remote
     config:
