@@ -55,6 +55,7 @@ import (
 	govsource "github.com/forbole/bdjuno/v2/modules/gov/source"
 	localgovsource "github.com/forbole/bdjuno/v2/modules/gov/source/local"
 	remotegovsource "github.com/forbole/bdjuno/v2/modules/gov/source/remote"
+	"github.com/forbole/bdjuno/v2/modules/group"
 	"github.com/forbole/bdjuno/v2/modules/modules"
 	"github.com/forbole/bdjuno/v2/modules/pricefeed"
 	slashingsource "github.com/forbole/bdjuno/v2/modules/slashing/source"
@@ -119,6 +120,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	cosmwasmModule := cosmwasm.NewModule(cdc, db)
 	gravityModule := gravity.NewModule(cdc, db)
 	nftModule := nft.NewModule(cdc, db)
+	groupModule := group.NewModule(cdc, db)
 
 	return []jmodules.Module{
 		messages.NewModule(r.parser, cdc, ctx.Database),
@@ -140,6 +142,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		cosmwasmModule,
 		gravityModule,
 		nftModule,
+		groupModule,
 	}
 }
 
