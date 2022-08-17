@@ -23,8 +23,18 @@ func (m *Module) UpdateProposal(height int64, blockVals *tmctypes.ResultValidato
 	proposal, err := m.source.Proposal(height, id)
 	if err != nil {
 		if strings.Contains(err.Error(), codes.NotFound.String()) {
-			// Handle case when a proposal is deleted from the chain (did not pass deposit period)
-			return m.updateDeletedProposalStatus(id)
+			m.proposalNotFoundCountMutex.Lock()
+			defer m.proposalNotFoundCountMutex.Unlock()
+
+			if m.proposalNotFoundCount[id] >= 100 {
+				// Handle case when a proposal is deleted from the chain (did not pass deposit period)
+				delete(m.proposalNotFoundCount, id)
+				return m.updateDeletedProposalStatus(id)
+			}
+
+			m.proposalNotFoundCount[id]++
+
+			return nil
 		}
 
 		return fmt.Errorf("error while getting proposal: %s", err)

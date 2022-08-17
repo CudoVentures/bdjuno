@@ -14,6 +14,7 @@ import (
 	"github.com/forbole/juno/v2/node/remote"
 
 	"github.com/forbole/bdjuno/v2/modules/cosmwasm"
+	"github.com/forbole/bdjuno/v2/modules/cudomint"
 	"github.com/forbole/bdjuno/v2/modules/gravity"
 	"github.com/forbole/bdjuno/v2/modules/history"
 	"github.com/forbole/bdjuno/v2/modules/nft"
@@ -47,7 +48,6 @@ import (
 	"github.com/forbole/bdjuno/v2/modules/distribution"
 	"github.com/forbole/bdjuno/v2/modules/feegrant"
 
-	"github.com/forbole/bdjuno/v2/modules/cudomint"
 	distrsource "github.com/forbole/bdjuno/v2/modules/distribution/source"
 	localdistrsource "github.com/forbole/bdjuno/v2/modules/distribution/source/local"
 	remotedistrsource "github.com/forbole/bdjuno/v2/modules/distribution/source/remote"
