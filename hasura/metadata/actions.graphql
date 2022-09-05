@@ -72,6 +72,13 @@ type Query {
         limit: Int
         count_total: Boolean
     ): ActionUnbondingDelegationResponse
+
+    action_nft_transfer_events(
+        token_id: Int!
+        denom_id: String!
+        from_time: Int
+        to_time: Int
+    ): ActionNftTransferEventsResponse
 }
 
 type ActionBalance {
@@ -106,10 +113,15 @@ type ActionValidatorCommissionAmount {
     coins: [ActionCoin]
 }
 
+type ActionNftTransferEventsResponse {
+    events: [ActionNftTransferEvent]
+}
+
 scalar ActionCoin
 scalar ActionDelegation
 scalar ActionEntry
 scalar ActionPagination
 scalar ActionRedelegation
 scalar ActionUnbondingDelegation
+scalar ActionNftTransferEvent
 

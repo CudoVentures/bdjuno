@@ -236,6 +236,27 @@ actions:
   permissions:
   - role: anonymous
 
+- name: action_nft_transfer_events
+  definition:
+    kind: synchronous
+    handler: http://host.docker.internal:4000/nft_transfer_events
+    output_type: ActionNftTransferEventsResponse
+    arguments:
+    - name: token_id
+      type: Int!
+    - name: denom_id
+      type: String!
+    - name: from_time
+      type: Int
+    - name: to_time
+      type: Int 
+    type: query
+    headers:
+    - value: application/json
+      name: Content-Type
+  permissions:
+  - role: anonymous
+
 ############### CUSTOM TYPES ###############
 custom_types:
   scalars:
@@ -245,6 +266,7 @@ custom_types:
   - name: ActionPagination
   - name: ActionRedelegation
   - name: ActionUnbondingDelegation
+  - name: ActionNftTransferEvent
 
   objects:
   - name: ActionBalance
@@ -289,3 +311,9 @@ custom_types:
     fields:
     - name: coins
       type: [ActionCoin]
+  
+  - name: ActionNftTransferEventsResponse
+    fields:
+    - name: events
+      type: [ActionNftTransferEvent]
+

@@ -29,3 +29,15 @@ type PayloadArgs struct {
 	Limit      uint64 `json:"limit"`
 	CountTotal bool   `json:"count_total"`
 }
+
+type NftTransferEventsPayload struct {
+	SessionVariables map[string]interface{} `json:"session_variables"`
+	Input            NftTransferEventsArgs  `json:"input"`
+}
+
+type NftTransferEventsArgs struct {
+	TokenID  int    `json:"token_id"`
+	DenomID  string `json:"denom_id"`
+	FromTime int    `json:"from_time"`
+	ToTime   int    `json:"to_time"`
+}
