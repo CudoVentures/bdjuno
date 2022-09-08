@@ -1,8 +1,9 @@
 package database
 
-func (db *Db) SaveDenom(txHash, denomID, name, schema, symbol, owner, contractAddressSigner string) error {
-	_, err := db.Sql.Exec(`INSERT INTO nft_denom (transaction_hash, id, name, schema, symbol, owner, contract_address_signer) 
-		VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING`, txHash, denomID, name, schema, symbol, owner, contractAddressSigner)
+func (db *Db) SaveDenom(txHash, denomID, name, schema, symbol, owner, contractAddressSigner, traits, minter, description, dataText, dataJSON string) error {
+	_, err := db.Sql.Exec(`INSERT INTO nft_denom (transaction_hash, id, name, schema, symbol, owner, contract_address_signer, 
+		traits, minter, description, data_text, data_json) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) ON CONFLICT DO NOTHING`,
+		txHash, denomID, name, schema, symbol, owner, contractAddressSigner, traits, minter, description, dataText, dataJSON)
 	return err
 }
 

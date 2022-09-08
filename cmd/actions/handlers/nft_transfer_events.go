@@ -4,12 +4,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"time"
 
 	nftTypes "github.com/CudoVentures/cudos-node/x/nft/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	actionstypes "github.com/forbole/bdjuno/v2/cmd/actions/types"
+	"github.com/forbole/bdjuno/v2/utils"
 	"github.com/forbole/juno/v2/types"
 )
 
@@ -95,7 +95,7 @@ func searchTxsByFilter(query string, ctx *actionstypes.Context) ([]*types.Tx, er
 func getTxNftChangeOwnershipEvents(cdc codec.Codec, tx *types.Tx) ([]actionstypes.TransferEvent, error) {
 	transferEvents := []actionstypes.TransferEvent{}
 
-	timestamp, err := iso8601ToTimestamp(tx.Timestamp)
+	timestamp, err := utils.ISO8601ToTimestamp(tx.Timestamp)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func getTxNftChangeOwnershipEvents(cdc codec.Codec, tx *types.Tx) ([]actionstype
 func filterTxsByTimeRange(junoTxs []*types.Tx, from, to int) ([]*types.Tx, error) {
 	filtered := []*types.Tx{}
 	for _, junoTx := range junoTxs {
-		timestamp, err := iso8601ToTimestamp(junoTx.Timestamp)
+		timestamp, err := utils.ISO8601ToTimestamp(junoTx.Timestamp)
 		if err != nil {
 			return nil, err
 		}
@@ -157,13 +157,4 @@ func filterTxsByTimeRange(junoTxs []*types.Tx, from, to int) ([]*types.Tx, error
 		}
 	}
 	return filtered, nil
-}
-
-func iso8601ToTimestamp(timeStr string) (int, error) {
-	layout := "2006-01-02T15:04:05Z"
-	t, err := time.Parse(layout, timeStr)
-	if err != nil {
-		return 0, err
-	}
-	return int(t.Unix()), nil
 }

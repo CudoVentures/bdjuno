@@ -17,6 +17,7 @@ import (
 	"github.com/forbole/bdjuno/v2/modules/cudomint"
 	"github.com/forbole/bdjuno/v2/modules/gravity"
 	"github.com/forbole/bdjuno/v2/modules/history"
+	"github.com/forbole/bdjuno/v2/modules/marketplace"
 	"github.com/forbole/bdjuno/v2/modules/nft"
 	"github.com/forbole/bdjuno/v2/modules/slashing"
 
@@ -121,6 +122,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	gravityModule := gravity.NewModule(cdc, db)
 	nftModule := nft.NewModule(cdc, db)
 	groupModule := group.NewModule(cdc, db)
+	marketplaceModule := marketplace.NewModule(cdc, db)
 
 	return []jmodules.Module{
 		messages.NewModule(r.parser, cdc, ctx.Database),
@@ -143,6 +145,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		gravityModule,
 		nftModule,
 		groupModule,
+		marketplaceModule,
 	}
 }
 
