@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/forbole/bdjuno/v2/database"
-	"github.com/forbole/juno/v2/cmd/parse"
+	parsetypes "github.com/forbole/juno/v3/cmd/parse/types"
+	"github.com/forbole/juno/v3/parser"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,7 +19,7 @@ func (mw mockWorker) Name() string {
 	return "mockWorker"
 }
 
-func (mw mockWorker) Start(ctx context.Context, parseCfg *parse.Config, parseCtx *parse.Context,
+func (mw mockWorker) Start(ctx context.Context, parseCfg *parsetypes.Config, parseCtx *parser.Context,
 	storage keyValueStorage, interval time.Duration) {
 	instancesCount++
 }
@@ -32,8 +33,8 @@ func TestStartWorkers(t *testing.T) {
 			},
 		},
 	}
-	var parseCfg parse.Config
-	parseCtx := parse.Context{
+	var parseCfg parsetypes.Config
+	parseCtx := parser.Context{
 		Database: &database.Db{},
 	}
 
@@ -51,7 +52,7 @@ func TestStartWorkers(t *testing.T) {
 
 func TestBaseWorkerStart(t *testing.T) {
 	var executionsCount int
-	job := func(parseCfg *parse.Config, parseCtx *parse.Context, storage keyValueStorage) error {
+	job := func(parseCfg *parsetypes.Config, parseCtx *parser.Context, storage keyValueStorage) error {
 		executionsCount += 1
 		return nil
 	}

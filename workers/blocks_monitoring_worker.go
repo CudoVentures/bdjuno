@@ -10,7 +10,8 @@ import (
 
 	"github.com/forbole/bdjuno/v2/database"
 	"github.com/forbole/bdjuno/v2/database/types"
-	"github.com/forbole/juno/v2/cmd/parse"
+	parsetypes "github.com/forbole/juno/v3/cmd/parse/types"
+	"github.com/forbole/juno/v3/parser"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -22,11 +23,11 @@ func (bmw blocksMonitoringWorker) Name() string {
 	return "blocks_monitoring_worker"
 }
 
-func (bmw blocksMonitoringWorker) Start(ctx context.Context, parseCfg *parse.Config, parseCtx *parse.Context, storage keyValueStorage, interval time.Duration) {
+func (bmw blocksMonitoringWorker) Start(ctx context.Context, parseCfg *parsetypes.Config, parseCtx *parser.Context, storage keyValueStorage, interval time.Duration) {
 	bmw.baseWorker.Start(ctx, bmw.Name(), bmw.monitorBlocks, parseCfg, parseCtx, storage, interval)
 }
 
-func (bmw blocksMonitoringWorker) monitorBlocks(parseCfg *parse.Config, parseCtx *parse.Context, storage keyValueStorage) error {
+func (bmw blocksMonitoringWorker) monitorBlocks(parseCfg *parsetypes.Config, parseCtx *parser.Context, storage keyValueStorage) error {
 
 	lastMonitoredBlockHeightVal, err := storage.GetOrDefaultValue(blocksMonitoringLastBlockHeight, "0")
 	if err != nil {
@@ -77,7 +78,7 @@ func (bmw blocksMonitoringWorker) monitorBlocks(parseCfg *parse.Config, parseCtx
 	return nil
 }
 
-func getLatestStoredBlockHeight(parseCtx *parse.Context) (int64, error) {
+func getLatestStoredBlockHeight(parseCtx *parser.Context) (int64, error) {
 	var rows []types.BlockRow
 	db := database.Cast(parseCtx.Database)
 	if err := db.Sqlx.Select(&rows, sqlx.Rebind(sqlx.DOLLAR, "SELECT MAX(height) AS height FROM block")); err != nil {

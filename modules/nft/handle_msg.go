@@ -7,7 +7,7 @@ import (
 	nftTypes "github.com/CudoVentures/cudos-node/x/nft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/forbole/bdjuno/v2/modules/utils"
-	juno "github.com/forbole/juno/v2/types"
+	juno "github.com/forbole/juno/v3/types"
 )
 
 // HandleMsg implements MessageModule
@@ -19,9 +19,8 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 	switch cosmosMsg := msg.(type) {
 	case *nftTypes.MsgIssueDenom:
 		return m.handleMsgIssueDenom(tx, cosmosMsg)
-	// TODO: Uncomment when cudos-node with version supporting MsgTransferDenom is released
-	// case *nftTypes.MsgTransferDenom:
-	// 	return m.handleMsgTransferDenom(cosmosMsg)
+	case *nftTypes.MsgTransferDenom:
+		return m.handleMsgTransferDenom(cosmosMsg)
 	case *nftTypes.MsgMintNFT:
 		return m.handleMsgMintNFT(index, tx, cosmosMsg)
 	case *nftTypes.MsgEditNFT:
@@ -39,9 +38,9 @@ func (m *Module) handleMsgIssueDenom(tx *juno.Tx, msg *nftTypes.MsgIssueDenom) e
 	return m.db.SaveDenom(tx.TxHash, msg.Id, msg.Name, msg.Schema, msg.Symbol, msg.Sender, msg.ContractAddressSigner)
 }
 
-// func (m *Module) handleMsgTransferDenom(msg *nftTypes.MsgTransferDenom) error {
-// 	return m.db.UpdateDenom(msg.Id, msg.Recipient)
-// }
+func (m *Module) handleMsgTransferDenom(msg *nftTypes.MsgTransferDenom) error {
+	return m.db.UpdateDenom(msg.Id, msg.Recipient)
+}
 
 func (m *Module) handleMsgMintNFT(index int, tx *juno.Tx, msg *nftTypes.MsgMintNFT) error {
 	tokenIDStr := utils.GetValueFromLogs(uint32(index), tx.Logs, nftTypes.EventTypeMintNFT, nftTypes.AttributeKeyTokenID)

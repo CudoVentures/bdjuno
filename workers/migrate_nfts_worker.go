@@ -9,7 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/forbole/bdjuno/v2/database"
 	"github.com/forbole/bdjuno/v2/modules/nft"
-	"github.com/forbole/juno/v2/cmd/parse"
+	parsetypes "github.com/forbole/juno/v3/cmd/parse/types"
+	"github.com/forbole/juno/v3/parser"
 )
 
 type migrateNftsWorker struct {
@@ -20,11 +21,11 @@ func (mnw migrateNftsWorker) Name() string {
 	return "migrate_nfts_worker"
 }
 
-func (mnw migrateNftsWorker) Start(ctx context.Context, parseCfg *parse.Config, parseCtx *parse.Context, storage keyValueStorage, interval time.Duration) {
+func (mnw migrateNftsWorker) Start(ctx context.Context, parseCfg *parsetypes.Config, parseCtx *parser.Context, storage keyValueStorage, interval time.Duration) {
 	mnw.baseWorker.Start(ctx, mnw.Name(), mnw.migrateNfts, parseCfg, parseCtx, storage, interval)
 }
 
-func (mnw migrateNftsWorker) migrateNfts(parseCfg *parse.Config, parseCtx *parse.Context, storage keyValueStorage) error {
+func (mnw migrateNftsWorker) migrateNfts(parseCfg *parsetypes.Config, parseCtx *parser.Context, storage keyValueStorage) error {
 	currentHeightVal, err := storage.GetOrDefaultValue(nftMigrationCurrentHeightKey, "0")
 	if err != nil {
 		return fmt.Errorf("error while getting worker storage key '%s': %s", nftMigrationCurrentHeightKey, err)
@@ -88,7 +89,7 @@ func (mnw migrateNftsWorker) migrateNfts(parseCfg *parse.Config, parseCtx *parse
 	return nil
 }
 
-func (mnw migrateNftsWorker) processBlock(module *nft.Module, parseCtx *parse.Context, currentHeight int64) error {
+func (mnw migrateNftsWorker) processBlock(module *nft.Module, parseCtx *parser.Context, currentHeight int64) error {
 	block, err := parseCtx.Node.Block(currentHeight)
 	if err != nil {
 		return fmt.Errorf("failed to get block from node: %s", err)

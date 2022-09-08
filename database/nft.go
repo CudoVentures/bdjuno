@@ -12,7 +12,7 @@ func (db *Db) UpdateDenom(denomID, owner string) error {
 }
 
 func (db *Db) SaveNFT(txHash string, tokenID uint64, denomID, name, uri, dataJSON, dataText, owner, sender, contractAddressSigner string) error {
-	_, err := db.Sqlx.Exec(`INSERT INTO nft_nft (transaction_hash, id, denom_id, name, uri, owner, data_json, data_text, sender, contract_address_signer) 
+	_, err := db.Sql.Exec(`INSERT INTO nft_nft (transaction_hash, id, denom_id, name, uri, owner, data_json, data_text, sender, contract_address_signer) 
 	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT DO NOTHING`, txHash, tokenID, denomID, name, uri, owner, dataJSON, dataText, sender, contractAddressSigner)
 	return err
 }

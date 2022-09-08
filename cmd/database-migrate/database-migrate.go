@@ -6,19 +6,22 @@ import (
 	"time"
 
 	"github.com/forbole/bdjuno/v2/database"
-	"github.com/forbole/juno/v2/cmd/parse"
+	parsetypes "github.com/forbole/juno/v3/cmd/parse/types"
+	"github.com/forbole/juno/v3/types/config"
 	"github.com/spf13/cobra"
 )
 
 // NewDatabaseMigrateCmd returns the Cobra command allowing to migrate the db up to latest scheme
-func NewDatabaseMigrateCmd(parseCfg *parse.Config) *cobra.Command {
+func NewDatabaseMigrateCmd(parseCfg *parsetypes.Config) *cobra.Command {
 	return &cobra.Command{
 		Use:     "database migrate",
 		Short:   "Migrates database to latest scheme from database/scheme folder",
 		Example: "bdjuno database migrate",
-		PreRunE: parse.ReadConfig(parseCfg),
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return parsetypes.UpdatedGlobalCfg(parseCfg)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			parseCtx, err := parse.GetParsingContext(parseCfg)
+			parseCtx, err := parsetypes.GetParserContext(config.Cfg, parseCfg)
 			if err != nil {
 				return err
 			}

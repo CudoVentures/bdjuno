@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"time"
 
-	parsecmd "github.com/forbole/juno/v2/cmd/parse"
+	"github.com/forbole/juno/v3/parser"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -24,7 +24,7 @@ const noMigrationsTablePqError = "pq: relation \"migrations\" does not exist"
 //go:embed scheme
 var scheme embed.FS
 
-func ExecuteMigrations(ctx context.Context, parseCtx *parsecmd.Context) error {
+func ExecuteMigrations(ctx context.Context, parseCtx *parser.Context) error {
 	db := Cast(parseCtx.Database)
 
 	var rows []Migration

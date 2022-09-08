@@ -9,7 +9,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	dbtypes "github.com/forbole/bdjuno/v2/database/types"
-	junotypes "github.com/forbole/juno/v2/types"
+	junotypes "github.com/forbole/juno/v3/types"
 )
 
 func newDecPts(value int64, prec int64) *sdk.Dec {

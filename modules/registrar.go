@@ -7,11 +7,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/forbole/juno/v2/modules/pruning"
-	"github.com/forbole/juno/v2/modules/telemetry"
+	"github.com/forbole/juno/v3/modules/pruning"
+	"github.com/forbole/juno/v3/modules/telemetry"
 
 	"github.com/cosmos/cosmos-sdk/simapp/params"
-	"github.com/forbole/juno/v2/node/remote"
+	"github.com/forbole/juno/v3/node/remote"
 
 	"github.com/forbole/bdjuno/v2/modules/cosmwasm"
 	"github.com/forbole/bdjuno/v2/modules/cudomint"
@@ -28,15 +28,15 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/forbole/juno/v2/node/local"
+	"github.com/forbole/juno/v3/node/local"
 
-	jmodules "github.com/forbole/juno/v2/modules"
-	"github.com/forbole/juno/v2/modules/messages"
-	"github.com/forbole/juno/v2/modules/registrar"
+	jmodules "github.com/forbole/juno/v3/modules"
+	"github.com/forbole/juno/v3/modules/messages"
+	"github.com/forbole/juno/v3/modules/registrar"
 
 	"github.com/forbole/bdjuno/v2/utils"
 
-	nodeconfig "github.com/forbole/juno/v2/node/config"
+	nodeconfig "github.com/forbole/juno/v3/node/config"
 
 	"github.com/forbole/bdjuno/v2/database"
 	"github.com/forbole/bdjuno/v2/modules/auth"
@@ -99,6 +99,11 @@ func NewRegistrar(parser messages.MessageAddressesParser) *Registrar {
 
 // BuildModules implements modules.Registrar
 func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
+	configBytes, err := ctx.JunoConfig.GetBytes()
+	if err != nil {
+		panic(err)
+	}
+
 	cdc := ctx.EncodingConfig.Marshaler
 	db := database.Cast(ctx.Database)
 
@@ -113,7 +118,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	distrModule := distribution.NewModule(sources.DistrSource, cdc, db)
 	feegrantModule := feegrant.NewModule(cdc, db)
 	historyModule := history.NewModule(ctx.JunoConfig.Chain, r.parser, cdc, db)
-	cudoMintModule := cudomint.NewModule(cdc, db, ctx.JunoConfig.GetBytes())
+	cudoMintModule := cudomint.NewModule(cdc, db, configBytes)
 	slashingModule := slashing.NewModule(sources.SlashingSource, cdc, db)
 	stakingModule := staking.NewModule(sources.StakingSource, slashingModule, authModule, cdc, db)
 	govModule := gov.NewModule(sources.GovSource, authModule, distrModule, slashingModule, stakingModule, cdc, db)

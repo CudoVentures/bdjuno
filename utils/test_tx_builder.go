@@ -7,7 +7,7 @@ import (
 
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 
-	juno "github.com/forbole/juno/v2/types"
+	juno "github.com/forbole/juno/v3/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/group"

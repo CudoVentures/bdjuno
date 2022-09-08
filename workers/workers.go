@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"github.com/forbole/bdjuno/v2/database"
-	"github.com/forbole/juno/v2/cmd/parse"
-	"github.com/forbole/juno/v2/types/config"
+	parsecmdtypes "github.com/forbole/juno/v3/cmd/parse/types"
+	parsetypes "github.com/forbole/juno/v3/cmd/parse/types"
+	"github.com/forbole/juno/v3/parser"
+	"github.com/forbole/juno/v3/types/config"
 	"github.com/spf13/cobra"
 )
 
@@ -16,29 +18,33 @@ type PreRunE func(cmd *cobra.Command, args []string) error
 
 type worker interface {
 	Name() string
-	Start(ctx context.Context, parseCfg *parse.Config, parseCtx *parse.Context, storage keyValueStorage, interval time.Duration)
+	Start(ctx context.Context, parseCfg *parsetypes.Config, parseCtx *parser.Context, storage keyValueStorage, interval time.Duration)
 }
 
 var cancelWorkersCtx context.CancelFunc
 
 var workers = []worker{
-	fixBlocksWorker{},
 	migrateNftsWorker{},
 	blocksMonitoringWorker{},
 }
 
-func GetStartWorkersPrerunE(origPreRunE PreRunE, parseCfg *parse.Config) PreRunE {
+func GetStartWorkersPrerunE(origPreRunE PreRunE, parseCfg *parsetypes.Config) PreRunE {
 	return func(cmd *cobra.Command, args []string) error {
-		if err := parse.ReadConfig(parseCfg)(nil, nil); err != nil {
+		if err := parsetypes.UpdatedGlobalCfg(parseCfg); err != nil {
 			return err
 		}
 
-		parseCtx, err := parse.GetParsingContext(parseCfg)
+		parseCtx, err := parsecmdtypes.GetParserContext(config.Cfg, parseCfg)
 		if err != nil {
 			return err
 		}
 
-		cfg, err := parseConfig(config.Cfg.GetBytes())
+		bytes, err := config.Cfg.GetBytes()
+		if err != nil {
+			return err
+		}
+
+		cfg, err := parseConfig(bytes)
 		if err != nil {
 			return err
 		}
@@ -51,7 +57,7 @@ func GetStartWorkersPrerunE(origPreRunE PreRunE, parseCfg *parse.Config) PreRunE
 	}
 }
 
-func startWorkers(ctx context.Context, workers []worker, cfg workersConfig, parseCfg *parse.Config, parseCtx *parse.Context) error {
+func startWorkers(ctx context.Context, workers []worker, cfg workersConfig, parseCfg *parsetypes.Config, parseCtx *parser.Context) error {
 	var workersCtx context.Context
 	workersCtx, cancelWorkersCtx = context.WithCancel(ctx)
 

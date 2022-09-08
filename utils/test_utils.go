@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/forbole/juno/v2/cmd/parse"
-	dbconfig "github.com/forbole/juno/v2/database/config"
-	"github.com/forbole/juno/v2/logging"
+	dbconfig "github.com/forbole/juno/v3/database/config"
+	"github.com/forbole/juno/v3/logging"
+	"github.com/forbole/juno/v3/parser"
 
-	junodb "github.com/forbole/juno/v2/database"
+	junodb "github.com/forbole/juno/v3/database"
 
 	"github.com/forbole/bdjuno/v2/database"
 
@@ -28,6 +28,8 @@ func NewTestDb(schema string) (*database.Db, error) {
 		schema,
 		-1,
 		-1,
+		100000,
+		100,
 	)
 
 	cdc := simapp.MakeTestEncodingConfig()
@@ -56,7 +58,7 @@ func NewTestDb(schema string) (*database.Db, error) {
 		ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancelFunc()
 
-		err = database.ExecuteMigrations(ctx, &parse.Context{Database: db})
+		err = database.ExecuteMigrations(ctx, &parser.Context{Database: db})
 		if err != nil {
 			return err
 		}

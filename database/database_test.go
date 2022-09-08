@@ -8,7 +8,7 @@ import (
 	"github.com/forbole/bdjuno/v2/types"
 	"github.com/forbole/bdjuno/v2/utils"
 
-	juno "github.com/forbole/juno/v2/types"
+	juno "github.com/forbole/juno/v3/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmversion "github.com/tendermint/tendermint/proto/tendermint/version"

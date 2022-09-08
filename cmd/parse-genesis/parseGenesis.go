@@ -4,24 +4,28 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/forbole/juno/v2/cmd/parse"
-	"github.com/forbole/juno/v2/modules"
-	"github.com/forbole/juno/v2/types"
-	"github.com/forbole/juno/v2/types/config"
-	junoutils "github.com/forbole/juno/v2/types/utils"
+	parsecmdtypes "github.com/forbole/juno/v3/cmd/parse/types"
+	parsetypes "github.com/forbole/juno/v3/cmd/parse/types"
+	"github.com/forbole/juno/v3/modules"
+	"github.com/forbole/juno/v3/parser"
+	"github.com/forbole/juno/v3/types"
+	"github.com/forbole/juno/v3/types/config"
+	junoutils "github.com/forbole/juno/v3/types/utils"
 	"github.com/spf13/cobra"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 // NewParseGenesisCmd returns the Cobra command allowing to parse the genesis file
-func NewParseGenesisCmd(parseCfg *parse.Config) *cobra.Command {
+func NewParseGenesisCmd(parseCfg *parsetypes.Config) *cobra.Command {
 	return &cobra.Command{
 		Use:     "parse-genesis [[module names]]",
 		Short:   "Parse genesis file. To parse specific modules, input module names as arguments",
 		Example: "bdjuno parse-genesis auth bank consensus gov history staking",
-		PreRunE: parse.ReadConfig(parseCfg),
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return parsetypes.UpdatedGlobalCfg(parseCfg)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			parseCtx, err := parse.GetParsingContext(parseCfg)
+			parseCtx, err := parsecmdtypes.GetParserContext(config.Cfg, parseCfg)
 			if err != nil {
 				return err
 			}
@@ -68,7 +72,7 @@ func NewParseGenesisCmd(parseCfg *parse.Config) *cobra.Command {
 }
 
 // doesModuleExist tells whether a module with the given name exist inside the specified context ot not
-func getModule(module string, parseCtx *parse.Context) (modules.Module, bool) {
+func getModule(module string, parseCtx *parser.Context) (modules.Module, bool) {
 	for _, mod := range parseCtx.Modules {
 		if module == mod.Name() {
 			return mod, true
@@ -77,7 +81,7 @@ func getModule(module string, parseCtx *parse.Context) (modules.Module, bool) {
 	return nil, false
 }
 
-func resolveInitialHeightBlock(ctx *parse.Context, initialHeight int64) error {
+func resolveInitialHeightBlock(ctx *parser.Context, initialHeight int64) error {
 	hasBlock, err := ctx.Database.HasBlock(initialHeight)
 	if err != nil {
 		return err
@@ -108,7 +112,7 @@ func resolveInitialHeightBlock(ctx *parse.Context, initialHeight int64) error {
 	return ctx.Database.SaveBlock(types.NewBlockFromTmBlock(block, totalGas))
 }
 
-func resolveInitialHeightValidator(ctx *parse.Context, initialHeight int64, block *coretypes.ResultBlock) error {
+func resolveInitialHeightValidator(ctx *parser.Context, initialHeight int64, block *coretypes.ResultBlock) error {
 	vals, err := ctx.Node.Validators(initialHeight)
 	if err != nil {
 		return fmt.Errorf("failed to get validators for block: %s", err)
