@@ -16,6 +16,7 @@ chain:
         - cudomint
         - nft
         - group
+        - marketplace
 node:
     type: remote
     config:

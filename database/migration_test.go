@@ -12,6 +12,7 @@ var expectedAppliedMigrations = []database.Migration{
 	{ID: int64(4), Name: "003-nft_module.sql", CreatedAt: int64(0)},
 	{ID: int64(5), Name: "004-distinct_message_query_func.sql", CreatedAt: int64(0)},
 	{ID: int64(6), Name: "005-group_module.sql", CreatedAt: int64(0)},
+	{ID: int64(7), Name: "006-marketplace_module.sql", CreatedAt: int64(0)},
 }
 
 func (suite *DbTestSuite) TestExecuteMigrations() {

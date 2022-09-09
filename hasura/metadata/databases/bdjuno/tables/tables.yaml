@@ -58,3 +58,6 @@
 - "!include public_nft_denom.yaml"
 - "!include public_nft_nft.yaml"
 - "!include public_distinct_message.yaml"
+- "!include public_marketplace_collection.yaml"
+- "!include public_marketplace_nft.yaml"
+- "!include public_marketplace_nft_buy_history.yaml"
