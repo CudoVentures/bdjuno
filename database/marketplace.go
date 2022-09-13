@@ -2,9 +2,9 @@ package database
 
 import "fmt"
 
-func (db *Db) SaveMarketplaceCollection(txHash string, id uint64, denomID, mintRoyalties, resaleRoyalties, creator string) error {
-	_, err := db.Sql.Exec(`INSERT INTO marketplace_collection (transaction_hash, id, denom_id, mint_royalties, resale_royalties, creator) 
-		VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING`, txHash, id, denomID, mintRoyalties, resaleRoyalties, creator)
+func (db *Db) SaveMarketplaceCollection(txHash string, id uint64, denomID, mintRoyalties, resaleRoyalties, creator string, verified bool) error {
+	_, err := db.Sql.Exec(`INSERT INTO marketplace_collection (transaction_hash, id, denom_id, mint_royalties, resale_royalties, verified, creator) 
+		VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING`, txHash, id, denomID, mintRoyalties, resaleRoyalties, verified, creator)
 	return err
 }
 
@@ -33,5 +33,10 @@ func (tx *DbTx) SaveMarketplaceNftBuy(txHash string, id uint64, buyer string, ti
 
 	_, err := tx.Exec(`INSERT INTO marketplace_nft_buy_history (transaction_hash, token_id, denom_id, price, seller, buyer, timestamp) 
 		VALUES($1, $2, $3, $4, $5, $6, $7)`, txHash, tokenID, denomID, price, seller, buyer, timestamp)
+	return err
+}
+
+func (db *Db) SetMarketplaceCollectionVerificationStatus(id uint64, verified bool) error {
+	_, err := db.Sql.Exec(`UPDATE marketplace_collection SET verified = $1 WHERE id = $2`, verified, id)
 	return err
 }

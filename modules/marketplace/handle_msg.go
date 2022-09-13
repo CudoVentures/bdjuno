@@ -28,6 +28,10 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 		return m.handleMsgBuyNft(tx, cosmosMsg)
 	case *marketplaceTypes.MsgRemoveNft:
 		return m.handleMsgRemoveNft(cosmosMsg)
+	case *marketplaceTypes.MsgVerifyCollection:
+		return m.handleMsgVerifyCollection(cosmosMsg)
+	case *marketplaceTypes.MsgUnverifyCollection:
+		return m.handleMsgUnverifyCollection(cosmosMsg)
 	default:
 		return nil
 	}
@@ -38,7 +42,7 @@ func (m *Module) handleMsgPublishCollection(index int, tx *juno.Tx, msg *marketp
 	if err != nil {
 		return err
 	}
-	return m.db.SaveMarketplaceCollection(tx.TxHash, collectionID, msg.DenomId, royaltiesToText(msg.MintRoyalties), royaltiesToText(msg.ResaleRoyalties), msg.Creator)
+	return m.db.SaveMarketplaceCollection(tx.TxHash, collectionID, msg.DenomId, royaltiesToText(msg.MintRoyalties), royaltiesToText(msg.ResaleRoyalties), msg.Creator, false)
 }
 
 func (m *Module) handleMsgPublishNft(index int, tx *juno.Tx, msg *marketplaceTypes.MsgPublishNft) error {
@@ -78,6 +82,14 @@ func (m *Module) handleMsgRemoveNft(msg *marketplaceTypes.MsgRemoveNft) error {
 	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
 		return dbTx.RemoveMarketplaceNft(msg.Id)
 	})
+}
+
+func (m *Module) handleMsgVerifyCollection(msg *marketplaceTypes.MsgVerifyCollection) error {
+	return m.db.SetMarketplaceCollectionVerificationStatus(msg.Id, true)
+}
+
+func (m *Module) handleMsgUnverifyCollection(msg *marketplaceTypes.MsgUnverifyCollection) error {
+	return m.db.SetMarketplaceCollectionVerificationStatus(msg.Id, false)
 }
 
 func royaltiesToText(royalties []marketplaceTypes.Royalty) string {

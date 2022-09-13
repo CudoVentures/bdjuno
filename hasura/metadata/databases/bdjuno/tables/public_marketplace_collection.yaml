@@ -17,6 +17,7 @@ select_permissions:
     - denom_id
     - mint_royalties
     - resale_royalties
+    - verified
     - creator
     filter: {}
   role: anonymous
