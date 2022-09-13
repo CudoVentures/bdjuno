@@ -91,6 +91,8 @@ github.com/CudoVentures/cosmos-sdk v0.0.0-20220816082327-65532d606824 h1:6IkLkSV
 github.com/CudoVentures/cosmos-sdk v0.0.0-20220816082327-65532d606824/go.mod h1:Zlp+5q+oliIV6SFlfspqcd/28Ra7v51Bt6Wy6H1b8PI=
 github.com/CudoVentures/cudos-node v1.1.1-0.20220908135211-dbbc627cd9df h1:lxhCWtesD7vIu56+Bn53g4WYdwPDMmrPs0+v6E7RkyU=
 github.com/CudoVentures/cudos-node v1.1.1-0.20220908135211-dbbc627cd9df/go.mod h1:BPVYfkZ6i5qLM9/l3nILwTFUQ1cVDqbn7XxSuPwujkA=
+github.com/CudoVentures/cudos-node v1.1.1-0.20220913102658-8e3739fe2b96 h1:uuIdTTbhgsS9YzgpcsBhFQqkRB4UubpaJJniK2t+Ljs=
+github.com/CudoVentures/cudos-node v1.1.1-0.20220913102658-8e3739fe2b96/go.mod h1:BPVYfkZ6i5qLM9/l3nILwTFUQ1cVDqbn7XxSuPwujkA=
 github.com/CudoVentures/juno/v2 v2.0.1-0.20220908075630-6618cc96377f h1:yWNnzclSePa0xJfKFCXDMSBdmFOPD84uwlE6zGaXreI=
 github.com/CudoVentures/juno/v2 v2.0.1-0.20220908075630-6618cc96377f/go.mod h1:lSiplsjZl8aFajq+DnRph947q6hMPHJqfGEb1WH+pGA=
 github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=

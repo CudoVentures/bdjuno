@@ -26,6 +26,7 @@ CREATE TABLE marketplace_collection
     denom_id TEXT NOT NULL REFERENCES nft_denom (id),
     mint_royalties TEXT NOT NULL,
     resale_royalties TEXT NOT NULL,
+    verified BOOLEAN NOT NULL,
     creator TEXT NOT NULL,
     PRIMARY KEY(id)
 );
