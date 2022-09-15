@@ -121,13 +121,18 @@ type ThresholdDecisionPolicy struct {
 }
 
 type DecisionPolicyWindows struct {
-	VotingPeriod       uint64 `json:"voting_period,omitempty,string"`
-	MinExecutionPeriod uint64 `json:"min_execution_period,omitempty,string"`
+	VotingPeriod       string `json:"voting_period,omitempty"`
+	MinExecutionPeriod string `json:"min_execution_period,omitempty"`
 }
 
 type MsgUpdateMembers struct {
 	GroupID       uint64    `json:"group_id,omitempty,string"`
 	MemberUpdates []*Member `json:"member_updates"`
+}
+type MsgUpdateGroupMetadata struct {
+	Admin    string `json:"admin,omitempty"`
+	GroupId  uint64 `json:"group_id,omitempty,string"`
+	Metadata string `json:"metadata,omitempty"`
 }
 
 type Member struct {
