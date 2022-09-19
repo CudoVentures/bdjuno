@@ -131,7 +131,7 @@ type MsgUpdateMembers struct {
 }
 type MsgUpdateGroupMetadata struct {
 	Admin    string `json:"admin,omitempty"`
-	GroupId  uint64 `json:"group_id,omitempty,string"`
+	GroupID  uint64 `json:"group_id,omitempty,string"`
 	Metadata string `json:"metadata,omitempty"`
 }
 
