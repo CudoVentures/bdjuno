@@ -101,10 +101,10 @@ func (dbTx *DbTx) UpdateGroupPolicyMetadata(groupID uint64, metadata string) err
 	return err
 }
 
-func (dbTx *DbTx) UpdateDecisionPolicy(groupID uint64, policy *types.ThresholdDecisionPolicy) error {
+func (dbTx *DbTx) UpdateDecisionPolicy(groupID uint64, threshold uint64, votingPeriod uint64, minExecutionPeriod uint64) error {
 	_, err := dbTx.Exec(
 		`UPDATE group_with_policy SET threshold = $1, voting_period = $2, min_execution_period = $3 WHERE id = $4`,
-		policy.Threshold, policy.Windows.VotingPeriod, policy.Windows.MinExecutionPeriod, groupID,
+		threshold, votingPeriod, minExecutionPeriod, groupID,
 	)
 	return err
 }
