@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/forbole/bdjuno/v2/database"
+	"github.com/forbole/bdjuno/v2/modules/utils"
 	"github.com/forbole/bdjuno/v2/types"
 	gjv "github.com/xeipuuv/gojsonschema"
 )
@@ -27,44 +29,57 @@ func (m *Module) RunAdditionalOperations() error {
 
 	sub := client.Subscription(subID)
 	sub.ReceiveSettings.MaxOutstandingMessages = 1
-	sub.ReceiveSettings.NumGoroutines = 1 // todo try without
+	sub.ReceiveSettings.NumGoroutines = 1
 
-	return sub.Receive(ctx, m.subscribeToVerifiedContracts)
-}
-
-func (m *Module) subscribeToVerifiedContracts(ctx context.Context, msg *pubsub.Message) {
-	m.db.ExecuteTx(func(dbTx *database.DbTx) error {
-		var contract types.VerifiedContractPublishMessage
-
-		if err := json.Unmarshal(msg.Data, &contract); err != nil {
-			msg.Ack()
-			return err
-		}
-
-		exists, err := dbTx.IsExistingTokenCode(contract.CodeID)
-		if err != nil {
-			msg.Nack()
-			return err
-		}
-
-		if exists {
-			msg.Ack()
-			return fmt.Errorf("contract is already tracked")
-		}
-
-		if !isToken(ctx, &contract) {
-			msg.Ack()
-			return fmt.Errorf("contract is not a cw20 token")
-		}
-
-		if err := m.saveToken(dbTx, &contract); err != nil {
-			msg.Nack()
-			return err
-		}
-
-		msg.Ack()
+	utils.WatchMethod(func() error {
+		m.subscribeToVerifiedContracts(ctx, sub)
 		return nil
 	})
+
+	return nil
+}
+
+func (m *Module) subscribeToVerifiedContracts(ctx context.Context, sub *pubsub.Subscription) {
+	var mu sync.Mutex
+	sub.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
+		mu.Lock()
+		defer mu.Unlock()
+
+		m.db.ExecuteTx(func(dbTx *database.DbTx) error {
+			var contract types.VerifiedContractPublishMessage
+
+			if err := json.Unmarshal(msg.Data, &contract); err != nil {
+				msg.Ack()
+				return err
+			}
+
+			exists, err := dbTx.IsExistingTokenCode(contract.CodeID)
+			if err != nil {
+				// todo set maximum msg receives, cuz currently we considered that the db has dropped, but if it hasn't, we will keep receiving this msg forever spam
+				msg.Nack()
+				return err
+			}
+
+			if exists {
+				msg.Ack()
+				return fmt.Errorf("contract is already tracked")
+			}
+
+			if !isToken(ctx, &contract) {
+				msg.Ack()
+				return fmt.Errorf("contract is not a cw20 token")
+			}
+
+			if err := m.saveToken(dbTx, &contract); err != nil {
+				msg.Nack()
+				return err
+			}
+
+			msg.Ack()
+			return nil
+		})
+	})
+
 }
 
 func (m *Module) saveToken(dbTx *database.DbTx, contract *types.VerifiedContractPublishMessage) error {
