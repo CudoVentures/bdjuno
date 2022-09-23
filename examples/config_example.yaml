@@ -18,6 +18,7 @@ chain:
         - nft
         - group
         - marketplace
+        - cw20token
 node:
     type: remote
     config:

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	cudosnodesimapp "github.com/CudoVentures/cudos-node/simapp"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -21,6 +22,9 @@ import (
 	"github.com/forbole/bdjuno/v2/modules/nft"
 	"github.com/forbole/bdjuno/v2/modules/slashing"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -29,6 +33,7 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	"github.com/forbole/juno/v2/node/local"
 
 	jmodules "github.com/forbole/juno/v2/modules"
@@ -49,6 +54,10 @@ import (
 	"github.com/forbole/bdjuno/v2/modules/distribution"
 	"github.com/forbole/bdjuno/v2/modules/feegrant"
 
+	"github.com/forbole/bdjuno/v2/modules/cw20token"
+	cw20tokensource "github.com/forbole/bdjuno/v2/modules/cw20token/source"
+	localcw20tokensource "github.com/forbole/bdjuno/v2/modules/cw20token/source/local"
+	remotecw20tokensource "github.com/forbole/bdjuno/v2/modules/cw20token/source/remote"
 	distrsource "github.com/forbole/bdjuno/v2/modules/distribution/source"
 	localdistrsource "github.com/forbole/bdjuno/v2/modules/distribution/source/local"
 	remotedistrsource "github.com/forbole/bdjuno/v2/modules/distribution/source/remote"
@@ -123,6 +132,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	nftModule := nft.NewModule(cdc, db)
 	groupModule := group.NewModule(cdc, db)
 	marketplaceModule := marketplace.NewModule(cdc, db)
+	cw20tokenModule := cw20token.NewModule(cdc, db, sources.CW20TokenSource)
 
 	return []jmodules.Module{
 		messages.NewModule(r.parser, cdc, ctx.Database),
@@ -146,15 +156,17 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		nftModule,
 		groupModule,
 		marketplaceModule,
+		cw20tokenModule,
 	}
 }
 
 type Sources struct {
-	BankSource     banksource.Source
-	DistrSource    distrsource.Source
-	GovSource      govsource.Source
-	SlashingSource slashingsource.Source
-	StakingSource  stakingsource.Source
+	BankSource      banksource.Source
+	DistrSource     distrsource.Source
+	GovSource       govsource.Source
+	SlashingSource  slashingsource.Source
+	StakingSource   stakingsource.Source
+	CW20TokenSource cw20tokensource.Source
 }
 
 func BuildSources(nodeCfg nodeconfig.Config, encodingConfig *params.EncodingConfig) (*Sources, error) {
@@ -180,12 +192,37 @@ func buildLocalSources(cfg *local.Details, encodingConfig *params.EncodingConfig
 		cfg.Home, 0, simapp.MakeTestEncodingConfig(), simapp.EmptyAppOptions{},
 	)
 
+	cudosNodeApp := cudosnodesimapp.NewSimApp(
+		log.NewTMLogger(log.NewSyncWriter(os.Stdout)), source.StoreDB, nil, true, map[int64]bool{},
+		cfg.Home, 0, simapp.MakeTestEncodingConfig(), simapp.EmptyAppOptions{},
+	)
+
+	wasmKeeper := wasm.NewKeeper(
+		app.AppCodec(),
+		app.GetKey(wasm.StoreKey),
+		app.GetSubspace(wasm.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.StakingKeeper,
+		app.DistrKeeper,
+		cudosNodeApp.IBCKeeper.ChannelKeeper,
+		&cudosNodeApp.IBCKeeper.PortKeeper,
+		app.CapabilityKeeper.ScopeToModule(wasm.ModuleName),
+		cudosNodeApp.TransferKeeper,
+		app.MsgServiceRouter(),
+		app.GRPCQueryRouter(),
+		"wasmDir",
+		wasm.DefaultWasmConfig(),
+		"supportedFeatures",
+	)
+
 	sources := &Sources{
-		BankSource:     localbanksource.NewSource(source, banktypes.QueryServer(app.BankKeeper)),
-		DistrSource:    localdistrsource.NewSource(source, distrtypes.QueryServer(app.DistrKeeper)),
-		GovSource:      localgovsource.NewSource(source, govtypes.QueryServer(app.GovKeeper)),
-		SlashingSource: localslashingsource.NewSource(source, slashingtypes.QueryServer(app.SlashingKeeper)),
-		StakingSource:  localstakingsource.NewSource(source, stakingkeeper.Querier{Keeper: app.StakingKeeper}),
+		BankSource:      localbanksource.NewSource(source, banktypes.QueryServer(app.BankKeeper)),
+		DistrSource:     localdistrsource.NewSource(source, distrtypes.QueryServer(app.DistrKeeper)),
+		GovSource:       localgovsource.NewSource(source, govtypes.QueryServer(app.GovKeeper)),
+		SlashingSource:  localslashingsource.NewSource(source, slashingtypes.QueryServer(app.SlashingKeeper)),
+		StakingSource:   localstakingsource.NewSource(source, stakingkeeper.Querier{Keeper: app.StakingKeeper}),
+		CW20TokenSource: localcw20tokensource.NewSource(source, wasmkeeper.Querier(&wasmKeeper)),
 	}
 
 	// Mount and initialize the stores
@@ -219,10 +256,11 @@ func buildRemoteSources(cfg *remote.Details) (*Sources, error) {
 	}
 
 	return &Sources{
-		BankSource:     remotebanksource.NewSource(source, banktypes.NewQueryClient(source.GrpcConn)),
-		DistrSource:    remotedistrsource.NewSource(source, distrtypes.NewQueryClient(source.GrpcConn)),
-		GovSource:      remotegovsource.NewSource(source, govtypes.NewQueryClient(source.GrpcConn)),
-		SlashingSource: remoteslashingsource.NewSource(source, slashingtypes.NewQueryClient(source.GrpcConn)),
-		StakingSource:  remotestakingsource.NewSource(source, stakingtypes.NewQueryClient(source.GrpcConn)),
+		BankSource:      remotebanksource.NewSource(source, banktypes.NewQueryClient(source.GrpcConn)),
+		DistrSource:     remotedistrsource.NewSource(source, distrtypes.NewQueryClient(source.GrpcConn)),
+		GovSource:       remotegovsource.NewSource(source, govtypes.NewQueryClient(source.GrpcConn)),
+		SlashingSource:  remoteslashingsource.NewSource(source, slashingtypes.NewQueryClient(source.GrpcConn)),
+		StakingSource:   remotestakingsource.NewSource(source, stakingtypes.NewQueryClient(source.GrpcConn)),
+		CW20TokenSource: remotecw20tokensource.NewSource(source, wasmtypes.NewQueryClient(source.GrpcConn)),
 	}, nil
 }
