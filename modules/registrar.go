@@ -1,10 +1,10 @@
 package modules
 
 import (
+	"context"
 	"fmt"
 	"os"
 
-	cudosnodesimapp "github.com/CudoVentures/cudos-node/simapp"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -22,7 +22,6 @@ import (
 	"github.com/forbole/bdjuno/v2/modules/nft"
 	"github.com/forbole/bdjuno/v2/modules/slashing"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -132,7 +131,15 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	nftModule := nft.NewModule(cdc, db)
 	groupModule := group.NewModule(cdc, db)
 	marketplaceModule := marketplace.NewModule(cdc, db)
-	cw20tokenModule := cw20token.NewModule(cdc, db, sources.CW20TokenSource)
+
+	// todo get from .env. os.Getenv returns empty
+	projectID := "multisig-firestore-1"
+	subID := "my-sub"
+	pubsub, err := utils.NewGooglePubSub(context.Background(), projectID, subID)
+	if err != nil {
+		panic(err)
+	}
+	cw20tokenModule := cw20token.NewModule(cdc, db, sources.CW20TokenSource, pubsub)
 
 	return []jmodules.Module{
 		messages.NewModule(r.parser, cdc, ctx.Database),
@@ -192,37 +199,13 @@ func buildLocalSources(cfg *local.Details, encodingConfig *params.EncodingConfig
 		cfg.Home, 0, simapp.MakeTestEncodingConfig(), simapp.EmptyAppOptions{},
 	)
 
-	cudosNodeApp := cudosnodesimapp.NewSimApp(
-		log.NewTMLogger(log.NewSyncWriter(os.Stdout)), source.StoreDB, nil, true, map[int64]bool{},
-		cfg.Home, 0, simapp.MakeTestEncodingConfig(), simapp.EmptyAppOptions{},
-	)
-
-	wasmKeeper := wasm.NewKeeper(
-		app.AppCodec(),
-		app.GetKey(wasm.StoreKey),
-		app.GetSubspace(wasm.ModuleName),
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.StakingKeeper,
-		app.DistrKeeper,
-		cudosNodeApp.IBCKeeper.ChannelKeeper,
-		&cudosNodeApp.IBCKeeper.PortKeeper,
-		app.CapabilityKeeper.ScopeToModule(wasm.ModuleName),
-		cudosNodeApp.TransferKeeper,
-		app.MsgServiceRouter(),
-		app.GRPCQueryRouter(),
-		"wasmDir",
-		wasm.DefaultWasmConfig(),
-		"supportedFeatures",
-	)
-
 	sources := &Sources{
 		BankSource:      localbanksource.NewSource(source, banktypes.QueryServer(app.BankKeeper)),
 		DistrSource:     localdistrsource.NewSource(source, distrtypes.QueryServer(app.DistrKeeper)),
 		GovSource:       localgovsource.NewSource(source, govtypes.QueryServer(app.GovKeeper)),
 		SlashingSource:  localslashingsource.NewSource(source, slashingtypes.QueryServer(app.SlashingKeeper)),
 		StakingSource:   localstakingsource.NewSource(source, stakingkeeper.Querier{Keeper: app.StakingKeeper}),
-		CW20TokenSource: localcw20tokensource.NewSource(source, wasmkeeper.Querier(&wasmKeeper)),
+		CW20TokenSource: localcw20tokensource.NewSource(source, wasmkeeper.Querier(cw20token.GetWasmKeeper(cfg.Home, source.StoreDB))),
 	}
 
 	// Mount and initialize the stores

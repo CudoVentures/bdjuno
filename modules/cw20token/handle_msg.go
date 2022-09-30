@@ -15,6 +15,8 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 
 	switch cosmosMsg := msg.(type) {
 	case *wasmTypes.MsgInstantiateContract:
+		m.mu.Lock()
+		defer m.mu.Unlock()
 		fmt.Print(cosmosMsg)
 	case *wasmTypes.MsgExecuteContract:
 		return nil
