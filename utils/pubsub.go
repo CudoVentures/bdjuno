@@ -2,7 +2,6 @@ package utils
 
 import (
 	"context"
-	"fmt"
 
 	"cloud.google.com/go/pubsub"
 )
@@ -47,9 +46,9 @@ func NewGooglePubSub(ctx context.Context, projectID string, subID string) (*Goog
 func (pb *GooglePubSub) Subscribe(callback func(*Message)) error {
 	sub := pb.client.Subscription(pb.subID)
 	sub.ReceiveSettings.MaxOutstandingMessages = 1
+	sub.ReceiveSettings.NumGoroutines = 1
 
 	return sub.Receive(pb.ctx, func(_ context.Context, msg *pubsub.Message) {
-		fmt.Println(*msg.DeliveryAttempt)
 		callback(NewGooglePubSubMessage(msg))
 	})
 }

@@ -22,7 +22,7 @@ type Module struct {
 	db     *database.Db
 	source source.Source
 	pubsub utils.PubSub
-	mu     sync.Mutex
+	mu     *sync.Mutex
 }
 
 func NewModule(cdc codec.Codec, db *database.Db, source source.Source, pubsub utils.PubSub) *Module {
@@ -31,7 +31,7 @@ func NewModule(cdc codec.Codec, db *database.Db, source source.Source, pubsub ut
 		db:     db,
 		source: source,
 		pubsub: pubsub,
-		mu:     sync.Mutex{},
+		mu:     &sync.Mutex{},
 	}
 }
 

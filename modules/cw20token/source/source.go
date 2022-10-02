@@ -5,5 +5,5 @@ import (
 )
 
 type Source interface {
-	AllContractState(address string, height int64) (*wasmtypes.QueryAllContractStateResponse, error)
+	AllContractState(address string, height int64) ([]wasmtypes.Model, error)
 }

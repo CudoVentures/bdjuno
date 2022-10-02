@@ -1,18 +1,26 @@
 package types
 
 type VerifiedContractPublishMessage struct {
-	ContractName      string
-	CodeID            int
-	InstantiateSchema string
-	ExecuteSchema     string
-	QuerySchema       string
+	ContractName  string
+	CodeID        int
+	ExecuteSchema string
+	QuerySchema   string
 }
 
-type TokenInstance struct {
+type MintInfo struct {
+	Minter string
+	Cap    uint64 `json:"cap,string"`
+}
+type TokenInfo struct {
 	Address     string
-	Owner       string
 	Name        string
-	Denom       string
-	TotalSupply string
-	MaxSupply   string
+	Symbol      string
+	Decimals    int8
+	TotalSupply string   `json:"total_supply"`
+	MintInfo    MintInfo `json:"mint"`
+}
+
+type TokenBalance struct {
+	Address string
+	Amount  uint64
 }

@@ -7,7 +7,8 @@ import (
 var (
 	// todo real db
 	verifiedContracts = []*types.VerifiedContractPublishMessage{}
-	tokens            = []string{}
+	tokens            = []*types.TokenInfo{}
+	tokenBalances     = []types.TokenBalance{}
 )
 
 func (dbTx *DbTx) SaveTokenCode(contract *types.VerifiedContractPublishMessage) error {
@@ -15,8 +16,13 @@ func (dbTx *DbTx) SaveTokenCode(contract *types.VerifiedContractPublishMessage) 
 	return nil
 }
 
-func (dbTx *DbTx) SaveToken(address string) error {
-	tokens = append(tokens, address)
+func (dbTx *DbTx) SaveToken(token *types.TokenInfo) error {
+	tokens = append(tokens, token)
+	return nil
+}
+
+func (dbTx *DbTx) SaveTokenBalances(balances []types.TokenBalance) error {
+	tokenBalances = append(tokenBalances, balances...)
 	return nil
 }
 
@@ -48,6 +54,10 @@ func (dbTx *DbTx) GetContractsByCodeID(codeID int) ([]string, error) {
 	return contracts, rows.Err()
 }
 
-func (dbTx *DbTx) GetAllTokens() ([]string, error) {
-	return tokens, nil
+func (dbTx *DbTx) GetAllTokenAddresses() ([]string, error) {
+	addresses := []string{}
+	for _, t := range tokens {
+		addresses = append(addresses, t.Address)
+	}
+	return addresses, nil
 }
