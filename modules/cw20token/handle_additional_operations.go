@@ -3,8 +3,6 @@ package cw20token
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/forbole/bdjuno/v2/database"
 	"github.com/forbole/bdjuno/v2/modules/utils"
@@ -30,18 +28,18 @@ func (m *Module) subscribeCallback(msg *pubsub.Message) {
 			return err
 		}
 
-		exists, err := dbTx.IsExistingTokenCode(contract.CodeID)
-		if err != nil {
+		if exists, err := dbTx.IsExistingTokenCode(contract.CodeID); err != nil {
 			msg.Nack()
 			return err
-		}
-
-		if exists {
+		} else if exists {
 			msg.Ack()
 			return fmt.Errorf("contract is already tracked")
 		}
 
-		if !isToken(&contract) {
+		if isToken, err := isToken(&contract); err != nil {
+			msg.Nack()
+			return err
+		} else if !isToken {
 			msg.Ack()
 			return fmt.Errorf("contract is not a cw20 token")
 		}
@@ -61,39 +59,20 @@ func (m *Module) subscribeCallback(msg *pubsub.Message) {
 	})
 }
 
-func (m *Module) saveExistingTokens(dbTx *database.DbTx, codeID int) error {
+func (m *Module) saveExistingTokens(dbTx *database.DbTx, codeID uint64) error {
 	contracts, err := dbTx.GetContractsByCodeID(codeID)
 	if err != nil {
 		return err
 	}
 
-	tokens, err := dbTx.GetAllTokenAddresses()
-	if err != nil {
-		return err
-	}
-
 	for _, contractAddress := range contracts {
-		exists := false
-		for _, t := range tokens {
-			if t == contractAddress {
-				exists = true
-				continue
-			}
-		}
-		if exists {
+		if exists, err := dbTx.IsExistingToken(contractAddress); err != nil {
+			return err
+		} else if exists {
 			continue
 		}
 
-		tokenInfo, balances, err := m.getTokenInfo(dbTx, contractAddress)
-		if err != nil {
-			return err
-		}
-
-		if err := dbTx.SaveToken(tokenInfo); err != nil {
-			return err
-		}
-
-		if err := dbTx.SaveTokenBalances(balances); err != nil {
+		if err := m.saveToken(dbTx, contractAddress); err != nil {
 			return err
 		}
 	}
@@ -101,50 +80,13 @@ func (m *Module) saveExistingTokens(dbTx *database.DbTx, codeID int) error {
 	return nil
 }
 
-func (m *Module) getTokenInfo(dbTx *database.DbTx, contractAddress string) (*types.TokenInfo, []types.TokenBalance, error) {
-	block, err := dbTx.GetLastBlock()
-	if err != nil {
-		return nil, nil, err
-	}
-	state, err := m.source.AllContractState(contractAddress, block.Height)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	tokenInfo := types.TokenInfo{}
-	balances := []types.TokenBalance{}
-	for _, s := range state {
-		key := string(s.Key)
-
-		if key == "token_info" {
-			if err := json.Unmarshal(s.Value, &tokenInfo); err != nil {
-				return nil, nil, err
-			}
-			continue
-		}
-
-		if strings.Contains(key, "balance") {
-			balance, err := strconv.ParseUint(strings.ReplaceAll(string(s.Value), "\"", ""), 10, 64)
-			if err != nil {
-				return nil, nil, err
-			}
-
-			addressIndex := strings.Index(key, "cudos")
-			balances = append(balances, types.TokenBalance{Address: key[addressIndex:], Amount: balance})
-		}
-	}
-
-	tokenInfo.Address = contractAddress
-	return &tokenInfo, balances, nil
-}
-
-func isToken(contract *types.VerifiedContractPublishMessage) bool {
+func isToken(contract *types.VerifiedContractPublishMessage) (bool, error) {
 	executeMsgs := []string{
 		`{"transfer":{"recipient":"test","amount":"1"}}`,
 		`{"send":{"contract":"test","amount":"1","msg":"test"}}`,
 	}
-	if isValid := validateSchema(contract.ExecuteSchema, executeMsgs); !isValid {
-		return false
+	if err := validateSchema(contract.ExecuteSchema, executeMsgs); err != nil {
+		return false, err
 	}
 
 	queryMsgs := []string{
@@ -152,23 +94,25 @@ func isToken(contract *types.VerifiedContractPublishMessage) bool {
 		`{"token_info":{}}`,
 		`{"all_accounts":{}}`,
 	}
-	return validateSchema(contract.QuerySchema, queryMsgs)
+	if err := validateSchema(contract.QuerySchema, queryMsgs); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
-func validateSchema(schema string, msgs []string) bool {
+func validateSchema(schema string, msgs []string) error {
 	for _, msg := range msgs {
-		if result, err := gjv.Validate(gjv.NewStringLoader(schema), gjv.NewStringLoader(msg)); err != nil || !result.Valid() {
-			if err != nil {
-				// todo instead print, return these errors
-				fmt.Print(err.Error())
+		if result, err := gjv.Validate(gjv.NewStringLoader(schema), gjv.NewStringLoader(msg)); err != nil {
+			return err
+		} else if !result.Valid() {
+			err := ""
+			for _, e := range result.Errors() {
+				err += e.String()
+				err += "\n"
 			}
-			if result != nil {
-				for _, e := range result.Errors() {
-					fmt.Print(e.String())
-				}
-			}
-			return false
+			return fmt.Errorf("%s", err)
 		}
 	}
-	return true
+	return nil
 }

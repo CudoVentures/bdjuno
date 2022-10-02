@@ -1,8 +1,9 @@
 package types
 
 type VerifiedContractPublishMessage struct {
-	ContractName  string
-	CodeID        int
+	ContractName string
+	// todo test : CodeID was int, now is uint64
+	CodeID        uint64
 	ExecuteSchema string
 	QuerySchema   string
 }
@@ -18,6 +19,7 @@ type TokenInfo struct {
 	Decimals    int8
 	TotalSupply string   `json:"total_supply"`
 	MintInfo    MintInfo `json:"mint"`
+	Balances    []TokenBalance
 }
 
 type TokenBalance struct {

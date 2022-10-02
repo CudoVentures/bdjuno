@@ -26,16 +26,27 @@ func (dbTx *DbTx) SaveTokenBalances(balances []types.TokenBalance) error {
 	return nil
 }
 
-func (dbTx *DbTx) IsExistingTokenCode(codeID int) (bool, error) {
+func (dbTx *DbTx) IsExistingToken(contractAddress string) (bool, error) {
+	for _, t := range tokens {
+		if t.Address == contractAddress {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func (dbTx *DbTx) IsExistingTokenCode(codeID uint64) (bool, error) {
 	for _, c := range verifiedContracts {
 		if c.CodeID == codeID {
 			return true, nil
 		}
 	}
+
 	return false, nil
 }
 
-func (dbTx *DbTx) GetContractsByCodeID(codeID int) ([]string, error) {
+func (dbTx *DbTx) GetContractsByCodeID(codeID uint64) ([]string, error) {
 	rows, err := dbTx.Query(`SELECT result_contract_address FROM cosmwasm_instantiate WHERE code_id = $1`, codeID)
 	if err != nil {
 		return nil, err
@@ -52,12 +63,4 @@ func (dbTx *DbTx) GetContractsByCodeID(codeID int) ([]string, error) {
 	}
 
 	return contracts, rows.Err()
-}
-
-func (dbTx *DbTx) GetAllTokenAddresses() ([]string, error) {
-	addresses := []string{}
-	for _, t := range tokens {
-		addresses = append(addresses, t.Address)
-	}
-	return addresses, nil
 }
