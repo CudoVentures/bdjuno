@@ -13,11 +13,14 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 )
 
-func (m *Module) saveTokenInfo(dbTx *database.DbTx, contractAddress string, height int64) error {
-	tokenInfo, err := m.source.GetTokenInfo(contractAddress, height)
+func (m *Module) saveTokenInfo(dbTx *database.DbTx, contract string, codeID uint64, height int64) error {
+	tokenInfo, err := m.source.GetTokenInfo(contract, height)
 	if err != nil {
 		return err
 	}
+
+	tokenInfo.Address = contract
+	tokenInfo.CodeID = codeID
 
 	if err := dbTx.SaveTokenInfo(tokenInfo); err != nil {
 		return err

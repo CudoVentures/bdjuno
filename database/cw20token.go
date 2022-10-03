@@ -36,12 +36,12 @@ func (dbTx *DbTx) UpdateTokenMinter(newMinter string) error {
 	return nil
 }
 
-func (dbTx *DbTx) UpdateTokenMarketing(project string, description string, admin string) error {
+func (dbTx *DbTx) UpdateTokenMarketing(contract string, project string, description string, admin string) error {
 	// todo
 	return nil
 }
 
-func (dbTx *DbTx) UpdateTokenLogo() error {
+func (dbTx *DbTx) UpdateTokenLogo(contract string, logo string) error {
 	// todo
 	return nil
 }
@@ -57,7 +57,7 @@ func (dbTx *DbTx) DeleteAllTokenBalances(contract string) error {
 }
 
 func (dbTx *DbTx) IsExistingToken(contract string) (bool, error) {
-	// todo only return true if codeID is valid tokenCodeID (becauase of possible migrations)
+	// todo only return true if codeID is valid tokenCodeID (becauase of possible migrations) (maybe with join, so no codeID = no result)
 	for _, t := range tokens {
 		if t.Address == contract {
 			return true, nil

@@ -55,7 +55,7 @@ func (s Source) GetTokenInfo(contract string, height int64) (*types.TokenInfo, e
 		res.Pagination.NextKey = r.Pagination.NextKey
 	}
 
-	return source.ParseToTokenInfo(contract, res)
+	return source.ParseToTokenInfo(res)
 }
 
 func (s Source) GetBalance(contract string, address string, height int64) (uint64, error) {

@@ -35,9 +35,12 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 }
 
 func (m *Module) handleMsgInstantiateContract(dbTx *database.DbTx, msg *wasmTypes.MsgInstantiateContract, tx *juno.Tx, index int) error {
-	if exists, err := dbTx.IsExistingTokenCode(msg.CodeID); err != nil {
+	exists, err := dbTx.IsExistingTokenCode(msg.CodeID)
+	if err != nil {
 		return err
-	} else if !exists {
+	}
+
+	if !exists {
 		return nil
 	}
 
@@ -45,13 +48,16 @@ func (m *Module) handleMsgInstantiateContract(dbTx *database.DbTx, msg *wasmType
 	if contract == "" {
 		return fmt.Errorf("error while getting EventInstantiate")
 	}
-	return m.saveTokenInfo(dbTx, contract, tx.Height)
+	return m.saveTokenInfo(dbTx, contract, msg.CodeID, tx.Height)
 }
 
 func (m *Module) handleMsgExecuteContract(dbTx *database.DbTx, msg *wasmTypes.MsgExecuteContract, tx *juno.Tx, index int) error {
-	if exists, err := dbTx.IsExistingToken(msg.Contract); err != nil {
+	exists, err := dbTx.IsExistingToken(msg.Contract)
+	if err != nil {
 		return err
-	} else if !exists {
+	}
+
+	if !exists {
 		return nil
 	}
 
@@ -76,9 +82,9 @@ func (m *Module) handleMsgExecuteContract(dbTx *database.DbTx, msg *wasmTypes.Ms
 	case "update_minter":
 		return dbTx.UpdateTokenMinter(msgDetails.NewMinter)
 	case "update_marketing":
-		return dbTx.UpdateTokenMarketing(msgDetails.Project, msgDetails.Description, msgDetails.Admin)
+		return dbTx.UpdateTokenMarketing(msg.Contract, msgDetails.Project, msgDetails.Description, msgDetails.Admin)
 	case "upload_logo":
-		return dbTx.UpdateTokenLogo()
+		return dbTx.UpdateTokenLogo(msg.Contract, utils.SanitizeUTF8(string(msgRaw)))
 	default:
 		if err := m.saveBalances(dbTx, msg.Contract, msg.Sender, &msgDetails, tx.Height); err != nil {
 			return err
@@ -93,19 +99,18 @@ func (m *Module) handleMsgExecuteContract(dbTx *database.DbTx, msg *wasmTypes.Ms
 }
 
 func (m *Module) handleMsgMigrateContract(dbTx *database.DbTx, msg *wasmTypes.MsgMigrateContract, tx *juno.Tx, index int) error {
-	if exists, err := dbTx.IsExistingToken(msg.Contract); err != nil {
+	exists, err := dbTx.IsExistingToken(msg.Contract)
+	if err != nil {
 		return err
-	} else if !exists {
-		return nil
 	}
 
-	if err := dbTx.UpdateTokenCodeID(msg.Contract, msg.CodeID); err != nil {
-		return err
+	if !exists {
+		return nil
 	}
 
 	if err := dbTx.DeleteAllTokenBalances(msg.Contract); err != nil {
 		return err
 	}
 
-	return m.saveTokenInfo(dbTx, msg.Contract, tx.Height)
+	return m.saveTokenInfo(dbTx, msg.Contract, msg.CodeID, tx.Height)
 }

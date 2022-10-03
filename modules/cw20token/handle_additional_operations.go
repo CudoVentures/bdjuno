@@ -29,18 +29,24 @@ func (m *Module) subscribeCallback(msg *pubsub.Message) {
 			return err
 		}
 
-		if exists, err := dbTx.IsExistingTokenCode(contract.CodeID); err != nil {
+		exists, err := dbTx.IsExistingTokenCode(contract.CodeID)
+		if err != nil {
 			msg.Nack()
 			return err
-		} else if exists {
+		}
+
+		if exists {
 			msg.Ack()
 			return fmt.Errorf("contract is already tracked")
 		}
 
-		if isToken, err := isToken(&contract); err != nil {
+		isToken, err := isToken(&contract)
+		if err != nil {
 			msg.Nack()
 			return err
-		} else if !isToken {
+		}
+
+		if !isToken {
 			msg.Ack()
 			return fmt.Errorf("contract is not a cw20 token")
 		}
@@ -67,9 +73,12 @@ func (m *Module) saveExistingTokens(dbTx *database.DbTx, codeID uint64) error {
 	}
 
 	for _, contract := range contractAddresses {
-		if exists, err := dbTx.IsExistingToken(contract); err != nil {
+		exists, err := dbTx.IsExistingToken(contract)
+		if err != nil {
 			return err
-		} else if exists {
+		}
+
+		if exists {
 			continue
 		}
 
@@ -78,7 +87,7 @@ func (m *Module) saveExistingTokens(dbTx *database.DbTx, codeID uint64) error {
 			return err
 		}
 
-		if err := m.saveTokenInfo(dbTx, contract, block.Height); err != nil {
+		if err := m.saveTokenInfo(dbTx, contract, codeID, block.Height); err != nil {
 			return err
 		}
 	}
@@ -109,9 +118,12 @@ func isToken(contract *types.VerifiedContractPublishMessage) (bool, error) {
 
 func validateSchema(schema string, msgs []string) error {
 	for _, msg := range msgs {
-		if result, err := gjv.Validate(gjv.NewStringLoader(schema), gjv.NewStringLoader(msg)); err != nil {
+		result, err := gjv.Validate(gjv.NewStringLoader(schema), gjv.NewStringLoader(msg))
+		if err != nil {
 			return err
-		} else if !result.Valid() {
+		}
+
+		if !result.Valid() {
 			err := ""
 			for _, e := range result.Errors() {
 				err += e.String()

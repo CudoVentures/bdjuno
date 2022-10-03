@@ -7,11 +7,11 @@ import (
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
+	"github.com/forbole/bdjuno/v2/modules/utils"
 	"github.com/forbole/bdjuno/v2/types"
 )
 
-func ParseToTokenInfo(contractAddress string, res *wasmtypes.QueryAllContractStateResponse) (*types.TokenInfo, error) {
-	// todo SAVE MARKETING INFO
+func ParseToTokenInfo(res *wasmtypes.QueryAllContractStateResponse) (*types.TokenInfo, error) {
 	tokenInfo := types.TokenInfo{}
 	for _, m := range res.Models {
 		key := string(m.Key)
@@ -20,7 +20,6 @@ func ParseToTokenInfo(contractAddress string, res *wasmtypes.QueryAllContractSta
 			if err := json.Unmarshal(m.Value, &tokenInfo); err != nil {
 				return nil, err
 			}
-
 			continue
 		}
 
@@ -34,10 +33,22 @@ func ParseToTokenInfo(contractAddress string, res *wasmtypes.QueryAllContractSta
 			address := key[addressIndex:]
 
 			tokenInfo.Balances = append(tokenInfo.Balances, &types.TokenBalance{Address: address, Amount: balance})
+			continue
+		}
+
+		if key == "marketing_info" {
+			if err := json.Unmarshal(m.Value, &tokenInfo.MarketingInfo); err != nil {
+				return nil, err
+			}
+			continue
+		}
+
+		if key == "logo" {
+			tokenInfo.Logo = utils.SanitizeUTF8(string(m.Value))
+			continue
 		}
 	}
 
-	tokenInfo.Address = contractAddress
 	return &tokenInfo, nil
 }
 

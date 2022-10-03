@@ -1,5 +1,6 @@
 package types
 
+// todo move as anonymous struct
 type VerifiedContractPublishMessage struct {
 	ContractName  string
 	CodeID        uint64
@@ -8,21 +9,27 @@ type VerifiedContractPublishMessage struct {
 }
 
 type MintInfo struct {
-	Minter string
-	Cap    uint64 `json:"cap,string"`
+	Minter    string
+	MaxSupply uint64 `json:"cap,string"`
 }
 
-// todo test TotalSupply was string, now is uint64
+type MarketingInfo struct {
+	Project     string
+	Description string
+	Admin       string `json:"marketing"`
+}
+
 type TokenInfo struct {
-	Address     string
-	Name        string
-	Symbol      string
-	Decimals    int8
-	TotalSupply uint64   `json:"total_supply,string"`
-	MintInfo    MintInfo `json:"mint"`
-	Balances    []*TokenBalance
-	// todo fill CodeID everywhere (handleAdditionalOperations maybe)
-	CodeID uint64
+	Address           string
+	Name              string
+	Symbol            string
+	Decimals          int8
+	CirculatingSupply uint64   `json:"total_supply,string"`
+	MintInfo          MintInfo `json:"mint"`
+	MarketingInfo     MarketingInfo
+	Logo              string
+	Balances          []*TokenBalance
+	CodeID            uint64
 }
 
 type TokenBalance struct {

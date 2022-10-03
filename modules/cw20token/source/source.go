@@ -5,7 +5,7 @@ import (
 )
 
 type Source interface {
-	GetTokenInfo(contractAddress string, height int64) (*types.TokenInfo, error)
-	GetBalance(contractAddress string, address string, height int64) (uint64, error)
-	GetTotalSupply(contractAddress string, height int64) (uint64, error)
+	GetTokenInfo(contract string, height int64) (*types.TokenInfo, error)
+	GetBalance(contract string, address string, height int64) (uint64, error)
+	GetTotalSupply(contract string, height int64) (uint64, error)
 }
