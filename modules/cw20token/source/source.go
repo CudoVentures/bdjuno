@@ -1,9 +1,11 @@
 package source
 
 import (
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/forbole/bdjuno/v2/types"
 )
 
 type Source interface {
-	AllContractState(address string, height int64) ([]wasmtypes.Model, error)
+	GetTokenInfo(contractAddress string, height int64) (*types.TokenInfo, error)
+	GetBalance(contractAddress string, address string, height int64) (uint64, error)
+	GetTotalSupply(contractAddress string, height int64) (uint64, error)
 }

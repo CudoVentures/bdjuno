@@ -1,21 +1,69 @@
 package cw20token
 
 import (
-	"encoding/json"
 	"os"
-	"strconv"
-	"strings"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	cudosnodesimapp "github.com/CudoVentures/cudos-node/simapp"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/forbole/bdjuno/v2/database"
-	"github.com/forbole/bdjuno/v2/modules/cw20token/source"
 	"github.com/forbole/bdjuno/v2/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmdb "github.com/tendermint/tm-db"
 )
+
+func (m *Module) saveTokenInfo(dbTx *database.DbTx, contractAddress string, height int64) error {
+	tokenInfo, err := m.source.GetTokenInfo(contractAddress, height)
+	if err != nil {
+		return err
+	}
+
+	if err := dbTx.SaveTokenInfo(tokenInfo); err != nil {
+		return err
+	}
+
+	if err := dbTx.SaveTokenBalances(tokenInfo.Balances); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Module) updateBalances(dbTx *database.DbTx, contractAddress string, sender string, msg *types.MsgTokenExecute, height int64) error {
+	balances := []types.TokenBalance{}
+	if msg.Owner != "" {
+		balances = append(balances, types.TokenBalance{Address: msg.Owner})
+	} else {
+		balances = append(balances, types.TokenBalance{Address: sender})
+	}
+
+	if msg.Recipient != "" {
+		balances = append(balances, types.TokenBalance{Address: msg.Recipient})
+	} else if msg.Contract != "" {
+		balances = append(balances, types.TokenBalance{Address: msg.Contract})
+	}
+
+	for _, a := range balances {
+		balance, err := m.source.GetBalance(contractAddress, a.Address, height)
+		if err != nil {
+			return err
+		}
+
+		a.Amount = balance
+	}
+
+	return dbTx.SaveTokenBalances(balances)
+}
+
+func (m *Module) updateTotalSupply(dbTx *database.DbTx, contractAddress string, height int64) error {
+	totalSupply, err := m.source.GetTotalSupply(contractAddress, height)
+	if err != nil {
+		return err
+	}
+
+	return dbTx.UpdateTokenTotalSupply(contractAddress, totalSupply)
+}
 
 func GetWasmKeeper(homePath string, db tmdb.DB) *wasmkeeper.Keeper {
 	app := cudosnodesimapp.NewSimApp(
@@ -43,58 +91,4 @@ func GetWasmKeeper(homePath string, db tmdb.DB) *wasmkeeper.Keeper {
 	)
 
 	return &keeper
-}
-
-func (m *Module) saveToken(dbTx *database.DbTx, contractAddress string) error {
-	tokenInfo, err := getTokenInfo(dbTx, contractAddress, m.source)
-	if err != nil {
-		return err
-	}
-
-	if err := dbTx.SaveToken(tokenInfo); err != nil {
-		return err
-	}
-
-	if err := dbTx.SaveTokenBalances(tokenInfo.Balances); err != nil {
-		return err
-	}
-	return nil
-}
-
-func getTokenInfo(dbTx *database.DbTx, contractAddress string, source source.Source) (*types.TokenInfo, error) {
-	block, err := dbTx.GetLastBlock()
-	if err != nil {
-		return nil, err
-	}
-	state, err := source.AllContractState(contractAddress, block.Height)
-	if err != nil {
-		return nil, err
-	}
-
-	tokenInfo := types.TokenInfo{}
-	for _, s := range state {
-		key := string(s.Key)
-
-		if key == "token_info" {
-			if err := json.Unmarshal(s.Value, &tokenInfo); err != nil {
-				return nil, err
-			}
-			continue
-		}
-
-		if strings.Contains(key, "balance") {
-			balance, err := strconv.ParseUint(strings.ReplaceAll(string(s.Value), "\"", ""), 10, 64)
-			if err != nil {
-				return nil, err
-			}
-
-			addressIndex := strings.Index(key, "cudos")
-			address := key[addressIndex:]
-			// todo test tokenInfo.Balances
-			tokenInfo.Balances = append(tokenInfo.Balances, types.TokenBalance{Address: address, Amount: balance})
-		}
-	}
-
-	tokenInfo.Address = contractAddress
-	return &tokenInfo, nil
 }

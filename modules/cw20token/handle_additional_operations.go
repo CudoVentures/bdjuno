@@ -21,6 +21,7 @@ func (m *Module) RunAdditionalOperations() error {
 func (m *Module) subscribeCallback(msg *pubsub.Message) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
 	m.db.ExecuteTx(func(dbTx *database.DbTx) error {
 		var contract types.VerifiedContractPublishMessage
 		if err := json.Unmarshal(msg.Data, &contract); err != nil {
@@ -44,7 +45,7 @@ func (m *Module) subscribeCallback(msg *pubsub.Message) {
 			return fmt.Errorf("contract is not a cw20 token")
 		}
 
-		if err := dbTx.SaveTokenCode(&contract); err != nil {
+		if err := dbTx.SaveTokenCodeID(&contract); err != nil {
 			msg.Nack()
 			return err
 		}
@@ -72,7 +73,12 @@ func (m *Module) saveExistingTokens(dbTx *database.DbTx, codeID uint64) error {
 			continue
 		}
 
-		if err := m.saveToken(dbTx, contractAddress); err != nil {
+		block, err := dbTx.GetLastBlock()
+		if err != nil {
+			return err
+		}
+
+		if err := m.saveTokenInfo(dbTx, contractAddress, block.Height); err != nil {
 			return err
 		}
 	}

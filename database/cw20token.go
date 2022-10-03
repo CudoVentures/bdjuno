@@ -11,18 +11,38 @@ var (
 	tokenBalances     = []types.TokenBalance{}
 )
 
-func (dbTx *DbTx) SaveTokenCode(contract *types.VerifiedContractPublishMessage) error {
+func (dbTx *DbTx) SaveTokenCodeID(contract *types.VerifiedContractPublishMessage) error {
 	verifiedContracts = append(verifiedContracts, contract)
 	return nil
 }
 
-func (dbTx *DbTx) SaveToken(token *types.TokenInfo) error {
+func (dbTx *DbTx) SaveTokenInfo(token *types.TokenInfo) error {
 	tokens = append(tokens, token)
 	return nil
 }
 
 func (dbTx *DbTx) SaveTokenBalances(balances []types.TokenBalance) error {
 	tokenBalances = append(tokenBalances, balances...)
+	return nil
+}
+
+func (dbTx *DbTx) UpdateTokenTotalSupply(contractAddress string, totalSupply uint64) error {
+	// todo
+	return nil
+}
+
+func (dbTx *DbTx) UpdateTokenMinter(newMinter string) error {
+	// todo
+	return nil
+}
+
+func (dbTx *DbTx) UpdateTokenMarketing(project string, description string, admin string) error {
+	// todo
+	return nil
+}
+
+func (dbTx *DbTx) UpdateTokenLogo() error {
+	// todo
 	return nil
 }
 

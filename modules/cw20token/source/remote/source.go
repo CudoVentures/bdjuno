@@ -1,15 +1,18 @@
 package remote
 
 import (
+	"fmt"
+
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/forbole/juno/v2/node/remote"
 
-	cw20tokenkeeper "github.com/forbole/bdjuno/v2/modules/cw20token/source"
+	"github.com/forbole/bdjuno/v2/modules/cw20token/source"
+	"github.com/forbole/bdjuno/v2/types"
 )
 
 var (
-	_ cw20tokenkeeper.Source = &Source{}
+	_ source.Source = &Source{}
 )
 
 type Source struct {
@@ -25,28 +28,63 @@ func NewSource(source *remote.Source, wasmClient wasmtypes.QueryClient) *Source 
 	}
 }
 
-func (s Source) AllContractState(address string, height int64) ([]wasmtypes.Model, error) {
+func (s Source) GetTokenInfo(contract string, height int64) (*types.TokenInfo, error) {
 	ctx := remote.GetHeightRequestContext(s.Ctx, height)
-	state := []wasmtypes.Model{}
-	nextPage := []byte{}
 
+	res := &wasmtypes.QueryAllContractStateResponse{}
 	for {
 		req := &wasmtypes.QueryAllContractStateRequest{
-			Address:    address,
-			Pagination: &query.PageRequest{Key: nextPage},
+			Address:    contract,
+			Pagination: &query.PageRequest{Key: res.Pagination.NextKey},
 		}
 
-		res, err := s.wasmClient.AllContractState(ctx, req)
+		r, err := s.wasmClient.AllContractState(ctx, req)
 		if err != nil {
 			return nil, err
 		}
 
-		state = append(state, res.Models...)
-		nextPage = res.Pagination.NextKey
-		if nextPage == nil {
+		res.Models = append(res.Models, r.Models...)
+
+		if r.Pagination.NextKey == nil {
 			break
 		}
+
+		res.Pagination.NextKey = r.Pagination.NextKey
 	}
 
-	return state, nil
+	return source.ParseToTokenInfo(contract, res)
+}
+
+func (s Source) GetBalance(contract string, address string, height int64) (uint64, error) {
+	ctx := remote.GetHeightRequestContext(s.Ctx, height)
+
+	query := fmt.Sprintf(`"balance":{"address":"%s"}`, address)
+	req := &wasmtypes.QuerySmartContractStateRequest{
+		Address:   contract,
+		QueryData: []byte(query),
+	}
+
+	res, err := s.wasmClient.SmartContractState(ctx, req)
+	if err != nil {
+		return 0, err
+	}
+
+	return source.ParseToBalance(res)
+}
+
+func (s Source) GetTotalSupply(contract string, height int64) (uint64, error) {
+	ctx := remote.GetHeightRequestContext(s.Ctx, height)
+
+	query := `{"token_info":{}}`
+	req := &wasmtypes.QuerySmartContractStateRequest{
+		Address:   contract,
+		QueryData: []byte(query),
+	}
+
+	res, err := s.wasmClient.SmartContractState(ctx, req)
+	if err != nil {
+		return 0, err
+	}
+
+	return source.ParseToTotalSupply(res)
 }
