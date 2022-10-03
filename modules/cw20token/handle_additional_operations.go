@@ -61,13 +61,13 @@ func (m *Module) subscribeCallback(msg *pubsub.Message) {
 }
 
 func (m *Module) saveExistingTokens(dbTx *database.DbTx, codeID uint64) error {
-	contracts, err := dbTx.GetContractsByCodeID(codeID)
+	contractAddresses, err := dbTx.GetContractsByCodeID(codeID)
 	if err != nil {
 		return err
 	}
 
-	for _, contractAddress := range contracts {
-		if exists, err := dbTx.IsExistingToken(contractAddress); err != nil {
+	for _, contract := range contractAddresses {
+		if exists, err := dbTx.IsExistingToken(contract); err != nil {
 			return err
 		} else if exists {
 			continue
@@ -78,7 +78,7 @@ func (m *Module) saveExistingTokens(dbTx *database.DbTx, codeID uint64) error {
 			return err
 		}
 
-		if err := m.saveTokenInfo(dbTx, contractAddress, block.Height); err != nil {
+		if err := m.saveTokenInfo(dbTx, contract, block.Height); err != nil {
 			return err
 		}
 	}

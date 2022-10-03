@@ -20,7 +20,9 @@ type TokenInfo struct {
 	Decimals    int8
 	TotalSupply uint64   `json:"total_supply,string"`
 	MintInfo    MintInfo `json:"mint"`
-	Balances    []TokenBalance
+	Balances    []*TokenBalance
+	// todo fill CodeID everywhere (handleAdditionalOperations maybe)
+	CodeID uint64
 }
 
 type TokenBalance struct {

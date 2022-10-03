@@ -8,7 +8,7 @@ var (
 	// todo real db
 	verifiedContracts = []*types.VerifiedContractPublishMessage{}
 	tokens            = []*types.TokenInfo{}
-	tokenBalances     = []types.TokenBalance{}
+	tokenBalances     = []*types.TokenBalance{}
 )
 
 func (dbTx *DbTx) SaveTokenCodeID(contract *types.VerifiedContractPublishMessage) error {
@@ -21,12 +21,12 @@ func (dbTx *DbTx) SaveTokenInfo(token *types.TokenInfo) error {
 	return nil
 }
 
-func (dbTx *DbTx) SaveTokenBalances(balances []types.TokenBalance) error {
+func (dbTx *DbTx) SaveTokenBalances(balances []*types.TokenBalance) error {
 	tokenBalances = append(tokenBalances, balances...)
 	return nil
 }
 
-func (dbTx *DbTx) UpdateTokenTotalSupply(contractAddress string, totalSupply uint64) error {
+func (dbTx *DbTx) UpdateTokenTotalSupply(contract string, totalSupply uint64) error {
 	// todo
 	return nil
 }
@@ -46,9 +46,20 @@ func (dbTx *DbTx) UpdateTokenLogo() error {
 	return nil
 }
 
-func (dbTx *DbTx) IsExistingToken(contractAddress string) (bool, error) {
+func (dbTx *DbTx) UpdateTokenCodeID(contract string, codeID uint64) error {
+	// todo
+	return nil
+}
+
+func (dbTx *DbTx) DeleteAllTokenBalances(contract string) error {
+	// todo
+	return nil
+}
+
+func (dbTx *DbTx) IsExistingToken(contract string) (bool, error) {
+	// todo only return true if codeID is valid tokenCodeID (becauase of possible migrations)
 	for _, t := range tokens {
-		if t.Address == contractAddress {
+		if t.Address == contract {
 			return true, nil
 		}
 	}

@@ -33,7 +33,7 @@ func ParseToTokenInfo(contractAddress string, res *wasmtypes.QueryAllContractSta
 			addressIndex := strings.Index(key, "cudos")
 			address := key[addressIndex:]
 
-			tokenInfo.Balances = append(tokenInfo.Balances, types.TokenBalance{Address: address, Amount: balance})
+			tokenInfo.Balances = append(tokenInfo.Balances, &types.TokenBalance{Address: address, Amount: balance})
 		}
 	}
 

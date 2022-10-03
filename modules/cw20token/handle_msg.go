@@ -2,6 +2,7 @@ package cw20token
 
 import (
 	"encoding/json"
+	"fmt"
 
 	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,9 +26,11 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 			return m.handleMsgInstantiateContract(dbTx, cosmosMsg, tx, index)
 		case *wasmTypes.MsgExecuteContract:
 			return m.handleMsgExecuteContract(dbTx, cosmosMsg, tx, index)
+		case *wasmTypes.MsgMigrateContract:
+			return m.handleMsgMigrateContract(dbTx, cosmosMsg, tx, index)
+		default:
+			return nil
 		}
-		// todo if migrate - we should update sth (research what)
-		return nil
 	})
 }
 
@@ -37,9 +40,12 @@ func (m *Module) handleMsgInstantiateContract(dbTx *database.DbTx, msg *wasmType
 	} else if !exists {
 		return nil
 	}
-	contractAddress := utils.GetValueFromLogs(uint32(index), tx.Logs, wasmTypes.EventTypeInstantiate, wasmTypes.AttributeKeyContractAddr)
 
-	return m.saveTokenInfo(dbTx, contractAddress, tx.Height)
+	contract := utils.GetValueFromLogs(uint32(index), tx.Logs, wasmTypes.EventTypeInstantiate, wasmTypes.AttributeKeyContractAddr)
+	if contract == "" {
+		return fmt.Errorf("error while getting EventInstantiate")
+	}
+	return m.saveTokenInfo(dbTx, contract, tx.Height)
 }
 
 func (m *Module) handleMsgExecuteContract(dbTx *database.DbTx, msg *wasmTypes.MsgExecuteContract, tx *juno.Tx, index int) error {
@@ -74,14 +80,32 @@ func (m *Module) handleMsgExecuteContract(dbTx *database.DbTx, msg *wasmTypes.Ms
 	case "upload_logo":
 		return dbTx.UpdateTokenLogo()
 	default:
-		if err := m.updateBalances(dbTx, msg.Contract, msg.Sender, &msgDetails, tx.Height); err != nil {
+		if err := m.saveBalances(dbTx, msg.Contract, msg.Sender, &msgDetails, tx.Height); err != nil {
 			return err
 		}
 
 		if msgType == "mint" || msgType == "burn" || msgType == "burn_from" {
-			return m.updateTotalSupply(dbTx, msg.Contract, tx.Height)
+			return m.saveTotalSupply(dbTx, msg.Contract, tx.Height)
 		}
 
 		return nil
 	}
+}
+
+func (m *Module) handleMsgMigrateContract(dbTx *database.DbTx, msg *wasmTypes.MsgMigrateContract, tx *juno.Tx, index int) error {
+	if exists, err := dbTx.IsExistingToken(msg.Contract); err != nil {
+		return err
+	} else if !exists {
+		return nil
+	}
+
+	if err := dbTx.UpdateTokenCodeID(msg.Contract, msg.CodeID); err != nil {
+		return err
+	}
+
+	if err := dbTx.DeleteAllTokenBalances(msg.Contract); err != nil {
+		return err
+	}
+
+	return m.saveTokenInfo(dbTx, msg.Contract, tx.Height)
 }

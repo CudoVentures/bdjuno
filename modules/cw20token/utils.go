@@ -30,18 +30,18 @@ func (m *Module) saveTokenInfo(dbTx *database.DbTx, contractAddress string, heig
 	return nil
 }
 
-func (m *Module) updateBalances(dbTx *database.DbTx, contractAddress string, sender string, msg *types.MsgTokenExecute, height int64) error {
-	balances := []types.TokenBalance{}
+func (m *Module) saveBalances(dbTx *database.DbTx, contractAddress string, sender string, msg *types.MsgTokenExecute, height int64) error {
+	balances := []*types.TokenBalance{}
 	if msg.Owner != "" {
-		balances = append(balances, types.TokenBalance{Address: msg.Owner})
+		balances = append(balances, &types.TokenBalance{Address: msg.Owner})
 	} else {
-		balances = append(balances, types.TokenBalance{Address: sender})
+		balances = append(balances, &types.TokenBalance{Address: sender})
 	}
 
 	if msg.Recipient != "" {
-		balances = append(balances, types.TokenBalance{Address: msg.Recipient})
+		balances = append(balances, &types.TokenBalance{Address: msg.Recipient})
 	} else if msg.Contract != "" {
-		balances = append(balances, types.TokenBalance{Address: msg.Contract})
+		balances = append(balances, &types.TokenBalance{Address: msg.Contract})
 	}
 
 	for _, a := range balances {
@@ -56,7 +56,7 @@ func (m *Module) updateBalances(dbTx *database.DbTx, contractAddress string, sen
 	return dbTx.SaveTokenBalances(balances)
 }
 
-func (m *Module) updateTotalSupply(dbTx *database.DbTx, contractAddress string, height int64) error {
+func (m *Module) saveTotalSupply(dbTx *database.DbTx, contractAddress string, height int64) error {
 	totalSupply, err := m.source.GetTotalSupply(contractAddress, height)
 	if err != nil {
 		return err
