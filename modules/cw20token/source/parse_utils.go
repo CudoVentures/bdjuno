@@ -31,8 +31,8 @@ func ParseToTokenInfo(res *wasmtypes.QueryAllContractStateResponse) (*types.Toke
 
 			addressIndex := strings.Index(key, "cudos")
 			address := key[addressIndex:]
-
 			tokenInfo.Balances = append(tokenInfo.Balances, &types.TokenBalance{Address: address, Amount: balance})
+
 			continue
 		}
 

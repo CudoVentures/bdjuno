@@ -51,12 +51,12 @@ func (m *Module) subscribeCallback(msg *pubsub.Message) {
 			return fmt.Errorf("contract is not a cw20 token")
 		}
 
-		if err := dbTx.SaveTokenCodeID(&contract); err != nil {
+		if err := dbTx.SaveTokenCodeID(contract.CodeID); err != nil {
 			msg.Nack()
 			return err
 		}
 
-		if err := m.saveExistingTokens(dbTx, contract.CodeID); err != nil {
+		if err := m.saveMatchingContracts(dbTx, contract.CodeID); err != nil {
 			msg.Nack()
 			return err
 		}
@@ -66,14 +66,14 @@ func (m *Module) subscribeCallback(msg *pubsub.Message) {
 	})
 }
 
-func (m *Module) saveExistingTokens(dbTx *database.DbTx, codeID uint64) error {
-	contractAddresses, err := dbTx.GetContractsByCodeID(codeID)
+func (m *Module) saveMatchingContracts(dbTx *database.DbTx, codeID uint64) error {
+	contracts, err := dbTx.GetContractsByCodeID(codeID)
 	if err != nil {
 		return err
 	}
 
-	for _, contract := range contractAddresses {
-		exists, err := dbTx.IsExistingToken(contract)
+	for _, c := range contracts {
+		exists, err := dbTx.IsExistingToken(c)
 		if err != nil {
 			return err
 		}
@@ -87,7 +87,7 @@ func (m *Module) saveExistingTokens(dbTx *database.DbTx, codeID uint64) error {
 			return err
 		}
 
-		if err := m.saveTokenInfo(dbTx, contract, codeID, block.Height); err != nil {
+		if err := m.saveTokenInfo(dbTx, c, codeID, block.Height); err != nil {
 			return err
 		}
 	}
@@ -132,5 +132,6 @@ func validateSchema(schema string, msgs []string) error {
 			return fmt.Errorf("%s", err)
 		}
 	}
+
 	return nil
 }

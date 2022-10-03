@@ -80,7 +80,7 @@ func (m *Module) handleMsgExecuteContract(dbTx *database.DbTx, msg *wasmTypes.Ms
 
 	switch msgType {
 	case "update_minter":
-		return dbTx.UpdateTokenMinter(msgDetails.NewMinter)
+		return dbTx.UpdateTokenMinter(msg.Contract, msgDetails.NewMinter)
 	case "update_marketing":
 		return dbTx.UpdateTokenMarketing(msg.Contract, msgDetails.Project, msgDetails.Description, msgDetails.Admin)
 	case "upload_logo":
@@ -91,7 +91,7 @@ func (m *Module) handleMsgExecuteContract(dbTx *database.DbTx, msg *wasmTypes.Ms
 		}
 
 		if msgType == "mint" || msgType == "burn" || msgType == "burn_from" {
-			return m.saveTotalSupply(dbTx, msg.Contract, tx.Height)
+			return m.saveCirculatingSupply(dbTx, msg.Contract, tx.Height)
 		}
 
 		return nil

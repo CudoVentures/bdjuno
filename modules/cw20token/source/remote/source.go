@@ -72,7 +72,7 @@ func (s Source) GetBalance(contract string, address string, height int64) (uint6
 	return source.ParseToBalance(res)
 }
 
-func (s Source) GetTotalSupply(contract string, height int64) (uint64, error) {
+func (s Source) GetCirculatingSupply(contract string, height int64) (uint64, error) {
 	ctx := remote.GetHeightRequestContext(s.Ctx, height)
 
 	query := `{"token_info":{}}`

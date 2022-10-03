@@ -1,6 +1,5 @@
 package types
 
-// todo move as anonymous struct
 type VerifiedContractPublishMessage struct {
 	ContractName  string
 	CodeID        uint64
