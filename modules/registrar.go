@@ -1,7 +1,6 @@
 package modules
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -132,14 +131,8 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	groupModule := group.NewModule(cdc, db)
 	marketplaceModule := marketplace.NewModule(cdc, db)
 
-	// todo get from .env. os.Getenv returns empty
-	projectID := "multisig-firestore-1"
-	subID := "my-sub"
-	pubsub, err := utils.NewGooglePubSub(context.Background(), projectID, subID)
-	if err != nil {
-		panic(err)
-	}
-	cw20tokenModule := cw20token.NewModule(cdc, db, sources.CW20TokenSource, pubsub)
+	pubSubClient := cw20token.GetPubSubClient(ctx.JunoConfig.GetBytes())
+	cw20tokenModule := cw20token.NewModule(cdc, db, sources.CW20TokenSource, pubSubClient)
 
 	return []jmodules.Module{
 		messages.NewModule(r.parser, cdc, ctx.Database),

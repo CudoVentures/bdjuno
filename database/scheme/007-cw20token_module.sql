@@ -31,3 +31,4 @@ CREATE TABLE cw20token_balance
 );
 
 CREATE INDEX cw20token_balance_token_index ON cw20token_balance (token);
+CREATE INDEX cw20token_balance_address_index ON cw20token_balance (address);

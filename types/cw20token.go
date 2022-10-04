@@ -36,13 +36,17 @@ type TokenBalance struct {
 	Amount  uint64
 }
 
-type MsgTokenExecute struct {
-	Recipient   string
-	Amount      uint64 `json:"amount,string"`
-	Owner       string
-	Contract    string
-	NewMinter   string `json:"new_minter"`
-	Project     string
-	Description string
-	Admin       string `json:"marketing"`
+type MsgExecuteToken struct {
+	Type              string
+	MsgRaw            []byte
+	Contract          string
+	Sender            string
+	Recipient         string
+	Amount            uint64 `json:"amount,string"`
+	Owner             string
+	RecipientContract string `json:"contract"`
+	NewMinter         string `json:"new_minter"`
+	Project           string
+	Description       string
+	Admin             string `json:"marketing"`
 }

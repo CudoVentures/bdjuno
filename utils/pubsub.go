@@ -6,6 +6,39 @@ import (
 	"cloud.google.com/go/pubsub"
 )
 
+type PubSub interface {
+	Subscribe(callback func(*Message)) error
+}
+
+type GooglePubSubClient struct {
+	ctx   context.Context
+	sub   *pubsub.Subscription
+	topic *pubsub.Topic
+}
+
+func NewGooglePubSubClient(ctx context.Context, projectID string, subID string) (*GooglePubSubClient, error) {
+	client, err := pubsub.NewClient(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	sub := client.Subscription(subID)
+	sub.ReceiveSettings.MaxOutstandingMessages = 1
+	sub.ReceiveSettings.NumGoroutines = 1
+
+	return &GooglePubSubClient{ctx: ctx, sub: sub}, nil
+}
+
+func (c *GooglePubSubClient) Subscribe(callback func(*Message)) error {
+	return c.sub.Receive(c.ctx, func(_ context.Context, msg *pubsub.Message) {
+		callback(NewGooglePubSubMessage(msg))
+	})
+}
+
+func (c *GooglePubSubClient) Publish(data []byte) *pubsub.PublishResult {
+	return c.topic.Publish(c.ctx, &pubsub.Message{Data: data})
+}
+
 type Message struct {
 	Data []byte
 	Ack  func()
@@ -18,37 +51,4 @@ func NewGooglePubSubMessage(msg *pubsub.Message) *Message {
 		Ack:  msg.Ack,
 		Nack: msg.Nack,
 	}
-}
-
-type PubSub interface {
-	Subscribe(callback func(*Message)) error
-}
-
-type GooglePubSub struct {
-	ctx    context.Context
-	client *pubsub.Client
-	subID  string
-}
-
-func NewGooglePubSub(ctx context.Context, projectID string, subID string) (*GooglePubSub, error) {
-	client, err := pubsub.NewClient(ctx, projectID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &GooglePubSub{
-		ctx:    ctx,
-		client: client,
-		subID:  subID,
-	}, nil
-}
-
-func (pb *GooglePubSub) Subscribe(callback func(*Message)) error {
-	sub := pb.client.Subscription(pb.subID)
-	sub.ReceiveSettings.MaxOutstandingMessages = 1
-	sub.ReceiveSettings.NumGoroutines = 1
-
-	return sub.Receive(pb.ctx, func(_ context.Context, msg *pubsub.Message) {
-		callback(NewGooglePubSubMessage(msg))
-	})
 }

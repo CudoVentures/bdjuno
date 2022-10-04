@@ -22,7 +22,11 @@ type Module struct {
 	db     *database.Db
 	source source.Source
 	pubsub utils.PubSub
-	mu     *sync.Mutex
+	// we use mutex.Lock() to keep Subscribe and InstantiateMsg in sync
+	// for example a matching contract may get saved in the db
+	// right after our Subscribe() starts updating matching contracts
+	// in this case, that matching contract would never be recognized as token
+	mu *sync.Mutex
 }
 
 func NewModule(cdc codec.Codec, db *database.Db, source source.Source, pubsub utils.PubSub) *Module {

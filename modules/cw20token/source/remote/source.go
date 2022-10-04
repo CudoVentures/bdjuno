@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/forbole/juno/v2/node/remote"
 
+	"github.com/forbole/bdjuno/v2/modules/cw20token"
 	"github.com/forbole/bdjuno/v2/modules/cw20token/source"
 	"github.com/forbole/bdjuno/v2/types"
 )
@@ -52,7 +53,7 @@ func (s Source) GetTokenInfo(contract string, height int64) (*types.TokenInfo, e
 		res.Pagination.NextKey = r.Pagination.NextKey
 	}
 
-	return source.ParseToTokenInfo(res)
+	return cw20token.ParseToTokenInfo(res)
 }
 
 func (s Source) GetBalance(contract string, address string, height int64) (uint64, error) {
@@ -69,7 +70,7 @@ func (s Source) GetBalance(contract string, address string, height int64) (uint6
 		return 0, err
 	}
 
-	return source.ParseToBalance(res)
+	return cw20token.ParseToBalance(res)
 }
 
 func (s Source) GetCirculatingSupply(contract string, height int64) (uint64, error) {
@@ -86,5 +87,5 @@ func (s Source) GetCirculatingSupply(contract string, height int64) (uint64, err
 		return 0, err
 	}
 
-	return source.ParseToTotalSupply(res)
+	return cw20token.ParseToTotalSupply(res)
 }

@@ -1,4 +1,4 @@
-package source
+package cw20token
 
 import (
 	"encoding/json"
@@ -74,4 +74,23 @@ func ParseToTotalSupply(res *wasmtypes.QuerySmartContractStateResponse) (uint64,
 	}
 
 	return totalSupply.TotalSupply, nil
+}
+
+func ParseToMsgExecuteToken(data []byte) (*types.MsgExecuteToken, error) {
+	req := map[string]json.RawMessage{}
+	if err := json.Unmarshal(data, &req); err != nil {
+		return nil, err
+	}
+
+	msg := types.MsgExecuteToken{}
+	for key, val := range req {
+		if err := json.Unmarshal(val, &msg); err != nil {
+			return nil, err
+		}
+
+		msg.Type = key
+		msg.MsgRaw = val
+	}
+
+	return &msg, nil
 }
