@@ -5,7 +5,6 @@ postgres-data/
 # Configuration
 *.toml
 *.json
-config.yaml
 
 # Coverage
 coverage.*
