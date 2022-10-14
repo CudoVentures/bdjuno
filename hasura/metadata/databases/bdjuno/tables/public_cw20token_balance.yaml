@@ -1,0 +1,16 @@
+table:
+  name: cw20token_balance
+  schema: public
+object_relationships:
+  - name: cw20token_info
+    using:
+      foreign_key_constraint_on: token
+select_permissions:
+- permission:
+    allow_aggregations: true
+    columns:
+    - address
+    - token
+    - balance
+    filter: {}
+  role: anonymous

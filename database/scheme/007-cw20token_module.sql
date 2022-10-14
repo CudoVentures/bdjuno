@@ -21,7 +21,6 @@ CREATE TABLE cw20token_info
 
 CREATE INDEX cw20token_info_code_id_index ON cw20token_info (code_id);
 
-
 CREATE TABLE cw20token_balance
 (
     address TEXT   NOT NULL,

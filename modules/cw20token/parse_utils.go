@@ -5,13 +5,13 @@ import (
 	"strconv"
 	"strings"
 
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	"github.com/forbole/bdjuno/v2/modules/utils"
 	"github.com/forbole/bdjuno/v2/types"
 )
 
-func ParseToTokenInfo(res *wasmtypes.QueryAllContractStateResponse) (*types.TokenInfo, error) {
+func parseToTokenInfo(res *wasm.QueryAllContractStateResponse) (*types.TokenInfo, error) {
 	tokenInfo := types.TokenInfo{}
 	for _, m := range res.Models {
 		key := string(m.Key)
@@ -31,7 +31,7 @@ func ParseToTokenInfo(res *wasmtypes.QueryAllContractStateResponse) (*types.Toke
 
 			addressIndex := strings.Index(key, "cudos")
 			address := key[addressIndex:]
-			tokenInfo.Balances = append(tokenInfo.Balances, &types.TokenBalance{Address: address, Amount: balance})
+			tokenInfo.Balances = append(tokenInfo.Balances, types.TokenBalance{Address: address, Amount: balance})
 
 			continue
 		}
@@ -52,7 +52,7 @@ func ParseToTokenInfo(res *wasmtypes.QueryAllContractStateResponse) (*types.Toke
 	return &tokenInfo, nil
 }
 
-func ParseToBalance(res *wasmtypes.QuerySmartContractStateResponse) (uint64, error) {
+func parseToBalance(res *wasm.QuerySmartContractStateResponse) (uint64, error) {
 	balance := struct {
 		Balance uint64 `json:"balance,string"`
 	}{}
@@ -64,7 +64,7 @@ func ParseToBalance(res *wasmtypes.QuerySmartContractStateResponse) (uint64, err
 	return balance.Balance, nil
 }
 
-func ParseToTotalSupply(res *wasmtypes.QuerySmartContractStateResponse) (uint64, error) {
+func parseToCirculatingSupply(res *wasm.QuerySmartContractStateResponse) (uint64, error) {
 	totalSupply := struct {
 		TotalSupply uint64 `json:"total_supply,string"`
 	}{}
@@ -76,21 +76,24 @@ func ParseToTotalSupply(res *wasmtypes.QuerySmartContractStateResponse) (uint64,
 	return totalSupply.TotalSupply, nil
 }
 
-func ParseToMsgExecuteToken(data []byte) (*types.MsgExecuteToken, error) {
+func parseToMsgExecuteToken(msg *wasm.MsgExecuteContract) (*types.MsgExecuteToken, error) {
 	req := map[string]json.RawMessage{}
-	if err := json.Unmarshal(data, &req); err != nil {
+	if err := json.Unmarshal(msg.Msg, &req); err != nil {
 		return nil, err
 	}
 
-	msg := types.MsgExecuteToken{}
+	res := types.MsgExecuteToken{}
 	for key, val := range req {
-		if err := json.Unmarshal(val, &msg); err != nil {
+		if err := json.Unmarshal(val, &res); err != nil {
 			return nil, err
 		}
 
-		msg.Type = key
-		msg.MsgRaw = val
+		res.Type = key
+		res.MsgRaw = val
 	}
 
-	return &msg, nil
+	res.Contract = msg.Contract
+	res.Sender = msg.Sender
+
+	return &res, nil
 }

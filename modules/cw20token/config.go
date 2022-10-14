@@ -9,14 +9,11 @@ type Config struct {
 	SubID     string `yaml:"sub_id"`
 }
 
-func ParseConfig(bz []byte) (*Config, error) {
+func ParseConfig(cfgBytes []byte) (*Config, error) {
 	cfg := struct {
-		config *Config `yaml:"verified_contracts_subscription"`
+		Config *Config `yaml:"verified_contracts_subscription"`
 	}{}
 
-	if err := yaml.Unmarshal(bz, &cfg); err != nil {
-		return nil, err
-	}
-
-	return cfg.config, nil
+	err := yaml.Unmarshal(cfgBytes, &cfg)
+	return cfg.Config, err
 }

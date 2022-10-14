@@ -8,7 +8,7 @@ import (
 
 	"github.com/forbole/bdjuno/v2/database"
 	"github.com/forbole/bdjuno/v2/modules/cw20token/source"
-	"github.com/forbole/bdjuno/v2/utils"
+	"github.com/forbole/bdjuno/v2/utils/pubsub"
 )
 
 var (
@@ -21,15 +21,16 @@ type Module struct {
 	cdc    codec.Codec
 	db     *database.Db
 	source source.Source
-	pubsub utils.PubSub
+	pubsub pubsub.PubSubClient
 	// we use mutex.Lock() to keep Subscribe and InstantiateMsg in sync
 	// for example a matching contract may get saved in the db
-	// right after our Subscribe() starts updating matching contracts
+	// right after subscribeCallback starts updating matching contracts
 	// in this case, that matching contract would never be recognized as token
+
 	mu *sync.Mutex
 }
 
-func NewModule(cdc codec.Codec, db *database.Db, source source.Source, pubsub utils.PubSub) *Module {
+func NewModule(cdc codec.Codec, db *database.Db, source source.Source, pubsub pubsub.PubSubClient) *Module {
 	return &Module{
 		cdc:    cdc,
 		db:     db,

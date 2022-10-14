@@ -3,7 +3,7 @@ package cw20token
 import (
 	"fmt"
 
-	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/forbole/bdjuno/v2/database"
 	"github.com/forbole/bdjuno/v2/modules/utils"
@@ -21,11 +21,11 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 
 	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
 		switch cosmosMsg := msg.(type) {
-		case *wasmTypes.MsgInstantiateContract:
+		case *wasm.MsgInstantiateContract:
 			return m.handleMsgInstantiateContract(dbTx, cosmosMsg, tx, index)
-		case *wasmTypes.MsgExecuteContract:
+		case *wasm.MsgExecuteContract:
 			return m.handleMsgExecuteContract(dbTx, cosmosMsg, tx, index)
-		case *wasmTypes.MsgMigrateContract:
+		case *wasm.MsgMigrateContract:
 			return m.handleMsgMigrateContract(dbTx, cosmosMsg, tx, index)
 		default:
 			return nil
@@ -33,14 +33,17 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 	})
 }
 
-func (m *Module) handleMsgInstantiateContract(dbTx *database.DbTx, msg *wasmTypes.MsgInstantiateContract, tx *juno.Tx, index int) error {
-	if exists, err := dbTx.IsExistingTokenCode(msg.CodeID); err != nil {
+func (m *Module) handleMsgInstantiateContract(dbTx *database.DbTx, msg *wasm.MsgInstantiateContract, tx *juno.Tx, index int) error {
+	found, err := dbTx.CodeIDExists(msg.CodeID)
+	if err != nil {
 		return err
-	} else if !exists {
-		return nil
 	}
 
-	contract := utils.GetValueFromLogs(uint32(index), tx.Logs, wasmTypes.EventTypeInstantiate, wasmTypes.AttributeKeyContractAddr)
+	if !found {
+		return fmt.Errorf("codeID is not a token")
+	}
+
+	contract := utils.GetValueFromLogs(uint32(index), tx.Logs, wasm.EventTypeInstantiate, wasm.AttributeKeyContractAddr)
 	if contract == "" {
 		return fmt.Errorf("error while getting EventInstantiate")
 	}
@@ -49,97 +52,127 @@ func (m *Module) handleMsgInstantiateContract(dbTx *database.DbTx, msg *wasmType
 }
 
 func (m *Module) saveTokenInfo(dbTx *database.DbTx, contract string, codeID uint64, height int64) error {
-	tokenInfo, err := m.source.GetTokenInfo(contract, height)
+	res, err := m.source.GetTokenInfo(contract, height)
+	if err != nil {
+		return err
+	}
+
+	tokenInfo, err := parseToTokenInfo(res)
 	if err != nil {
 		return err
 	}
 
 	tokenInfo.Address = contract
 	tokenInfo.CodeID = codeID
-	if err := dbTx.SaveTokenInfo(tokenInfo); err != nil {
+
+	if err := dbTx.SaveInfo(tokenInfo); err != nil {
 		return err
 	}
 
-	if err := dbTx.SaveTokenBalances(contract, tokenInfo.Balances); err != nil {
-		return err
-	}
-
-	return nil
+	return dbTx.SaveBalances(contract, tokenInfo.Balances)
 }
 
-func (m *Module) handleMsgExecuteContract(dbTx *database.DbTx, msg *wasmTypes.MsgExecuteContract, tx *juno.Tx, index int) error {
-	if exists, err := dbTx.IsExistingToken(msg.Contract); err != nil {
-		return err
-	} else if !exists {
-		return nil
-	}
-
-	req, err := ParseToMsgExecuteToken(msg.Msg)
+func (m *Module) handleMsgExecuteContract(dbTx *database.DbTx, msg *wasm.MsgExecuteContract, tx *juno.Tx, index int) error {
+	found, err := dbTx.TokenExists(msg.Contract)
 	if err != nil {
 		return err
 	}
 
-	switch req.Type {
+	if !found {
+		return fmt.Errorf("contract is not a token")
+	}
+
+	r, err := parseToMsgExecuteToken(msg)
+	if err != nil {
+		return err
+	}
+
+	switch r.Type {
 	case "update_minter":
-		return dbTx.UpdateTokenMinter(req.Contract, req.NewMinter)
+		return dbTx.UpdateMinter(r.Contract, r.NewMinter)
 	case "update_marketing":
-		return dbTx.UpdateTokenMarketing(req.Contract, req.Project, req.Description, req.Admin)
+		return dbTx.UpdateMarketing(r.Contract, types.NewMarketingInfo(r.Project, r.Description, r.Admin))
 	case "upload_logo":
-		return dbTx.UpdateTokenLogo(req.Contract, utils.SanitizeUTF8(string(req.MsgRaw)))
+		return dbTx.UpdateLogo(r.Contract, utils.SanitizeUTF8(string(r.MsgRaw)))
 	case "mint", "burn", "burn_from":
-		if supply, err := m.source.GetCirculatingSupply(req.Contract, tx.Height); err != nil {
+		res, err := m.source.GetCirculatingSupply(r.Contract, tx.Height)
+		if err != nil {
 			return err
-		} else if err := dbTx.UpdateTokenCirculatingSupply(req.Contract, supply); err != nil {
+		}
+
+		supply, err := parseToCirculatingSupply(res)
+		if err != nil {
+			return err
+		}
+
+		if err := dbTx.UpdateSupply(r.Contract, supply); err != nil {
 			return err
 		}
 	}
 
-	req.Contract = msg.Contract
-	req.Sender = msg.Sender
-	balances, err := m.fetchBalances(req, tx.Height)
+	balances, err := m.fetchBalances(r, tx.Height)
 	if err != nil {
 		return err
 	}
 
-	return dbTx.SaveTokenBalances(req.Contract, balances)
+	return dbTx.SaveBalances(r.Contract, balances)
 }
 
-func (m *Module) fetchBalances(msg *types.MsgExecuteToken, height int64) ([]*types.TokenBalance, error) {
-	balances := []*types.TokenBalance{{Address: msg.Sender}}
+func (m *Module) fetchBalances(msg *types.MsgExecuteToken, height int64) ([]types.TokenBalance, error) {
+	balances := []types.TokenBalance{}
 
+	sender := msg.Sender
 	if msg.Owner != "" {
-		balances = append(balances, &types.TokenBalance{Address: msg.Owner})
+		sender = msg.Owner
 	}
+	balances = append(balances, types.TokenBalance{Address: sender})
 
 	if msg.Recipient != "" {
-		balances = append(balances, &types.TokenBalance{Address: msg.Recipient})
+		balances = append(balances, types.TokenBalance{Address: msg.Recipient})
 	}
 
 	if msg.RecipientContract != "" {
-		balances = append(balances, &types.TokenBalance{Address: msg.RecipientContract})
+		balances = append(balances, types.TokenBalance{Address: msg.RecipientContract})
 	}
 
-	for _, b := range balances {
-		balance, err := m.source.GetBalance(msg.Contract, b.Address, height)
+	for i, b := range balances {
+		res, err := m.source.GetBalance(msg.Contract, b.Address, height)
 		if err != nil {
 			return nil, err
 		}
 
-		b.Amount = balance
+		balance, err := parseToBalance(res)
+		if err != nil {
+			return nil, err
+		}
+
+		balances[i].Amount = balance
 	}
 
 	return balances, nil
 }
 
-func (m *Module) handleMsgMigrateContract(dbTx *database.DbTx, msg *wasmTypes.MsgMigrateContract, tx *juno.Tx, index int) error {
-	if exists, err := dbTx.IsExistingToken(msg.Contract); err != nil {
+func (m *Module) handleMsgMigrateContract(dbTx *database.DbTx, msg *wasm.MsgMigrateContract, tx *juno.Tx, index int) error {
+	found, err := dbTx.TokenExists(msg.Contract)
+	if err != nil {
 		return err
-	} else if !exists {
-		return nil
 	}
 
-	if err := dbTx.DeleteAllTokenBalances(msg.Contract); err != nil {
+	if !found {
+		return fmt.Errorf("contract is not a token")
+	}
+
+	if err := dbTx.DeleteAllBalances(msg.Contract); err != nil {
 		return err
+	}
+
+	found, err = dbTx.CodeIDExists(msg.CodeID)
+	if err != nil {
+		return err
+	}
+
+	if !found {
+		return dbTx.DeleteToken(msg.Contract)
 	}
 
 	return m.saveTokenInfo(dbTx, msg.Contract, msg.CodeID, tx.Height)

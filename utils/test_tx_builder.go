@@ -9,6 +9,7 @@ import (
 
 	juno "github.com/forbole/juno/v2/types"
 
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/group"
 )
@@ -81,6 +82,12 @@ func (builder *TestTxBuilder) WithEventWithdrawProposal() *TestTxBuilder {
 	}
 
 	builder.events = append(builder.events, abcitypes.Event(eventWithdraw))
+	return builder
+}
+
+func (builder *TestTxBuilder) WithEventInstantiateContract(contractAddr string) *TestTxBuilder {
+	eventInstantiateContract := sdk.NewEvent(wasm.EventTypeInstantiate, sdk.NewAttribute(wasm.AttributeKeyContractAddr, contractAddr))
+	builder.events = append(builder.events, abcitypes.Event(eventInstantiateContract))
 	return builder
 }
 

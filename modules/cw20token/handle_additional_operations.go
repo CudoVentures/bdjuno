@@ -6,8 +6,7 @@ import (
 	"github.com/forbole/bdjuno/v2/database"
 	"github.com/forbole/bdjuno/v2/modules/utils"
 	"github.com/forbole/bdjuno/v2/types"
-	ps "github.com/forbole/bdjuno/v2/utils"
-	"github.com/rs/zerolog/log"
+	"github.com/forbole/bdjuno/v2/utils/pubsub"
 )
 
 func (m *Module) RunAdditionalOperations() error {
@@ -18,43 +17,34 @@ func (m *Module) RunAdditionalOperations() error {
 	return nil
 }
 
-// if a live service like db returns err we put the msg back in queue for retry with msg.Nack()
-// because it's theoretically possible that the service has been down for a moment
-// if a business logic service returns err we mark the msg as processed with msg.Ack()
-// on some errors we return nil and on others we return the err, because on the bottom
-// of the subscribeCallback we mark the msg based on the ExecuteTx result
-func (m *Module) subscribeCallback(msg *ps.Message) {
+// if a live service like db returns err, it might be caused by connection issues
+// we put the msg back in queue with msg.Nack() so we can try to process it again
+// if err is caused by business logic we remove it from queue with msg.Ack()
+// we mark the msg based on ExecuteTx result, that's why we return nil on some errors
+func (m *Module) subscribeCallback(msg *pubsub.PubSubMsg) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	err := m.db.ExecuteTx(func(dbTx *database.DbTx) error {
-		var contract types.VerifiedContractPublishMessage
+		var contract types.MsgVerifiedContract
 		if err := json.Unmarshal(msg.Data, &contract); err != nil {
-			// todo if logging works remove this description
-			//
-			// here we have an exception. err is not depending on a service status
-			// that's why we acknowledge the msg, since it doesn't meet the requirements
-			// we also return the error, because it's not predictable and may be informative
-			log.Info().Str("module", "cw20token").Msg("error while unmarshaling publish message from json")
 			return nil
 		}
 
-		if exists, err := dbTx.IsExistingTokenCode(contract.CodeID); err != nil {
+		if err := validateTokenSchema(&contract); err != nil {
+			return nil
+		}
+
+		found, err := dbTx.CodeIDExists(contract.CodeID)
+		if err != nil {
 			return err
-		} else if exists {
-			log.Info().Str("module", "cw20token").Msg("token is already tracked")
+		}
+
+		if found {
 			return nil
 		}
 
-		if isToken, err := isToken(&contract); err != nil {
-			log.Info().Str("module", "cw20token").Msg("invalid json schema")
-			return nil
-		} else if !isToken {
-			log.Info().Str("module", "cw20token").Msg("contract doesn't match the cw20 standard")
-			return nil
-		}
-
-		if err := dbTx.SaveTokenCodeID(contract.CodeID); err != nil {
+		if err := dbTx.SaveCodeID(contract.CodeID); err != nil {
 			return err
 		}
 
@@ -63,7 +53,7 @@ func (m *Module) subscribeCallback(msg *ps.Message) {
 			return err
 		}
 
-		contracts, err := getUntrackedTokens(dbTx, contract.CodeID)
+		contracts, err := dbTx.GetContractsByCodeID(contract.CodeID)
 		if err != nil {
 			return err
 		}
@@ -79,29 +69,8 @@ func (m *Module) subscribeCallback(msg *ps.Message) {
 
 	if err != nil {
 		msg.Nack()
-		// todo it's possible that this log actually breaks the subscription
-		log.Error().Str("module", "cw20token").Err(err)
-	} else {
-		msg.Ack()
-	}
-}
-
-func getUntrackedTokens(dbTx *database.DbTx, codeID uint64) ([]string, error) {
-	contracts, err := dbTx.GetContractsByCodeID(codeID)
-	if err != nil {
-		return nil, err
+		return
 	}
 
-	res := []string{}
-	for _, addr := range contracts {
-		if exists, err := dbTx.IsExistingToken(addr); err != nil {
-			return nil, err
-		} else if exists {
-			continue
-		}
-
-		res = append(res, addr)
-	}
-
-	return res, nil
+	msg.Ack()
 }
