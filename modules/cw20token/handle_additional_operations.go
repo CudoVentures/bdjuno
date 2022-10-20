@@ -2,10 +2,13 @@ package cw20token
 
 import (
 	"encoding/json"
+	"time"
 
+	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/forbole/bdjuno/v2/database"
 	"github.com/forbole/bdjuno/v2/modules/utils"
 	"github.com/forbole/bdjuno/v2/types"
+	txutils "github.com/forbole/bdjuno/v2/utils"
 	"github.com/forbole/bdjuno/v2/utils/pubsub"
 )
 
@@ -26,16 +29,16 @@ func (m *Module) subscribeCallback(msg *pubsub.PubSubMsg) {
 	defer m.mu.Unlock()
 
 	err := m.db.ExecuteTx(func(dbTx *database.DbTx) error {
-		var contract types.MsgVerifiedContract
-		if err := json.Unmarshal(msg.Data, &contract); err != nil {
+		var c types.MsgVerifiedContract
+		if err := json.Unmarshal(msg.Data, &c); err != nil {
 			return nil
 		}
 
-		if err := validateTokenSchema(&contract); err != nil {
+		if err := validateTokenSchema(&c); err != nil {
 			return nil
 		}
 
-		found, err := dbTx.CodeIDExists(contract.CodeID)
+		found, err := dbTx.CodeIDExists(c.CodeID)
 		if err != nil {
 			return err
 		}
@@ -44,7 +47,7 @@ func (m *Module) subscribeCallback(msg *pubsub.PubSubMsg) {
 			return nil
 		}
 
-		if err := dbTx.SaveCodeID(contract.CodeID); err != nil {
+		if err := dbTx.SaveCodeID(c.CodeID); err != nil {
 			return err
 		}
 
@@ -53,13 +56,18 @@ func (m *Module) subscribeCallback(msg *pubsub.PubSubMsg) {
 			return err
 		}
 
-		contracts, err := dbTx.GetContractsByCodeID(contract.CodeID)
+		contracts, err := dbTx.GetContractsByCodeID(c.CodeID)
 		if err != nil {
 			return err
 		}
 
 		for _, addr := range contracts {
-			if err := m.saveTokenInfo(dbTx, addr, contract.CodeID, block.Height); err != nil {
+			tx, err := txutils.NewTx(time.Now(), "", uint64(block.Height)).WithEventInstantiateContract(addr).Build()
+			if err != nil {
+				return err
+			}
+
+			if err := m.handleMsgInstantiateContract(dbTx, &wasm.MsgInstantiateContract{CodeID: c.CodeID}, tx, 0); err != nil {
 				return err
 			}
 		}

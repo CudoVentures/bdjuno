@@ -153,7 +153,6 @@ replace (
 	github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.0.0-20220816082327-65532d606824
 	github.com/forbole/juno/v2 => github.com/CudoVentures/juno/v2 v2.0.1-0.20220908075630-6618cc96377f
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-	// github.com/tendermint/tendermint => github.com/forbole/tendermint v0.34.13-0.20210820072129-a2a4af55563d
 	google.golang.org/api => google.golang.org/api v0.20.0
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 )

@@ -68,11 +68,10 @@ func (suite *GroupModuleTestSuite) SetupTest() {
 
 	_, err = db.Sql.Exec(`INSERT INTO group_proposal VALUES ($1, $2, $3, $4, $5, $6, null, null, null, $7, $8, $9, null, $10)`, one, one, oneStr, oneStr, statusDefault.String(), resultDefault.String(), oneStr, oneStr, timestamp, one)
 	suite.Require().NoError(err)
-
 }
 
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgCreateGroupWithPolicy() {
-	tx, err := utils.NewTestTx(timestamp, oneStr, one).WithEventCreateGroup(two, twoStr).Build()
+	tx, err := utils.NewTx(timestamp, oneStr, one).WithEventCreateGroup(two, twoStr).Build()
 	suite.Require().NoError(err)
 
 	decisionPolicy, err := codectypes.NewAnyWithValue(group.NewThresholdDecisionPolicy(twoStr, time.Second*time.Duration(two), 0))
@@ -117,7 +116,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgCreateGroupWithPolicy() {
 }
 
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgSubmitProposal() {
-	tx, err := utils.NewTestTx(timestamp, oneStr, one).WithEventSubmitProposal(two).Build()
+	tx, err := utils.NewTx(timestamp, oneStr, one).WithEventSubmitProposal(two).Build()
 	suite.Require().NoError(err)
 
 	msg, err := group.NewMsgSubmitProposal(oneStr, []string{twoStr}, []types.Msg{}, twoStr, 0)
@@ -145,7 +144,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgSubmitProposal() {
 }
 
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgSubmitProposal_TryExec() {
-	tx, err := utils.NewTestTx(timestamp, oneStr, one).WithEventSubmitProposal(two).Build()
+	tx, err := utils.NewTx(timestamp, oneStr, one).WithEventSubmitProposal(two).Build()
 	suite.Require().NoError(err)
 
 	msg, err := group.NewMsgSubmitProposal(oneStr, []string{twoStr}, []types.Msg{}, twoStr, execTry)
@@ -156,7 +155,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgSubmitProposal_TryExec() {
 }
 
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgVote_UpdateStatusToAccepted() {
-	tx, err := utils.NewTestTx(timestamp, oneStr, one).WithEventVote().Build()
+	tx, err := utils.NewTx(timestamp, oneStr, one).WithEventVote().Build()
 	suite.Require().NoError(err)
 
 	msg := group.MsgVote{ProposalId: one, Voter: oneStr, Option: voteYes}
@@ -184,7 +183,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgVote_UpdateStatusToAccepte
 }
 
 func (suite *GroupModuleTestSuite) TestGroup_HangleMsgVote_UpdateStatusToRejected() {
-	tx, err := utils.NewTestTx(timestamp, oneStr, one).WithEventVote().Build()
+	tx, err := utils.NewTx(timestamp, oneStr, one).WithEventVote().Build()
 	suite.Require().NoError(err)
 
 	msg := group.MsgVote{ProposalId: one, Voter: oneStr, Option: voteNo}
@@ -206,7 +205,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HangleMsgVote_UpdateStatusToRejecte
 }
 
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgVote_TryExec() {
-	tx, err := utils.NewTestTx(timestamp, oneStr, one).WithEventVote().Build()
+	tx, err := utils.NewTx(timestamp, oneStr, one).WithEventVote().Build()
 	suite.Require().NoError(err)
 
 	msg := group.MsgVote{ProposalId: one, Voter: oneStr, Option: voteYes, Exec: execTry}
@@ -216,7 +215,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgVote_TryExec() {
 }
 
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec() {
-	tx, err := utils.NewTestTx(timestamp, oneStr, one).WithEventExec(resultSuccess).Build()
+	tx, err := utils.NewTx(timestamp, oneStr, one).WithEventExec(resultSuccess).Build()
 	suite.Require().NoError(err)
 
 	msg := group.MsgExec{ProposalId: one, Executor: oneStr}
@@ -247,7 +246,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec() {
 }
 
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec_HandleMsgUpdateGroup() {
-	tx, err := utils.NewTestTx(timestamp, oneStr, one).WithEventSubmitProposal(two).WithEventVote().WithEventExec(resultSuccess).Build()
+	tx, err := utils.NewTx(timestamp, oneStr, one).WithEventSubmitProposal(two).WithEventVote().WithEventExec(resultSuccess).Build()
 	suite.Require().NoError(err)
 
 	msgJson := fmt.Sprintf(`{"group_policy_address": "%[1]d","proposers": ["%[1]d"],"metadata": "","messages": [{"@type": "/cosmos.group.v1.MsgUpdateGroupMetadata","admin": "%[1]d","group_id": "%[1]d","metadata": "%[2]d"},{"@type": "/cosmos.group.v1.MsgUpdateGroupPolicyMetadata","admin": "%[1]d","group_id": "%[1]d","metadata": "%[2]d"},{"@type": "/cosmos.group.v1.MsgUpdateGroupMembers","admin": "%[1]d","group_id": "%[1]d","member_updates": [{ "weight": "0", "address": "%[1]d", "metadata": "%[2]d" },{ "weight": "%[2]d", "address": "%[2]d", "metadata": "%[2]d" }]},{"@type": "/cosmos.group.v1.MsgUpdateGroupPolicyDecisionPolicy","admin": "%[1]d","group_id": "%[1]d","decision_policy": {"@type":"/cosmos.group.v1.ThresholdDecisionPolicy","threshold":"%[2]d","windows": {"voting_period": "%[2]ds", "min_execution_period": "%[2]ds"}}}]}`, one, two)
@@ -292,7 +291,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec_HandleMsgUpdateGroup(
 }
 
 func (suite *GroupModuleTestSuite) TestGroup_HandleMsgWithdrawProposal() {
-	tx, err := utils.NewTestTx(timestamp, oneStr, one).WithEventWithdrawProposal().Build()
+	tx, err := utils.NewTx(timestamp, oneStr, one).WithEventWithdrawProposal().Build()
 	suite.Require().NoError(err)
 
 	msg := group.MsgWithdrawProposal{ProposalId: one, Address: oneStr}

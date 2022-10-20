@@ -17,6 +17,7 @@ type GoogleFakePubSubClient struct {
 }
 
 func NewFakeGooglePubSubClient(ctx context.Context) (*GoogleFakePubSubClient, error) {
+	// TODO see the pstest example and how they recommend to cleanup after usage
 	server := pstest.NewServer()
 	client, err := pubsub.NewClient(
 		ctx,

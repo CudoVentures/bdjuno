@@ -16,14 +16,12 @@ import (
 )
 
 func TestCW20Token_HandleAdditionalOperations(t *testing.T) {
-	for _, tc := range []struct {
-		name              string
+	for testName, tc := range map[string]struct {
 		arrange           func(s *source.MockSource) *types.MsgVerifiedContract
 		wantAck, wantNack bool
 		assertTokenInfo   bool
 	}{
-		{
-			name: "new token codeID",
+		"new token codeID": {
 			arrange: func(s *source.MockSource) *types.MsgVerifiedContract {
 				s.T.Address = tokenAddr2
 				return newPubMsg(s.T.CodeID, validExecuteSchema, validQuerySchema)
@@ -31,8 +29,7 @@ func TestCW20Token_HandleAdditionalOperations(t *testing.T) {
 			wantAck:         true,
 			assertTokenInfo: true,
 		},
-		{
-			name: "error on m.saveTokenInfo()",
+		"error on m.saveTokenInfo()": {
 			arrange: func(s *source.MockSource) *types.MsgVerifiedContract {
 				n := -1
 				s.T.Balances[0].Amount = uint64(n)
@@ -40,22 +37,19 @@ func TestCW20Token_HandleAdditionalOperations(t *testing.T) {
 			},
 			wantNack: true,
 		},
-		{
-			name: "existing token codeID",
+		"existing token codeID": {
 			arrange: func(s *source.MockSource) *types.MsgVerifiedContract {
 				return newPubMsg(s.T.CodeID+1, validExecuteSchema, validQuerySchema)
 			},
 			wantAck: true,
 		},
-		{
-			name: "invalid json schema",
+		"invalid json schema": {
 			arrange: func(s *source.MockSource) *types.MsgVerifiedContract {
 				return newPubMsg(s.T.CodeID, "", "")
 			},
 			wantAck: true,
 		},
-		{
-			name: "error on dbTx.CodeIDExists()",
+		"error on dbTx.CodeIDExists()": {
 			arrange: func(s *source.MockSource) *types.MsgVerifiedContract {
 				n := -1
 				return newPubMsg(uint64(n), validExecuteSchema, validQuerySchema)
@@ -63,11 +57,10 @@ func TestCW20Token_HandleAdditionalOperations(t *testing.T) {
 			wantNack: true,
 		},
 	} {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(testName, func(t *testing.T) {
 			db, err := utils.NewTestDb("cw20TokenTest_handleAdditionalOperations")
 			require.NoError(t, err)
 
-			// ctx, _ := context.WithCancel(context.Background())
 			ps, err := pubsub.NewFakeGooglePubSubClient(context.Background())
 			require.NoError(t, err)
 
@@ -102,7 +95,6 @@ func TestCW20Token_HandleAdditionalOperations(t *testing.T) {
 
 			m.mu.Lock()
 			defer m.mu.Unlock()
-			// cancel()
 
 			require.Equal(t, tc.wantAck, ps.AckCount > 0)
 			require.Equal(t, tc.wantNack, ps.NackCount > 0)

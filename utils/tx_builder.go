@@ -14,7 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/group"
 )
 
-type TestTxBuilder struct {
+type TxBuilder struct {
 	events    []abcitypes.Event
 	errors    []string
 	timestamp time.Time
@@ -22,30 +22,30 @@ type TestTxBuilder struct {
 	height    uint64
 }
 
-func NewTestTx(timestamp time.Time, txHash string, height uint64) *TestTxBuilder {
-	return &TestTxBuilder{timestamp: timestamp, txHash: txHash, height: height}
+func NewTx(timestamp time.Time, txHash string, height uint64) *TxBuilder {
+	return &TxBuilder{timestamp: timestamp, txHash: txHash, height: height}
 }
 
-func (builder *TestTxBuilder) WithEventCreateGroup(groupID uint64, address string) *TestTxBuilder {
+func (b *TxBuilder) WithEventCreateGroup(groupID uint64, address string) *TxBuilder {
 	if address == "" {
-		builder.errors = append(builder.errors, "error while building testTx: empty group address")
+		b.errors = append(b.errors, "error while building testTx: empty group address")
 
 	}
 	eventCreateGroup, err := sdk.TypedEventToEvent(&group.EventCreateGroup{GroupId: groupID})
 	if err != nil {
-		builder.errors = append(builder.errors, err.Error())
+		b.errors = append(b.errors, err.Error())
 	}
 
 	eventCreateGroupPolicy, err := sdk.TypedEventToEvent(&group.EventCreateGroupPolicy{Address: address})
 	if err != nil {
-		builder.errors = append(builder.errors, err.Error())
+		b.errors = append(b.errors, err.Error())
 	}
 
-	builder.events = append(builder.events, abcitypes.Event(eventCreateGroup), abcitypes.Event(eventCreateGroupPolicy))
-	return builder
+	b.events = append(b.events, abcitypes.Event(eventCreateGroup), abcitypes.Event(eventCreateGroupPolicy))
+	return b
 }
 
-func (builder *TestTxBuilder) WithEventSubmitProposal(proposalID uint64) *TestTxBuilder {
+func (builder *TxBuilder) WithEventSubmitProposal(proposalID uint64) *TxBuilder {
 	eventSubmitProposal, err := sdk.TypedEventToEvent(&group.EventSubmitProposal{ProposalId: proposalID})
 	if err != nil {
 		builder.errors = append(builder.errors, err.Error())
@@ -55,7 +55,7 @@ func (builder *TestTxBuilder) WithEventSubmitProposal(proposalID uint64) *TestTx
 	return builder
 }
 
-func (builder *TestTxBuilder) WithEventExec(result group.ProposalExecutorResult) *TestTxBuilder {
+func (builder *TxBuilder) WithEventExec(result group.ProposalExecutorResult) *TxBuilder {
 	eventExec, err := sdk.TypedEventToEvent(&group.EventExec{Result: result, Logs: "1"})
 	if err != nil {
 		builder.errors = append(builder.errors, err.Error())
@@ -65,7 +65,7 @@ func (builder *TestTxBuilder) WithEventExec(result group.ProposalExecutorResult)
 	return builder
 }
 
-func (builder *TestTxBuilder) WithEventVote() *TestTxBuilder {
+func (builder *TxBuilder) WithEventVote() *TxBuilder {
 	eventVote, err := sdk.TypedEventToEvent(&group.EventVote{ProposalId: 1})
 	if err != nil {
 		builder.errors = append(builder.errors, err.Error())
@@ -75,7 +75,7 @@ func (builder *TestTxBuilder) WithEventVote() *TestTxBuilder {
 	return builder
 }
 
-func (builder *TestTxBuilder) WithEventWithdrawProposal() *TestTxBuilder {
+func (builder *TxBuilder) WithEventWithdrawProposal() *TxBuilder {
 	eventWithdraw, err := sdk.TypedEventToEvent(&group.EventWithdrawProposal{ProposalId: 1})
 	if err != nil {
 		builder.errors = append(builder.errors, err.Error())
@@ -85,13 +85,13 @@ func (builder *TestTxBuilder) WithEventWithdrawProposal() *TestTxBuilder {
 	return builder
 }
 
-func (builder *TestTxBuilder) WithEventInstantiateContract(contractAddr string) *TestTxBuilder {
+func (builder *TxBuilder) WithEventInstantiateContract(contractAddr string) *TxBuilder {
 	eventInstantiateContract := sdk.NewEvent(wasm.EventTypeInstantiate, sdk.NewAttribute(wasm.AttributeKeyContractAddr, contractAddr))
 	builder.events = append(builder.events, abcitypes.Event(eventInstantiateContract))
 	return builder
 }
 
-func (builder *TestTxBuilder) Build() (*juno.Tx, error) {
+func (builder *TxBuilder) Build() (*juno.Tx, error) {
 	if len(builder.errors) > 0 {
 		return &juno.Tx{}, fmt.Errorf(`error while building testTx: %s`, strings.Join(builder.errors, "\n"))
 	}

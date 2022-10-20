@@ -63,3 +63,4 @@
 - "!include public_marketplace_nft_buy_history.yaml"
 - "!include public_cw20token_balance.yaml"
 - "!include public_cw20token_info.yaml"
+- "!include public_cw20token_code_id.yaml"

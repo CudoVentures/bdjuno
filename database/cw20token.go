@@ -77,11 +77,6 @@ func (dbTx *DbTx) DeleteToken(token string) error {
 	return err
 }
 
-func (dbTx *DbTx) DeleteAllBalances(token string) error {
-	_, err := dbTx.Exec(`DELETE FROM cw20token_balance WHERE token = $1`, token)
-	return err
-}
-
 func (dbTx *DbTx) TokenExists(token string) (bool, error) {
 	var found bool
 	err := dbTx.QueryRow(

@@ -16,114 +16,77 @@ import (
 )
 
 func TestCW20Token_HandleMsg(t *testing.T) {
-	for _, tc := range []struct {
+	for testName, tc := range map[string]struct {
 		name    string
 		arrange func(s *source.MockSource) sdk.Msg
-		wantErr error
 	}{
-		{
-			name: "instantiate new token",
+		"instantiate": {
 			arrange: func(s *source.MockSource) sdk.Msg {
 				s.T.Address = tokenAddr2
 				return &wasm.MsgInstantiateContract{CodeID: s.T.CodeID}
 			},
 		},
-		{
-			name: "instantiate invalid contract address",
-			arrange: func(s *source.MockSource) sdk.Msg {
-				s.T.Address = ""
-				return &wasm.MsgInstantiateContract{CodeID: s.T.CodeID}
-			},
-			wantErr: fmt.Errorf("error while getting EventInstantiate"),
-		},
-		{
-			name: "instantiate non-token codeID",
-			arrange: func(s *source.MockSource) sdk.Msg {
-				s.T.Address = tokenAddr2
-				return &wasm.MsgInstantiateContract{CodeID: s.T.CodeID + 1}
-			},
-			wantErr: fmt.Errorf("codeID is not a token"),
-		},
-		{
-			name: "execute transfer",
+		"execute transfer": {
 			arrange: func(s *source.MockSource) sdk.Msg {
 				require.NoError(t, s.Transfer(addr1, addr2, fund))
 				return newExecuteMsg(fmt.Sprintf(`{"transfer":{"recipient":"%s","amount":"%d"}}`, addr2, fund))
 			},
 		},
-		{
-			name: "execute transfer_from",
+		"execute transfer_from": {
 			arrange: func(s *source.MockSource) sdk.Msg {
 				require.NoError(t, s.Transfer(addr2, addr1, num1))
 				return newExecuteMsg(fmt.Sprintf(`{"transfer_from":{"owner":"%s","recipient":"%s","amount":"%d"}}`, addr2, addr1, num1))
 			},
 		},
-		{
-			name: "execute send",
+		"execute send": {
 			arrange: func(s *source.MockSource) sdk.Msg {
 				require.NoError(t, s.Transfer(addr1, addr2, num1))
 				return newExecuteMsg(fmt.Sprintf(`{"send":{"contract":"%s","amount":"%d","msg":{}}}`, addr2, num1))
 			},
 		},
-		{
-			name: "execute send_from",
+		"execute send_from": {
 			arrange: func(s *source.MockSource) sdk.Msg {
 				require.NoError(t, s.Transfer(addr2, addr1, num1))
 				return newExecuteMsg(fmt.Sprintf(`{"send_from":{"owner":"%s","contract":"%s","amount":"%d","msg":{}}}`, addr2, addr1, num1))
 			},
 		},
-		{
-			name: "execute burn",
+		"execute burn": {
 			arrange: func(s *source.MockSource) sdk.Msg {
 				require.NoError(t, s.Burn(addr1, num1))
 				return newExecuteMsg(fmt.Sprintf(`{"burn":{"amount":"%d"}}`, num1))
 			},
 		},
-		{
-			name: "execute burn_from",
+		"execute burn_from": {
 			arrange: func(s *source.MockSource) sdk.Msg {
 				require.NoError(t, s.Burn(addr2, num1))
 				return newExecuteMsg(fmt.Sprintf(`{"burn_from":{"owner":"%s","amount":"%d"}}`, addr2, num1))
 			},
 		},
-		{
-			name: "execute mint",
+		"execute mint": {
 			arrange: func(s *source.MockSource) sdk.Msg {
 				require.NoError(t, s.Mint(addr2, num1))
 				return newExecuteMsg(fmt.Sprintf(`{"mint":{"recipient":"%s","amount":"%d"}}`, addr2, num1))
 			},
 		},
-		{
-			name: "execute upload_logo",
+		"execute upload_logo": {
 			arrange: func(s *source.MockSource) sdk.Msg {
 				s.UpdateLogo(logo2)
 				return newExecuteMsg(fmt.Sprintf(`{"upload_logo":%s}`, logo2))
 			},
 		},
-		{
-			name: "execute update_marketing",
+		"execute update_marketing": {
 			arrange: func(s *source.MockSource) sdk.Msg {
 				s.UpdateMarketingInfo(*types.NewMarketingInfo(str2, str2, addr2))
 				return newExecuteMsg(fmt.Sprintf(`{"update_marketing":{"project":"%s","description":"%s","marketing":"%s"}}`, str2, str2, addr2))
 			},
 		},
-		{
-			name: "execute update_minter",
+		"execute update_minter": {
 			arrange: func(s *source.MockSource) sdk.Msg {
 				s.UpdateMinter(addr2)
 				return newExecuteMsg(fmt.Sprintf(`{"update_minter":{"new_minter":"%s"}}`, addr2))
 			},
 		},
-		{
-			name: "migrate to new token codeID",
-			arrange: func(s *source.MockSource) sdk.Msg {
-				s.T.Name = str2
-				s.Transfer(addr1, addr2, num1)
-				return &wasm.MsgMigrateContract{Contract: s.T.Address, CodeID: s.T.CodeID}
-			},
-		},
-		{
-			name: "migrate to non-token codeID",
+		"migrate to invalid codeID": {
 			arrange: func(s *source.MockSource) sdk.Msg {
 				contractAddr := s.T.Address
 				codeID := s.T.CodeID + 1
@@ -131,8 +94,13 @@ func TestCW20Token_HandleMsg(t *testing.T) {
 				return &wasm.MsgMigrateContract{Contract: contractAddr, CodeID: codeID}
 			},
 		},
+		"migrate": {
+			arrange: func(s *source.MockSource) sdk.Msg {
+				return &wasm.MsgMigrateContract{Contract: s.T.Address, CodeID: s.T.CodeID}
+			},
+		},
 	} {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(testName, func(t *testing.T) {
 			db, err := utils.NewTestDb("cw20TokenTest_handleMsg")
 			require.NoError(t, err)
 
@@ -158,15 +126,13 @@ func TestCW20Token_HandleMsg(t *testing.T) {
 
 			msg := tc.arrange(s)
 
-			tx, err := utils.NewTestTx(time.Now(), "", num1).WithEventInstantiateContract(s.T.Address).Build()
+			tx, err := utils.NewTx(time.Time{}, "", num1).WithEventInstantiateContract(s.T.Address).Build()
 			require.NoError(t, err)
 
 			err = m.HandleMsg(0, msg, tx)
-			require.Equal(t, tc.wantErr, err)
+			require.NoError(t, err)
 
-			if err == nil {
-				assertTokenInfo(t, db, s.T)
-			}
+			assertTokenInfo(t, db, s.T)
 		})
 	}
 }

@@ -1,8 +1,6 @@
 package cw20token
 
 import (
-	"fmt"
-
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/forbole/bdjuno/v2/database"
@@ -34,52 +32,45 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 }
 
 func (m *Module) handleMsgInstantiateContract(dbTx *database.DbTx, msg *wasm.MsgInstantiateContract, tx *juno.Tx, index int) error {
-	found, err := dbTx.CodeIDExists(msg.CodeID)
-	if err != nil {
+	if found, err := dbTx.CodeIDExists(msg.CodeID); !found {
 		return err
-	}
-
-	if !found {
-		return fmt.Errorf("codeID is not a token")
 	}
 
 	contract := utils.GetValueFromLogs(uint32(index), tx.Logs, wasm.EventTypeInstantiate, wasm.AttributeKeyContractAddr)
-	if contract == "" {
-		return fmt.Errorf("error while getting EventInstantiate")
-	}
 
-	return m.saveTokenInfo(dbTx, contract, msg.CodeID, tx.Height)
-}
-
-func (m *Module) saveTokenInfo(dbTx *database.DbTx, contract string, codeID uint64, height int64) error {
-	res, err := m.source.GetTokenInfo(contract, height)
+	token, err := m.fetchTokenInfo(dbTx, contract, tx.Height)
 	if err != nil {
 		return err
+	}
+
+	token.CodeID = msg.CodeID
+
+	if err := dbTx.SaveInfo(token); err != nil {
+		return err
+	}
+
+	return dbTx.SaveBalances(contract, token.Balances)
+}
+
+func (m *Module) fetchTokenInfo(dbTx *database.DbTx, contract string, height int64) (*types.TokenInfo, error) {
+	res, err := m.source.GetTokenInfo(contract, height)
+	if err != nil {
+		return nil, err
 	}
 
 	tokenInfo, err := parseToTokenInfo(res)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	tokenInfo.Address = contract
-	tokenInfo.CodeID = codeID
 
-	if err := dbTx.SaveInfo(tokenInfo); err != nil {
-		return err
-	}
-
-	return dbTx.SaveBalances(contract, tokenInfo.Balances)
+	return tokenInfo, nil
 }
 
 func (m *Module) handleMsgExecuteContract(dbTx *database.DbTx, msg *wasm.MsgExecuteContract, tx *juno.Tx, index int) error {
-	found, err := dbTx.TokenExists(msg.Contract)
-	if err != nil {
+	if found, err := dbTx.TokenExists(msg.Contract); err != nil || !found {
 		return err
-	}
-
-	if !found {
-		return fmt.Errorf("contract is not a token")
 	}
 
 	r, err := parseToMsgExecuteToken(msg)
@@ -153,20 +144,11 @@ func (m *Module) fetchBalances(msg *types.MsgExecuteToken, height int64) ([]type
 }
 
 func (m *Module) handleMsgMigrateContract(dbTx *database.DbTx, msg *wasm.MsgMigrateContract, tx *juno.Tx, index int) error {
-	found, err := dbTx.TokenExists(msg.Contract)
-	if err != nil {
+	if found, err := dbTx.TokenExists(msg.Contract); err != nil || !found {
 		return err
 	}
 
-	if !found {
-		return fmt.Errorf("contract is not a token")
-	}
-
-	if err := dbTx.DeleteAllBalances(msg.Contract); err != nil {
-		return err
-	}
-
-	found, err = dbTx.CodeIDExists(msg.CodeID)
+	found, err := dbTx.CodeIDExists(msg.CodeID)
 	if err != nil {
 		return err
 	}
@@ -175,5 +157,5 @@ func (m *Module) handleMsgMigrateContract(dbTx *database.DbTx, msg *wasm.MsgMigr
 		return dbTx.DeleteToken(msg.Contract)
 	}
 
-	return m.saveTokenInfo(dbTx, msg.Contract, msg.CodeID, tx.Height)
+	return dbTx.UpdateCodeID(msg.Contract, msg.CodeID)
 }

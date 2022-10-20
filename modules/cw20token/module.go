@@ -26,7 +26,6 @@ type Module struct {
 	// for example a matching contract may get saved in the db
 	// right after subscribeCallback starts updating matching contracts
 	// in this case, that matching contract would never be recognized as token
-
 	mu *sync.Mutex
 }
 
