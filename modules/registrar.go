@@ -130,9 +130,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	nftModule := nft.NewModule(cdc, db)
 	groupModule := group.NewModule(cdc, db)
 	marketplaceModule := marketplace.NewModule(cdc, db)
-
-	pubSubClient := cw20token.GetPubSubClient(ctx.JunoConfig.GetBytes())
-	cw20tokenModule := cw20token.NewModule(cdc, db, sources.CW20TokenSource, pubSubClient)
+	cw20tokenModule := cw20token.NewModule(cdc, db, sources.CW20TokenSource)
 
 	return []jmodules.Module{
 		messages.NewModule(r.parser, cdc, ctx.Database),

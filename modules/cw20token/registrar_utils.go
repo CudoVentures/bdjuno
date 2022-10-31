@@ -1,7 +1,6 @@
 package cw20token
 
 import (
-	"context"
 	"os"
 	"time"
 
@@ -9,35 +8,24 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	cudosapp "github.com/CudoVentures/cudos-node/app"
-	csimapp "github.com/CudoVentures/cudos-node/simapp"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/forbole/bdjuno/v2/utils/pubsub"
+	"github.com/CudoVentures/cudos-node/simapp"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 )
 
-func GetPubSubClient(cfgBytes []byte) *pubsub.GooglePubSubClient {
-	cfg, err := ParseConfig(cfgBytes)
-	if err != nil {
-		panic(err)
-	}
-
-	client, err := pubsub.NewGooglePubSubClient(context.Background(), cfg.ProjectID, cfg.SubID)
-	if err != nil {
-		panic(err)
-	}
-
-	return client
-}
-
 func GetWasmKeeper(homePath string, db dbm.DB) *wasmkeeper.Keeper {
-	app := csimapp.NewSimApp(
-		log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, homePath, 0, csimapp.MakeTestEncodingConfig(), simapp.EmptyAppOptions{},
-	)
-
 	cudosapp.SetConfig()
 
+	app := simapp.NewSimApp(
+		log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, homePath, 0, simapp.MakeTestEncodingConfig(), simapp.EmptyAppOptions{},
+	)
+
+	// todo update cudos-node simapp
+	// add iterator feature
+	// cudosapp.SetConfig() for token prefix (must be called before initializing the simapp, otherwise it's already sealed)
+	// add time to keeper.SetParams() header cuz nil time panics (we also add wasm defaultParams, which may be called in NewSimApp())
+	// then we can remove this function
 	keeper := wasmkeeper.NewKeeper(
 		app.AppCodec(),
 		app.GetKey(wasm.StoreKey),
@@ -48,7 +36,7 @@ func GetWasmKeeper(homePath string, db dbm.DB) *wasmkeeper.Keeper {
 		app.DistrKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
-		nil,
+		app.CapabilityKeeper.ScopeToModule(wasm.ModuleName),
 		app.TransferKeeper,
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),

@@ -1,41 +1,38 @@
 package types
 
-type MsgVerifiedContract struct {
-	CodeID        uint64
-	ExecuteSchema string
-	QuerySchema   string
-}
+import "encoding/json"
 
-type MintInfo struct {
+type Mint struct {
 	Minter    string `json:"minter"`
 	MaxSupply uint64 `json:"cap,string"`
 }
 
-type MarketingInfo struct {
-	Project     string `json:"project"`
-	Description string `json:"description"`
-	Admin       string `json:"marketing"`
+type Marketing struct {
+	Project     string          `json:"project"`
+	Description string          `json:"description"`
+	Admin       string          `json:"marketing"`
+	Logo        json.RawMessage `json:"logo"`
 }
 
-func NewMarketingInfo(project, description, admin string) *MarketingInfo {
-	return &MarketingInfo{project, description, admin}
+func NewMarketing(project, description, admin string, logo json.RawMessage) Marketing {
+	return Marketing{project, description, admin, logo}
 }
 
 type TokenBalance struct {
 	Address string `json:"address"`
 	Amount  uint64 `json:"amount,string"`
 }
+
 type TokenInfo struct {
-	Address           string         `json:"address,omitempty"`
-	Name              string         `json:"name"`
-	Symbol            string         `json:"symbol"`
-	Decimals          int8           `json:"decimals"`
-	CirculatingSupply uint64         `json:"total_supply,string"`
-	MintInfo          MintInfo       `json:"mint,omitempty"`
-	MarketingInfo     MarketingInfo  `json:"marketing_info,omitempty"`
-	Logo              string         `json:"logo"`
-	CodeID            uint64         `json:"code_id"`
-	Balances          []TokenBalance `json:"initial_balances,omitempty"`
+	Address     string         `json:"address,omitempty"`
+	Name        string         `json:"name"`
+	Symbol      string         `json:"symbol"`
+	Decimals    int8           `json:"decimals"`
+	TotalSupply uint64         `json:"total_supply,string"`
+	Mint        Mint           `json:"mint,omitempty"`
+	Marketing   Marketing      `json:"marketing_info,omitempty"`
+	CodeID      uint64         `json:"code_id"`
+	Balances    []TokenBalance `json:"initial_balances,omitempty"`
 }
 
 type MsgExecuteToken struct {
@@ -50,5 +47,5 @@ type MsgExecuteToken struct {
 	NewMinter         string `json:"new_minter"`
 	Project           string
 	Description       string
-	Admin             string `json:"marketing"`
+	MarketingAdmin    string `json:"marketing"`
 }

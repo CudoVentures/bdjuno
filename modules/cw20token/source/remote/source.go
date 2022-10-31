@@ -1,13 +1,12 @@
 package remote
 
 import (
-	"fmt"
-
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/forbole/juno/v2/node/remote"
 
 	"github.com/forbole/bdjuno/v2/modules/cw20token/source"
+	"github.com/forbole/bdjuno/v2/modules/cw20token/source/query"
+	"github.com/forbole/bdjuno/v2/types"
 )
 
 var (
@@ -16,73 +15,31 @@ var (
 
 type Source struct {
 	*remote.Source
-	wasmClient wasm.QueryClient
+	q *query.QueryHandler
 }
 
-func NewSource(source *remote.Source, wasmClient wasm.QueryClient) *Source {
+func NewSource(source *remote.Source, querier wasm.QueryClient) *Source {
 	return &Source{
-		Source:     source,
-		wasmClient: wasmClient,
+		Source: source,
+		q:      &query.QueryHandler{querier.SmartContractState},
 	}
 }
-
-func (s Source) GetTokenInfo(contract string, height int64) (*wasm.QueryAllContractStateResponse, error) {
+func (s *Source) TokenInfo(tokenAddr string, height int64) (types.TokenInfo, error) {
 	ctx := remote.GetHeightRequestContext(s.Ctx, height)
-
-	res := &wasm.QueryAllContractStateResponse{Pagination: &query.PageResponse{}}
-	for {
-		req := &wasm.QueryAllContractStateRequest{
-			Address:    contract,
-			Pagination: &query.PageRequest{Key: res.Pagination.NextKey},
-		}
-
-		r, err := s.wasmClient.AllContractState(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-
-		res.Models = append(res.Models, r.Models...)
-
-		if r.Pagination.NextKey == nil {
-			break
-		}
-
-		res.Pagination.NextKey = r.Pagination.NextKey
-	}
-
-	return res, nil
+	return s.q.TokenInfo(ctx, tokenAddr, height)
 }
 
-func (s Source) GetBalance(contract string, address string, height int64) (*wasm.QuerySmartContractStateResponse, error) {
+func (s *Source) AllBalances(tokenAddr string, height int64) ([]types.TokenBalance, error) {
 	ctx := remote.GetHeightRequestContext(s.Ctx, height)
-
-	query := fmt.Sprintf(`{"balance":{"address":"%s"}}`, address)
-	req := &wasm.QuerySmartContractStateRequest{
-		Address:   contract,
-		QueryData: []byte(query),
-	}
-
-	res, err := s.wasmClient.SmartContractState(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return s.q.AllBalances(ctx, tokenAddr, height)
 }
 
-func (s Source) GetCirculatingSupply(contract string, height int64) (*wasm.QuerySmartContractStateResponse, error) {
+func (s *Source) Balance(tokenAddr string, address string, height int64) (uint64, error) {
 	ctx := remote.GetHeightRequestContext(s.Ctx, height)
+	return s.q.Balance(ctx, tokenAddr, address, height)
+}
 
-	query := `{"token_info":{}}`
-	req := &wasm.QuerySmartContractStateRequest{
-		Address:   contract,
-		QueryData: []byte(query),
-	}
-
-	res, err := s.wasmClient.SmartContractState(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+func (s *Source) TotalSupply(tokenAddr string, height int64) (uint64, error) {
+	ctx := remote.GetHeightRequestContext(s.Ctx, height)
+	return s.q.TotalSupply(ctx, tokenAddr, height)
 }

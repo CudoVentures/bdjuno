@@ -11,16 +11,17 @@ func (dbTx *DbTx) SaveCodeID(codeID uint64) error {
 	return err
 }
 
-func (dbTx *DbTx) SaveInfo(token *types.TokenInfo) error {
+func (dbTx *DbTx) SaveInfo(token types.TokenInfo) error {
 	_, err := dbTx.Exec(
 		`INSERT INTO cw20token_info VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		ON CONFLICT (address) DO UPDATE SET
 		code_id = excluded.code_id, name = excluded.name, symbol = excluded.symbol, decimals = excluded.decimals,
 		circulating_supply = excluded.circulating_supply, max_supply = excluded.max_supply, minter = excluded.minter,
 		marketing_admin = excluded.marketing_admin, project_url = excluded.project_url, description = excluded.description, logo = excluded.logo`,
-		token.Address, token.CodeID, token.Name, token.Symbol, token.Decimals, token.CirculatingSupply, token.MintInfo.MaxSupply,
-		token.MintInfo.Minter, token.MarketingInfo.Admin, token.MarketingInfo.Project, token.MarketingInfo.Description, token.Logo,
+		token.Address, token.CodeID, token.Name, token.Symbol, token.Decimals, token.TotalSupply, token.Mint.MaxSupply,
+		token.Mint.Minter, token.Marketing.Admin, token.Marketing.Project, token.Marketing.Description, token.Marketing.Logo,
 	)
+
 	return err
 }
 
@@ -54,7 +55,7 @@ func (dbTx *DbTx) UpdateMinter(token string, minter string) error {
 	return err
 }
 
-func (dbTx *DbTx) UpdateMarketing(token string, m *types.MarketingInfo) error {
+func (dbTx *DbTx) UpdateMarketing(token string, m types.Marketing) error {
 	_, err := dbTx.Exec(
 		`UPDATE cw20token_info SET project_url = $1, description = $2, marketing_admin = $3 WHERE address = $4`,
 		m.Project, m.Description, m.Admin, token,

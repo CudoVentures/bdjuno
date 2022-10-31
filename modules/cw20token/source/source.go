@@ -1,11 +1,12 @@
 package source
 
 import (
-	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/forbole/bdjuno/v2/types"
 )
 
 type Source interface {
-	GetTokenInfo(contract string, height int64) (*wasm.QueryAllContractStateResponse, error)
-	GetBalance(contract string, address string, height int64) (*wasm.QuerySmartContractStateResponse, error)
-	GetCirculatingSupply(contract string, height int64) (*wasm.QuerySmartContractStateResponse, error)
+	TokenInfo(tokenAddr string, height int64) (types.TokenInfo, error)
+	AllBalances(tokenAddr string, height int64) ([]types.TokenBalance, error)
+	Balance(tokenAddr string, address string, height int64) (uint64, error)
+	TotalSupply(tokenAddr string, height int64) (uint64, error)
 }
