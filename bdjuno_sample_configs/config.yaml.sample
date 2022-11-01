@@ -66,6 +66,3 @@ workers:
       interval: 30s
 cudomint:
     stats_service_url: http://127.0.0.1:3000
-verified_contracts_subscription:
-    project_id: multisig-firestore-1
-    sub_id: my-sub

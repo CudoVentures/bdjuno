@@ -61,11 +61,3 @@ func parseTokenInfoFromDbRow(t dbtypes.TokenInfoRow) types.TokenInfo {
 		CodeID:      t.CodeID,
 		Balances:    []types.TokenBalance{}}
 }
-
-// func newExecuteMsg(msgJson string) *wasm.MsgExecuteContract {
-// 	return &wasm.MsgExecuteContract{
-// 		Contract: tokenAddr1,
-// 		Sender:   addr1,
-// 		Msg:      []byte(msgJson),
-// 	}
-// }
