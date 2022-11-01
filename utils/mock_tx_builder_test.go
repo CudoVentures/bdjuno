@@ -17,12 +17,11 @@ var (
 	resultDefault = group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN
 )
 
-func TestTxBuilder_Build(t *testing.T) {
+func TestMockTxBuilder_Build(t *testing.T) {
 	timestamp := time.Now()
-	tx, err := NewTx(timestamp, str, num).WithEventCreateGroup(num, str).WithEventSubmitProposal(num).WithEventExec(resultDefault).WithEventVote().WithEventWithdrawProposal().WithEventInstantiateContract(str).Build()
-	require.NoError(t, err)
+	tx := NewMockTxBuilder(t, timestamp, str, num).WithEventCreateGroup(num, str).WithEventSubmitProposal(num).WithEventExec(resultDefault).WithEventVote().WithEventWithdrawProposal().WithEventInstantiateContract(str).WithEventWasmAction(str).Build()
 
-	expectedEventCount := 7
+	expectedEventCount := 8
 	actualEventCount := len(tx.Logs[0].Events)
 	require.Equal(t, expectedEventCount, actualEventCount)
 
@@ -56,11 +55,4 @@ func TestTxBuilder_Build(t *testing.T) {
 
 	actualHeight := tx.Height
 	require.Equal(t, int64(num), actualHeight)
-}
-
-func TestTxBuilder_Error(t *testing.T) {
-	timestamp := time.Now()
-	_, err := NewTx(timestamp, str, num).WithEventCreateGroup(1, "").WithEventSubmitProposal(1).WithEventExec(group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN).WithEventVote().WithEventWithdrawProposal().Build()
-	expectedError := "error while building testTx: error while building testTx: empty group address"
-	require.Equal(t, expectedError, err.Error())
 }

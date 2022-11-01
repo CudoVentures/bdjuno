@@ -5,7 +5,7 @@ import (
 	"github.com/forbole/juno/v2/node/remote"
 
 	"github.com/forbole/bdjuno/v2/modules/cw20token/source"
-	"github.com/forbole/bdjuno/v2/modules/cw20token/source/query"
+	q "github.com/forbole/bdjuno/v2/modules/cw20token/source/queryhandler"
 	"github.com/forbole/bdjuno/v2/types"
 )
 
@@ -15,13 +15,13 @@ var (
 
 type Source struct {
 	*remote.Source
-	q *query.QueryHandler
+	q *q.QueryHandler
 }
 
 func NewSource(source *remote.Source, querier wasm.QueryClient) *Source {
 	return &Source{
 		Source: source,
-		q:      &query.QueryHandler{querier.SmartContractState},
+		q:      &q.QueryHandler{querier.SmartContractState},
 	}
 }
 func (s *Source) TokenInfo(tokenAddr string, height int64) (types.TokenInfo, error) {

@@ -77,15 +77,13 @@ var (
 )
 
 func ValidateContract(contract wasmvm.WasmCode, cw cwStandard) error {
-	tmpdir := os.TempDir()
-	vm, err := wasmvm.NewVM(tmpdir, SUPPORTED_FEATURES, MEMORY_LIMIT, DEBUG, CACHE_SIZE)
+	vm, err := wasmvm.NewVM(os.TempDir(), SUPPORTED_FEATURES, MEMORY_LIMIT, DEBUG, CACHE_SIZE)
 	if err != nil {
 		return err
 	}
 
 	defer func() {
 		vm.Cleanup()
-		os.RemoveAll(tmpdir)
 	}()
 
 	// wasmCode coming from indexed MsgStoreCode is compressed

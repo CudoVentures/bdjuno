@@ -33,6 +33,7 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 		}
 	})
 }
+
 func (m *Module) handleMsgStoreCode(dbTx *database.DbTx, msg *wasm.MsgStoreCode, tx *juno.Tx, index int) error {
 	if err := utils.ValidateContract(msg.WASMByteCode, utils.CW20); err != nil {
 		return nil
@@ -72,102 +73,67 @@ func (m *Module) handleMsgInstantiateContract(dbTx *database.DbTx, msg *wasm.Msg
 }
 
 func (m *Module) handleMsgExecuteContract(dbTx *database.DbTx, msg *wasm.MsgExecuteContract, tx *juno.Tx, index int) error {
-	if found, err := dbTx.TokenExists(msg.Contract); err != nil || !found {
+	if found, err := dbTx.TokenExists(msg.Contract); !found {
 		return err
 	}
 
-	msgType := mutils.GetValueFromLogs(uint32(index), tx.Logs, wasm.WasmModuleEventType, "action")
-	r, err := parseToMsgExecuteToken(msg)
+	msgExecute := types.MsgExecute{}
+	if err := json.Unmarshal(msg.Msg, &msgExecute); err != nil {
+		return err
+	}
+
+	msgType := mutils.GetValueFromLogs(uint32(index), tx.Logs, wasm.WasmModuleEventType, sdk.AttributeKeyAction)
+	addresses := []string{}
+	switch types.TypeMsgExecute(msgType) {
+	case types.TypeTransfer:
+		addresses = append(addresses, msgExecute.Transfer.Recipient, msg.Sender)
+	case types.TypeTransferFrom:
+		mm := msgExecute.TransferFrom
+		addresses = append(addresses, mm.Owner, mm.Recipient)
+	case types.TypeSend:
+		addresses = append(addresses, msgExecute.Send.Contract, msg.Sender)
+	case types.TypeSendFrom:
+		mm := msgExecute.SendFrom
+		addresses = append(addresses, mm.Owner, mm.Contract)
+	case types.TypeBurn:
+		addresses = append(addresses, msg.Sender)
+	case types.TypeBurnFrom:
+		addresses = append(addresses, msgExecute.BurnFrom.Owner)
+	case types.TypeMint:
+		addresses = append(addresses, msgExecute.Mint.Recipient)
+	case types.TypeUpdateMinter:
+		return dbTx.UpdateMinter(msg.Contract, msgExecute.UpdateMinter.NewMinter)
+	case types.TypeUpdateMarketing:
+		mm := msgExecute.UpdateMarketing
+		return dbTx.UpdateMarketing(msg.Contract, types.Marketing{mm.Project, mm.Description, mm.Admin, nil})
+	case types.TypeUploadLogo:
+		return dbTx.UpdateLogo(msg.Contract, mutils.SanitizeUTF8(string(msgExecute.UploadLogo)))
+	}
+
+	supply, err := m.source.TotalSupply(msg.Contract, tx.Height)
 	if err != nil {
 		return err
 	}
 
-	// todo a cool idea is to make a map(similar to current approach)
-	// but against each key place msg type
-	// the type would be map[string]interface{}
-	// then access it with map[msgType].(*SpecificType)
-	// that way we only Unmarshal once and looks a good match with that switch
-	// also we can have []string and append to it when msgType modifies balance
-	// then after the switch we make for range []string update balance - easy
-	switch msgType {
-	case "update_minter":
-		return dbTx.UpdateMinter(r.Contract, r.NewMinter)
-	case "update_marketing":
-		return dbTx.UpdateMarketing(r.Contract, types.NewMarketing(r.Project, r.Description, r.MarketingAdmin, nil))
-	case "upload_logo":
-		return dbTx.UpdateLogo(r.Contract, mutils.SanitizeUTF8(string(r.MsgRaw)))
-	case "mint", "burn", "burn_from":
-		supply, err := m.source.TotalSupply(r.Contract, tx.Height)
-		if err != nil {
-			return err
-		}
-
-		if err := dbTx.UpdateSupply(r.Contract, supply); err != nil {
-			return err
-		}
-	}
-
-	balances, err := m.fetchBalances(r, tx.Height)
-	if err != nil {
+	if err := dbTx.UpdateSupply(msg.Contract, supply); err != nil {
 		return err
 	}
 
-	return dbTx.SaveBalances(r.Contract, balances)
-}
-
-func parseToMsgExecuteToken(msg *wasm.MsgExecuteContract) (*types.MsgExecuteToken, error) {
-	req := map[string]json.RawMessage{}
-	if err := json.Unmarshal(msg.Msg, &req); err != nil {
-		return nil, err
-	}
-
-	res := types.MsgExecuteToken{}
-	for msgType, msgRaw := range req {
-		if err := json.Unmarshal(msgRaw, &res); err != nil {
-			return nil, err
-		}
-
-		res.Type = msgType
-		res.MsgRaw = msgRaw
-	}
-
-	res.Contract = msg.Contract
-	res.Sender = msg.Sender
-
-	return &res, nil
-}
-
-func (m *Module) fetchBalances(msg *types.MsgExecuteToken, height int64) ([]types.TokenBalance, error) {
-	balances := []types.TokenBalance{}
-
-	sender := msg.Sender
-	if msg.Owner != "" {
-		sender = msg.Owner
-	}
-	balances = append(balances, types.TokenBalance{Address: sender})
-
-	if msg.Recipient != "" {
-		balances = append(balances, types.TokenBalance{Address: msg.Recipient})
-	}
-
-	if msg.RecipientContract != "" {
-		balances = append(balances, types.TokenBalance{Address: msg.RecipientContract})
-	}
-
-	for i, b := range balances {
-		balance, err := m.source.Balance(msg.Contract, b.Address, height)
+	balances := make([]types.TokenBalance, len(addresses))
+	for i, a := range addresses {
+		b, err := m.source.Balance(msg.Contract, a, tx.Height)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		balances[i].Amount = balance
+		balances[i] = types.TokenBalance{a, b}
 	}
 
-	return balances, nil
+	return dbTx.SaveBalances(msg.Contract, balances)
 }
 
 func (m *Module) handleMsgMigrateContract(dbTx *database.DbTx, msg *wasm.MsgMigrateContract, tx *juno.Tx, index int) error {
-	if found, err := dbTx.TokenExists(msg.Contract); err != nil || !found {
+	if found, err := dbTx.TokenExists(msg.Contract); !found {
 		return err
 	}
 

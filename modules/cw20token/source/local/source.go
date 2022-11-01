@@ -4,7 +4,7 @@ import (
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	"github.com/forbole/bdjuno/v2/modules/cw20token/source"
-	"github.com/forbole/bdjuno/v2/modules/cw20token/source/query"
+	q "github.com/forbole/bdjuno/v2/modules/cw20token/source/queryhandler"
 	"github.com/forbole/bdjuno/v2/types"
 	"github.com/forbole/juno/v2/node/local"
 )
@@ -15,13 +15,13 @@ var (
 
 type Source struct {
 	*local.Source
-	q *query.QueryHandler
+	q *q.QueryHandler
 }
 
 func NewSource(source *local.Source, querier wasm.QueryServer) *Source {
 	return &Source{
 		Source: source,
-		q:      query.QueryHandlerLocal(querier.SmartContractState),
+		q:      q.QueryHandlerLocal(querier.SmartContractState),
 	}
 }
 
