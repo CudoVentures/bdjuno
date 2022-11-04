@@ -40,3 +40,13 @@ func (db *Db) SetMarketplaceCollectionVerificationStatus(id uint64, verified boo
 	_, err := db.Sql.Exec(`UPDATE marketplace_collection SET verified = $1 WHERE id = $2`, verified, id)
 	return err
 }
+
+func (db *Db) SetMarketplaceNFTPrice(id uint64, price string) error {
+	_, err := db.Sql.Exec(`UPDATE marketplace_nft SET price = $1 WHERE id = $2`, price, id)
+	return err
+}
+
+func (db *Db) SetMarketplaceCollectionRoyalties(id uint64, mintRoyalties, resaleRoyalties string) error {
+	_, err := db.Sql.Exec(`UPDATE marketplace_collection SET mint_royalties = $1, resale_royalties = $2 WHERE id = $3`, mintRoyalties, resaleRoyalties, id)
+	return err
+}

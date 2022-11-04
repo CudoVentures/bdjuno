@@ -32,6 +32,12 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 		return m.handleMsgVerifyCollection(cosmosMsg)
 	case *marketplaceTypes.MsgUnverifyCollection:
 		return m.handleMsgUnverifyCollection(cosmosMsg)
+	case *marketplaceTypes.MsgUpdatePrice:
+		return m.handleMsgUpdatePrice(cosmosMsg)
+	case *marketplaceTypes.MsgUpdateRoyalties:
+		return m.handleMsgUpdateRoyalties(cosmosMsg)
+	case *marketplaceTypes.MsgCreateCollection:
+		return m.handleMsgCreateCollection(index, tx, cosmosMsg)
 	default:
 		return nil
 	}
@@ -90,6 +96,23 @@ func (m *Module) handleMsgVerifyCollection(msg *marketplaceTypes.MsgVerifyCollec
 
 func (m *Module) handleMsgUnverifyCollection(msg *marketplaceTypes.MsgUnverifyCollection) error {
 	return m.db.SetMarketplaceCollectionVerificationStatus(msg.Id, false)
+}
+
+func (m *Module) handleMsgUpdatePrice(msg *marketplaceTypes.MsgUpdatePrice) error {
+	return m.db.SetMarketplaceNFTPrice(msg.Id, msg.Price.String())
+}
+
+func (m *Module) handleMsgUpdateRoyalties(msg *marketplaceTypes.MsgUpdateRoyalties) error {
+	return m.db.SetMarketplaceCollectionRoyalties(msg.Id, royaltiesToText(msg.MintRoyalties), royaltiesToText(msg.ResaleRoyalties))
+}
+
+func (m *Module) handleMsgCreateCollection(index int, tx *juno.Tx, msg *marketplaceTypes.MsgCreateCollection) error {
+	collectionID, err := utils.GetUint64FromLogs(index, tx.Logs, tx.TxHash, marketplaceTypes.EventCreateCollectionType, marketplaceTypes.AttributeKeyCollectionID)
+	if err != nil {
+		return err
+	}
+
+	return m.db.SaveMarketplaceCollection(tx.TxHash, collectionID, msg.Name, royaltiesToText(msg.MintRoyalties), royaltiesToText(msg.ResaleRoyalties), msg.Creator, msg.Verified)
 }
 
 func royaltiesToText(royalties []marketplaceTypes.Royalty) string {
