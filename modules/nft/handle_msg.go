@@ -65,8 +65,7 @@ func (m *Module) handleMsgMintNFT(index int, tx *juno.Tx, msg *nftTypes.MsgMintN
 		return err
 	}
 
-	error := m.db.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, "0x0", msg.Sender, uint64(timestamp))
-	if error != nil {
+	if error := m.db.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, "0x0", msg.Sender, uint64(timestamp)); error != nil {
 		return error
 	}
 
@@ -92,8 +91,7 @@ func (m *Module) handleMsgTransferNFT(tx *juno.Tx, msg *nftTypes.MsgTransferNft)
 		return err
 	}
 
-	error := m.db.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, msg.Sender, msg.To, uint64(timestamp))
-	if error != nil {
+	if error := m.db.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, msg.Sender, msg.To, uint64(timestamp)); error != nil {
 		return error
 	}
 
@@ -116,8 +114,7 @@ func (m *Module) handleMsgBurnNFT(index int, tx *juno.Tx, msg *nftTypes.MsgBurnN
 		return err
 	}
 
-	error := m.db.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, msg.Sender, "0x0", uint64(timestamp))
-	if error != nil {
+	if error := m.db.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, msg.Sender, "0x0", uint64(timestamp)); error != nil {
 		return error
 	}
 

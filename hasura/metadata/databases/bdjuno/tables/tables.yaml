@@ -61,3 +61,4 @@
 - "!include public_marketplace_collection.yaml"
 - "!include public_marketplace_nft.yaml"
 - "!include public_marketplace_nft_buy_history.yaml"
+- "!include public_nft_transfer_history.yaml"
