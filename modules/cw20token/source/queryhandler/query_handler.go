@@ -19,7 +19,7 @@ type QueryHandler struct {
 	Query queryFn
 }
 
-func QueryHandlerFromLocal(q queryFnLocal) *QueryHandler {
+func FromLocal(q queryFnLocal) *QueryHandler {
 	queryFn := func(ctx context.Context, in *wasm.QuerySmartContractStateRequest, opts ...grpc.CallOption) (*wasm.QuerySmartContractStateResponse, error) {
 		return q(ctx, in)
 	}

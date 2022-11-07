@@ -21,7 +21,7 @@ type Source struct {
 func NewSource(source *local.Source, querier wasm.QueryServer) *Source {
 	return &Source{
 		Source: source,
-		q:      q.QueryHandlerFromLocal(querier.SmartContractState),
+		q:      q.FromLocal(querier.SmartContractState),
 	}
 }
 
