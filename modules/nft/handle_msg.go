@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	marketplaceTypes "github.com/CudoVentures/cudos-node/x/marketplace/types"
 	nftTypes "github.com/CudoVentures/cudos-node/x/nft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/forbole/bdjuno/v2/modules/utils"
@@ -29,6 +30,8 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 		return m.handleMsgTransferNFT(cosmosMsg)
 	case *nftTypes.MsgBurnNFT:
 		return m.handleMsgBurnNFT(cosmosMsg)
+	case *marketplaceTypes.MsgCreateCollection:
+		return m.handleMsgCreateCollection(tx, cosmosMsg)
 	default:
 		return nil
 	}
@@ -73,6 +76,13 @@ func (m *Module) handleMsgTransferNFT(msg *nftTypes.MsgTransferNft) error {
 
 func (m *Module) handleMsgBurnNFT(msg *nftTypes.MsgBurnNFT) error {
 	return m.db.BurnNFT(msg.Id, msg.DenomId)
+}
+
+func (m *Module) handleMsgCreateCollection(tx *juno.Tx, msg *marketplaceTypes.MsgCreateCollection) error {
+	dataJSON, dataText := getData(msg.Data)
+
+	return m.db.SaveDenom(tx.TxHash, msg.Id, msg.Name, msg.Schema, msg.Symbol, msg.Creator, "",
+		msg.Traits, msg.Minter, msg.Description, dataText, utils.SanitizeUTF8(dataJSON))
 }
 
 func getData(data string) (string, string) {

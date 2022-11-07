@@ -1,11 +1,11 @@
 .idea/
 build/
 postgres-data/
+bdjuno/
 
 # Configuration
 *.toml
 *.json
-config.yaml
 
 # Coverage
 coverage.*
