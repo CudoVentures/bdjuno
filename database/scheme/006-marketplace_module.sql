@@ -65,3 +65,14 @@ CREATE INDEX marketplace_nft_buy_history_token_id_denom_id_index ON marketplace_
 CREATE INDEX marketplace_nft_buy_history_seller_index ON marketplace_nft_buy_history (seller);
 CREATE INDEX marketplace_nft_buy_history_buyer_index ON marketplace_nft_buy_history (buyer);
 CREATE INDEX marketplace_nft_buy_history_timestamp_index ON marketplace_nft_buy_history (timestamp);
+
+
+CREATE TABLE nft_transfer_history
+(
+    id BIGINT NOT NULL,
+    transaction_hash TEXT NOT NULL REFERENCES transaction (hash),
+    denom_id TEXT NOT NULL REFERENCES nft_denom (id),
+    old_owner TEXT NOT NULL,
+    new_owner TEXT NOT NULL,
+    timestamp BIGINT NOT NULL
+);
