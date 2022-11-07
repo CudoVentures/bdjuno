@@ -10,7 +10,7 @@ type TokenInfoRow struct {
 	MaxSupply      uint64 `db:"max_supply"`
 	Minter         string `db:"minter"`
 	MarketingAdmin string `db:"marketing_admin"`
-	ProjectUrl     string `db:"project_url"`
+	ProjectURL     string `db:"project_url"`
 	Description    string `db:"description"`
 	Logo           string `db:"logo"`
 }

@@ -19,7 +19,7 @@ type QueryHandler struct {
 	Query queryFn
 }
 
-func QueryHandlerLocal(q queryFnLocal) *QueryHandler {
+func QueryHandlerFromLocal(q queryFnLocal) *QueryHandler {
 	queryFn := func(ctx context.Context, in *wasm.QuerySmartContractStateRequest, opts ...grpc.CallOption) (*wasm.QuerySmartContractStateResponse, error) {
 		return q(ctx, in)
 	}
@@ -30,15 +30,15 @@ func QueryHandlerLocal(q queryFnLocal) *QueryHandler {
 func (q *QueryHandler) TokenInfo(ctx context.Context, tokenAddr string, height int64) (types.TokenInfo, error) {
 	tokenInfo := types.TokenInfo{}
 
-	if err := q.query(ctx, tokenAddr, `{"token_info":{}}`, height, &tokenInfo); err != nil {
+	if err := q.query(ctx, tokenAddr, `{"token_info":{}}`, &tokenInfo); err != nil {
 		return types.TokenInfo{}, err
 	}
 
-	if err := q.query(ctx, tokenAddr, `{"minter":{}}`, height, &tokenInfo.Mint); err != nil {
+	if err := q.query(ctx, tokenAddr, `{"minter":{}}`, &tokenInfo.Mint); err != nil {
 		return types.TokenInfo{}, err
 	}
 
-	if err := q.query(ctx, tokenAddr, `{"marketing_info":{}}`, height, &tokenInfo.Marketing); err != nil {
+	if err := q.query(ctx, tokenAddr, `{"marketing_info":{}}`, &tokenInfo.Marketing); err != nil {
 		return types.TokenInfo{}, err
 	}
 
@@ -59,7 +59,7 @@ func (q *QueryHandler) AllBalances(ctx context.Context, tokenAddr string, height
 			Accounts []string `json:"accounts"`
 		}{}
 
-		if err := q.query(ctx, tokenAddr, query, height, &accounts); err != nil {
+		if err := q.query(ctx, tokenAddr, query, &accounts); err != nil {
 			return nil, err
 		}
 
@@ -86,7 +86,7 @@ func (q *QueryHandler) Balance(ctx context.Context, tokenAddr string, address st
 	}{}
 
 	query := fmt.Sprintf(`{"balance":{"address":"%s"}}`, address)
-	err := q.query(ctx, tokenAddr, query, height, &balance)
+	err := q.query(ctx, tokenAddr, query, &balance)
 
 	return balance.Balance, err
 }
@@ -96,12 +96,12 @@ func (q *QueryHandler) TotalSupply(ctx context.Context, tokenAddr string, height
 		TotalSupply uint64 `json:"total_supply,string"`
 	}{}
 
-	err := q.query(ctx, tokenAddr, `{"token_info":{}}`, height, &supply)
+	err := q.query(ctx, tokenAddr, `{"token_info":{}}`, &supply)
 
 	return supply.TotalSupply, err
 }
 
-func (q *QueryHandler) query(ctx context.Context, tokenAddr string, query string, height int64, dest interface{}) error {
+func (q *QueryHandler) query(ctx context.Context, tokenAddr string, query string, dest interface{}) error {
 	if dest == nil {
 		return nil
 	}

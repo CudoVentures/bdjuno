@@ -44,11 +44,11 @@ var interfaces = map[cwStandard]contract{
 }
 
 const (
-	SUPPORTED_FEATURES = "iterator,staking,stargate"
-	MEMORY_LIMIT       = 32
-	CACHE_SIZE         = 100
-	GAS_LIMIT          = 100_000_000_000_000
-	DEBUG              = false
+	supportedFeatures = "iterator,staking,stargate"
+	memoryLimit       = 32
+	cacheSize         = 100
+	gasLimit          = 100_000_000_000_000
+	debugMode         = false
 )
 
 var (
@@ -62,7 +62,7 @@ var (
 )
 
 func ValidateContract(contract wasmvm.WasmCode, cw cwStandard) error {
-	vm, err := wasmvm.NewVM(os.TempDir(), SUPPORTED_FEATURES, MEMORY_LIMIT, DEBUG, CACHE_SIZE)
+	vm, err := wasmvm.NewVM(os.TempDir(), supportedFeatures, memoryLimit, debugMode, cacheSize)
 	if err != nil {
 		return err
 	}
@@ -85,13 +85,13 @@ func ValidateContract(contract wasmvm.WasmCode, cw cwStandard) error {
 	}
 
 	for _, m := range interfaces[cw].msgs {
-		if _, _, err := vm.Execute(checksum, env, info, []byte(m.msg), store, *api, querier, gasMeter, GAS_LIMIT, deserCost); err != nil && err.Error() != m.wantErr {
+		if _, _, err := vm.Execute(checksum, env, info, []byte(m.msg), store, *api, querier, gasMeter, gasLimit, deserCost); err != nil && err.Error() != m.wantErr {
 			return err
 		}
 	}
 
 	for _, q := range interfaces[cw].queries {
-		if _, _, err := vm.Query(checksum, env, []byte(q), store, *api, querier, gasMeter, GAS_LIMIT, deserCost); err != nil {
+		if _, _, err := vm.Query(checksum, env, []byte(q), store, *api, querier, gasMeter, gasLimit, deserCost); err != nil {
 			return err
 		}
 	}

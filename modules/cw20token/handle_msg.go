@@ -27,7 +27,7 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 		case *wasm.MsgExecuteContract:
 			return m.handleMsgExecuteContract(dbTx, cosmosMsg, tx, index)
 		case *wasm.MsgMigrateContract:
-			return m.handleMsgMigrateContract(dbTx, cosmosMsg, tx, index)
+			return m.handleMsgMigrateContract(dbTx, cosmosMsg)
 		default:
 			return nil
 		}
@@ -132,7 +132,7 @@ func (m *Module) handleMsgExecuteContract(dbTx *database.DbTx, msg *wasm.MsgExec
 	return dbTx.SaveBalances(msg.Contract, balances)
 }
 
-func (m *Module) handleMsgMigrateContract(dbTx *database.DbTx, msg *wasm.MsgMigrateContract, tx *juno.Tx, index int) error {
+func (m *Module) handleMsgMigrateContract(dbTx *database.DbTx, msg *wasm.MsgMigrateContract) error {
 	if found, err := dbTx.TokenExists(msg.Contract); !found {
 		return err
 	}
