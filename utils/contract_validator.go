@@ -20,36 +20,25 @@ const (
 	CW1155
 )
 
+type msg struct {
+	msg     string
+	wantErr string
+}
 type contract struct {
-	msgs    []string
+	msgs    []msg
 	queries []string
 }
 
 var interfaces = map[cwStandard]contract{
 	CW20: {
-		msgs: []string{
-			`{"transfer":{"recipient":"cudos1","amount":"0"}}`,
-			// todo add all must functions
+		msgs: []msg{
+			{`{"transfer":{"recipient":"cudos1","amount":"0"}}`, "Invalid zero amount"},
+			{`{"transfer_from":{"owner":"creator","recipient":"cudos1","amount":"0"}}`, "No allowance for this account"},
+			{`{"increase_allowance":{"spender":"cudos1","amount":"0"}}`, ""},
 		},
 		queries: []string{
 			`{"all_accounts":{}}`,
 			`{"balance":{"address":"cudos1"}}`,
-		},
-	},
-	CW721: {
-		msgs: []string{
-			`{"":{}}`,
-		},
-		queries: []string{
-			`{"":{}}`,
-		},
-	},
-	CW1155: {
-		msgs: []string{
-			`{"":{}}`,
-		},
-		queries: []string{
-			`{"":{}}`,
 		},
 	},
 }
@@ -60,10 +49,6 @@ const (
 	CACHE_SIZE         = 100
 	GAS_LIMIT          = 100_000_000_000_000
 	DEBUG              = false
-
-	// this error is allowed because both initial_balances and mint are optional
-	// so we don't have a good way to fund, that's why we transfer 0 amount
-	ALLOWED_ERR = "Invalid zero amount"
 )
 
 var (
@@ -100,7 +85,7 @@ func ValidateContract(contract wasmvm.WasmCode, cw cwStandard) error {
 	}
 
 	for _, m := range interfaces[cw].msgs {
-		if _, _, err := vm.Execute(checksum, env, info, []byte(m), store, *api, querier, gasMeter, GAS_LIMIT, deserCost); err != nil && err.Error() != ALLOWED_ERR {
+		if _, _, err := vm.Execute(checksum, env, info, []byte(m.msg), store, *api, querier, gasMeter, GAS_LIMIT, deserCost); err != nil && err.Error() != m.wantErr {
 			return err
 		}
 	}

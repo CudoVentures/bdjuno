@@ -31,21 +31,6 @@ type TokenInfo struct {
 	Balances    []TokenBalance `json:"initial_balances,omitempty"`
 }
 
-type MsgExecuteToken struct {
-	Type              string
-	MsgRaw            []byte
-	Contract          string
-	Sender            string
-	Recipient         string
-	Amount            uint64 `json:"amount,string"`
-	Owner             string
-	RecipientContract string `json:"contract"`
-	NewMinter         string `json:"new_minter"`
-	Project           string
-	Description       string
-	MarketingAdmin    string `json:"marketing"`
-}
-
 type TypeMsgExecute string
 
 const (
