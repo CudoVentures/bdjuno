@@ -89,17 +89,17 @@ func (m *Module) handleMsgMintNft(index int, tx *juno.Tx, msg *marketplaceTypes.
 		return err
 	}
 
+	usdPrice, err := coingecko.GetCUDOSPrice("usd")
+	if err != nil {
+		return err
+	}
+
+	btcPrice, err := coingecko.GetCUDOSPrice("btc")
+	if err != nil {
+		return err
+	}
+
 	if err := m.db.ExecuteTx(func(dbTx *database.DbTx) error {
-		usdPrice, err := coingecko.GetCUDOSPrice("usd")
-		if err != nil {
-			return err
-		}
-
-		btcPrice, err := coingecko.GetCUDOSPrice("btc")
-		if err != nil {
-			return err
-		}
-
 		return dbTx.SaveMarketplaceNftMint(tx.TxHash, tokenID, msg.Creator, msg.DenomId, msg.Price.String(), uint64(timestamp), usdPrice, btcPrice)
 	}); err != nil {
 		return err
@@ -114,17 +114,17 @@ func (m *Module) handleMsgBuyNft(tx *juno.Tx, msg *marketplaceTypes.MsgBuyNft) e
 		return err
 	}
 
+	usdPrice, err := coingecko.GetCUDOSPrice("usd")
+	if err != nil {
+		return err
+	}
+
+	btcPrice, err := coingecko.GetCUDOSPrice("btc")
+	if err != nil {
+		return err
+	}
+
 	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
-		usdPrice, err := coingecko.GetCUDOSPrice("usd")
-		if err != nil {
-			return err
-		}
-
-		btcPrice, err := coingecko.GetCUDOSPrice("btc")
-		if err != nil {
-			return err
-		}
-
 		if err := dbTx.SaveMarketplaceNftBuy(tx.TxHash, msg.Id, msg.Creator, uint64(timestamp), usdPrice, btcPrice); err != nil {
 			return err
 		}
