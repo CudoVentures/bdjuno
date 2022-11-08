@@ -1,12 +1,13 @@
 package marketplace
 
 import (
+	"fmt"
 	"strconv"
 
 	marketplaceTypes "github.com/CudoVentures/cudos-node/x/marketplace/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/forbole/bdjuno/v2/database"
-	"github.com/forbole/bdjuno/v2/modules/utils"
+	utils "github.com/forbole/bdjuno/v2/modules/utils"
 	generalUtils "github.com/forbole/bdjuno/v2/utils"
 	juno "github.com/forbole/juno/v2/types"
 )
@@ -23,7 +24,7 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 	case *marketplaceTypes.MsgPublishNft:
 		return m.handleMsgPublishNft(index, tx, cosmosMsg)
 	case *marketplaceTypes.MsgMintNft:
-		return m.handleMsgMintNft(tx, cosmosMsg)
+		return m.handleMsgMintNft(index, tx, cosmosMsg)
 	case *marketplaceTypes.MsgBuyNft:
 		return m.handleMsgBuyNft(tx, cosmosMsg)
 	case *marketplaceTypes.MsgRemoveNft:
@@ -65,9 +66,29 @@ func (m *Module) handleMsgPublishNft(index int, tx *juno.Tx, msg *marketplaceTyp
 	return m.db.SaveMarketplaceNft(tx.TxHash, nftID, tokenID, msg.DenomId, msg.Price.String(), msg.Creator)
 }
 
-func (m *Module) handleMsgMintNft(tx *juno.Tx, msg *marketplaceTypes.MsgMintNft) error {
-	// We have nothing to do here for now
-	return nil
+func (m *Module) handleMsgMintNft(index int, tx *juno.Tx, msg *marketplaceTypes.MsgMintNft) error {
+	tokenIDStr := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventMintNftType, marketplaceTypes.AttributeKeyNftID)
+	if tokenIDStr == "" {
+		return fmt.Errorf("token id not found in tx %s", tx.TxHash)
+	}
+
+	tokenID, err := strconv.ParseUint(tokenIDStr, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	timestamp, err := generalUtils.ISO8601ToTimestamp(tx.Timestamp)
+	if err != nil {
+		return err
+	}
+
+	dataJSON, dataText := utils.GetData(msg.Data)
+
+	if err := m.db.SaveNFT(tx.TxHash, tokenID, msg.DenomId, msg.Name, msg.Uri, utils.SanitizeUTF8(dataJSON), dataText, msg.Recipient, msg.Creator, ""); err != nil {
+		return err
+	}
+
+	return m.db.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, "0x0", msg.Creator, uint64(timestamp))
 }
 
 func (m *Module) handleMsgBuyNft(tx *juno.Tx, msg *marketplaceTypes.MsgBuyNft) error {

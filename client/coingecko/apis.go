@@ -18,9 +18,9 @@ func GetCoinsList() (coins Tokens, err error) {
 }
 
 // GetTokensPrices queries the remote APIs to get the token prices of all the tokens having the given ids
-func GetTokensPrices(ids []string) ([]types.TokenPrice, error) {
+func GetTokensPrices(currency string, ids []string) ([]types.TokenPrice, error) {
 	var prices []MarketTicker
-	query := fmt.Sprintf("/coins/markets?vs_currency=usd&ids=%s", strings.Join(ids, ","))
+	query := fmt.Sprintf("/coins/markets?vs_currency=%s&ids=%s", currency, strings.Join(ids, ","))
 	err := queryCoinGecko(query, &prices)
 	if err != nil {
 		return nil, err
