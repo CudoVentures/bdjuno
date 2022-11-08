@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/x/group"
 	"github.com/forbole/bdjuno/v2/modules/utils"
 	"github.com/stretchr/testify/require"
@@ -16,12 +17,11 @@ var (
 	resultDefault = group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN
 )
 
-func TestTxBuilder_Build(t *testing.T) {
+func TestMockTxBuilder_Build(t *testing.T) {
 	timestamp := time.Now()
-	tx, err := NewTestTx(timestamp, str, num).WithEventCreateGroup(num, str).WithEventSubmitProposal(num).WithEventExec(resultDefault).WithEventVote().WithEventWithdrawProposal().Build()
-	require.NoError(t, err)
+	tx := NewMockTxBuilder(t, timestamp, str, num).WithEventCreateGroup(num, str).WithEventSubmitProposal(num).WithEventExec(resultDefault).WithEventVote().WithEventWithdrawProposal().WithEventInstantiateContract(str).WithEventWasmAction(str).Build()
 
-	expectedEventCount := 6
+	expectedEventCount := 8
 	actualEventCount := len(tx.Logs[0].Events)
 	require.Equal(t, expectedEventCount, actualEventCount)
 
@@ -43,6 +43,9 @@ func TestTxBuilder_Build(t *testing.T) {
 	withdrawEvent := utils.GetValueFromLogs(uint32(index), tx.Logs, "cosmos.group.v1.EventWithdrawProposal", "proposal_id")
 	require.Equal(t, str, withdrawEvent)
 
+	instantiateContractEvent := utils.GetValueFromLogs(uint32(index), tx.Logs, wasm.EventTypeInstantiate, wasm.AttributeKeyContractAddr)
+	require.Equal(t, str, instantiateContractEvent)
+
 	expectedTimestamp := timestamp.Format(time.RFC3339)
 	actualTimestamp := tx.Timestamp
 	require.Equal(t, expectedTimestamp, actualTimestamp)
@@ -52,11 +55,4 @@ func TestTxBuilder_Build(t *testing.T) {
 
 	actualHeight := tx.Height
 	require.Equal(t, int64(num), actualHeight)
-}
-
-func TestTxBuilder_Error(t *testing.T) {
-	timestamp := time.Now()
-	_, err := NewTestTx(timestamp, str, num).WithEventCreateGroup(1, "").WithEventSubmitProposal(1).WithEventExec(group.PROPOSAL_EXECUTOR_RESULT_NOT_RUN).WithEventVote().WithEventWithdrawProposal().Build()
-	expectedError := "error while building testTx: error while building testTx: empty group address"
-	require.Equal(t, expectedError, err.Error())
 }

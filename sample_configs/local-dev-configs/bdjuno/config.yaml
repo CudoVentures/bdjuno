@@ -17,6 +17,7 @@ chain:
         - cudomint
         - nft
         - marketplace
+        - cw20token
 node:
     type: remote
     config:
