@@ -93,22 +93,3 @@ func (dbTx *DbTx) CodeIDExists(codeID uint64) (bool, error) {
 	).Scan(&found)
 	return found, err
 }
-
-func (dbTx *DbTx) GetContractsByCodeID(codeID uint64) ([]string, error) {
-	rows, err := dbTx.Query(`SELECT result_contract_address FROM cosmwasm_instantiate WHERE code_id = $1`, codeID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var contracts []string
-	for rows.Next() {
-		var contract string
-		if err := rows.Scan(&contract); err != nil {
-			return nil, err
-		}
-		contracts = append(contracts, contract)
-	}
-
-	return contracts, rows.Err()
-}
