@@ -2,8 +2,6 @@ package database
 
 import (
 	"fmt"
-
-	"github.com/forbole/bdjuno/v2/client/coingecko"
 )
 
 func (db *Db) SaveMarketplaceCollection(txHash string, id uint64, denomID, mintRoyalties, resaleRoyalties, creator string, verified bool) error {
@@ -23,7 +21,7 @@ func (tx *DbTx) RemoveMarketplaceNft(id uint64) error {
 	return err
 }
 
-func (tx *DbTx) SaveMarketplaceNftBuy(txHash string, id uint64, buyer string, timestamp uint64) error {
+func (tx *DbTx) SaveMarketplaceNftBuy(txHash string, id uint64, buyer string, timestamp uint64, usdPrice, btcPrice string) error {
 	var tokenID uint64
 	var denomID, price, seller string
 
@@ -35,22 +33,17 @@ func (tx *DbTx) SaveMarketplaceNftBuy(txHash string, id uint64, buyer string, ti
 		return fmt.Errorf("nft (%d) not found for sale", id)
 	}
 
-	ids := []string{"cudos"}
-	usdPrices, e := coingecko.GetTokensPrices("usd", ids)
-	if e != nil {
-		return e
-	}
-	usdPrice := fmt.Sprintf("%g", usdPrices[0].Price)
+	return tx.saveMarketplaceNftBuy(txHash, buyer, timestamp, id, denomID, price, seller, usdPrice, btcPrice)
+}
 
-	btcPrices, e := coingecko.GetTokensPrices("btc", ids)
-	if e != nil {
-		return e
-	}
-	btcPrice := fmt.Sprintf("%g", btcPrices[0].Price)
-
+func (tx *DbTx) saveMarketplaceNftBuy(txHash string, buyer string, timestamp, tokenID uint64, denomID, price, seller, usdPrice, btcPrice string) error {
 	_, err := tx.Exec(`INSERT INTO marketplace_nft_buy_history (transaction_hash, token_id, denom_id, price, seller, buyer, usd_price, btc_price, timestamp) 
-		VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)`, txHash, tokenID, denomID, price, seller, buyer, usdPrice, btcPrice, timestamp)
+	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)`, txHash, tokenID, denomID, price, seller, buyer, usdPrice, btcPrice, timestamp)
 	return err
+}
+
+func (tx *DbTx) SaveMarketplaceNftMint(txHash string, tokenID uint64, buyer, denomID, price string, timestamp uint64, usdPrice, btcPrice string) error {
+	return tx.saveMarketplaceNftBuy(txHash, buyer, timestamp, tokenID, denomID, price, "0x0", usdPrice, btcPrice)
 }
 
 func (db *Db) SetMarketplaceCollectionVerificationStatus(id uint64, verified bool) error {

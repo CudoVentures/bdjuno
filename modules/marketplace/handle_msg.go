@@ -6,6 +6,7 @@ import (
 
 	marketplaceTypes "github.com/CudoVentures/cudos-node/x/marketplace/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/forbole/bdjuno/v2/client/coingecko"
 	"github.com/forbole/bdjuno/v2/database"
 	utils "github.com/forbole/bdjuno/v2/modules/utils"
 	generalUtils "github.com/forbole/bdjuno/v2/utils"
@@ -88,6 +89,22 @@ func (m *Module) handleMsgMintNft(index int, tx *juno.Tx, msg *marketplaceTypes.
 		return err
 	}
 
+	usdPrice, err := coingecko.GetCUDOSPrice("usd")
+	if err != nil {
+		return err
+	}
+
+	btcPrice, err := coingecko.GetCUDOSPrice("btc")
+	if err != nil {
+		return err
+	}
+
+	if err := m.db.ExecuteTx(func(dbTx *database.DbTx) error {
+		return dbTx.SaveMarketplaceNftMint(tx.TxHash, tokenID, msg.Creator, msg.DenomId, msg.Price.String(), uint64(timestamp), usdPrice, btcPrice)
+	}); err != nil {
+		return err
+	}
+
 	return m.db.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, "0x0", msg.Creator, uint64(timestamp))
 }
 
@@ -97,8 +114,18 @@ func (m *Module) handleMsgBuyNft(tx *juno.Tx, msg *marketplaceTypes.MsgBuyNft) e
 		return err
 	}
 
+	usdPrice, err := coingecko.GetCUDOSPrice("usd")
+	if err != nil {
+		return err
+	}
+
+	btcPrice, err := coingecko.GetCUDOSPrice("btc")
+	if err != nil {
+		return err
+	}
+
 	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
-		if err := dbTx.SaveMarketplaceNftBuy(tx.TxHash, msg.Id, msg.Creator, uint64(timestamp)); err != nil {
+		if err := dbTx.SaveMarketplaceNftBuy(tx.TxHash, msg.Id, msg.Creator, uint64(timestamp), usdPrice, btcPrice); err != nil {
 			return err
 		}
 		return dbTx.RemoveMarketplaceNft(msg.Id)
