@@ -42,6 +42,16 @@ func ConvertCoingeckoPrices(prices []MarketTicker) []types.TokenPrice {
 	return tokenPrices
 }
 
+func GetCUDOSPrice(currency string) (string, error) {
+	ids := []string{"cudos"}
+	prices, err := GetTokensPrices(currency, ids)
+	if err != nil {
+		return "", err
+	}
+	price := fmt.Sprintf("%g", prices[0].Price)
+	return price, err
+}
+
 // queryCoinGecko queries the CoinGecko APIs for the given endpoint
 func queryCoinGecko(endpoint string, ptr interface{}) error {
 	resp, err := http.Get("https://api.coingecko.com/api/v3" + endpoint)
