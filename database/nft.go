@@ -32,3 +32,9 @@ func (db *Db) BurnNFT(id, denomID string) error {
 	_, err := db.Sql.Exec(`UPDATE nft_nft SET burned = true WHERE id = $1 AND denom_id = $2`, id, denomID)
 	return err
 }
+
+func (db *Db) UpdateNFTHistory(txHash string, tokenID uint64, denomID, from, to string, timestamp uint64) error {
+	_, err := db.Sql.Exec(`INSERT INTO nft_transfer_history (transaction_hash, id, denom_id, old_owner, new_owner, timestamp) VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING`,
+		txHash, tokenID, denomID, from, to, timestamp)
+	return err
+}
