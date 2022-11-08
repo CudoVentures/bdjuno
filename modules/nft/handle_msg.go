@@ -7,7 +7,7 @@ import (
 	marketplaceTypes "github.com/CudoVentures/cudos-node/x/marketplace/types"
 	nftTypes "github.com/CudoVentures/cudos-node/x/nft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/forbole/bdjuno/v2/modules/utils"
+	utils "github.com/forbole/bdjuno/v2/modules/utils"
 	generalUtils "github.com/forbole/bdjuno/v2/utils"
 	juno "github.com/forbole/juno/v2/types"
 )
@@ -39,7 +39,7 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 }
 
 func (m *Module) handleMsgIssueDenom(tx *juno.Tx, msg *nftTypes.MsgIssueDenom) error {
-	dataJSON, dataText := getData(msg.Data)
+	dataJSON, dataText := utils.GetData(msg.Data)
 
 	return m.db.SaveDenom(tx.TxHash, msg.Id, msg.Name, msg.Schema, msg.Symbol, msg.Sender, msg.ContractAddressSigner,
 		msg.Traits, msg.Minter, msg.Description, dataText, utils.SanitizeUTF8(dataJSON))
@@ -69,13 +69,13 @@ func (m *Module) handleMsgMintNFT(index int, tx *juno.Tx, msg *nftTypes.MsgMintN
 		return error
 	}
 
-	dataJSON, dataText := getData(msg.Data)
+	dataJSON, dataText := utils.GetData(msg.Data)
 
 	return m.db.SaveNFT(tx.TxHash, tokenID, msg.DenomId, msg.Name, msg.URI, utils.SanitizeUTF8(dataJSON), dataText, msg.Recipient, msg.Sender, msg.ContractAddressSigner)
 }
 
 func (m *Module) handleMsgEditNFT(msg *nftTypes.MsgEditNFT) error {
-	dataJSON, dataText := getData(msg.Data)
+	dataJSON, dataText := utils.GetData(msg.Data)
 
 	return m.db.UpdateNFT(msg.Id, msg.DenomId, msg.Name, msg.URI, utils.SanitizeUTF8(dataJSON), dataText)
 }
@@ -122,20 +122,8 @@ func (m *Module) handleMsgBurnNFT(index int, tx *juno.Tx, msg *nftTypes.MsgBurnN
 }
 
 func (m *Module) handleMsgCreateCollection(tx *juno.Tx, msg *marketplaceTypes.MsgCreateCollection) error {
-	dataJSON, dataText := getData(msg.Data)
+	dataJSON, dataText := utils.GetData(msg.Data)
 
 	return m.db.SaveDenom(tx.TxHash, msg.Id, msg.Name, msg.Schema, msg.Symbol, msg.Creator, "",
 		msg.Traits, msg.Minter, msg.Description, dataText, utils.SanitizeUTF8(dataJSON))
-}
-
-func getData(data string) (string, string) {
-	dataText := data
-	dataJSON := "{}"
-
-	if data != "" && utils.IsJSON(data) {
-		dataJSON = data
-		dataText = ""
-	}
-
-	return dataJSON, dataText
 }

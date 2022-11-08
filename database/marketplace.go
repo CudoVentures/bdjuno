@@ -1,6 +1,10 @@
 package database
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/forbole/bdjuno/v2/client/coingecko"
+)
 
 func (db *Db) SaveMarketplaceCollection(txHash string, id uint64, denomID, mintRoyalties, resaleRoyalties, creator string, verified bool) error {
 	_, err := db.Sql.Exec(`INSERT INTO marketplace_collection (transaction_hash, id, denom_id, mint_royalties, resale_royalties, verified, creator) 
@@ -31,8 +35,21 @@ func (tx *DbTx) SaveMarketplaceNftBuy(txHash string, id uint64, buyer string, ti
 		return fmt.Errorf("nft (%d) not found for sale", id)
 	}
 
-	_, err := tx.Exec(`INSERT INTO marketplace_nft_buy_history (transaction_hash, token_id, denom_id, price, seller, buyer, timestamp) 
-		VALUES($1, $2, $3, $4, $5, $6, $7)`, txHash, tokenID, denomID, price, seller, buyer, timestamp)
+	ids := []string{"cudos"}
+	usdPrices, e := coingecko.GetTokensPrices("usd", ids)
+	if e != nil {
+		return e
+	}
+	usdPrice := fmt.Sprintf("%g", usdPrices[0].Price)
+
+	btcPrices, e := coingecko.GetTokensPrices("btc", ids)
+	if e != nil {
+		return e
+	}
+	btcPrice := fmt.Sprintf("%g", btcPrices[0].Price)
+
+	_, err := tx.Exec(`INSERT INTO marketplace_nft_buy_history (transaction_hash, token_id, denom_id, price, seller, buyer, usd_price, btc_price, timestamp) 
+		VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)`, txHash, tokenID, denomID, price, seller, buyer, usdPrice, btcPrice, timestamp)
 	return err
 }
 

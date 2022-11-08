@@ -21,6 +21,8 @@ select_permissions:
     - price
     - seller
     - buyer
+    - usd_price
+    - btc_price
     - timestamp
     filter: {}
   role: anonymous

@@ -57,6 +57,8 @@ CREATE TABLE marketplace_nft_buy_history
     price TEXT NOT NULL,
     seller TEXT NOT NULL,
     buyer TEXT NOT NULL,
+    usd_price TEXT NOT NULL,
+    btc_price TEXT NOT NULL,
     timestamp BIGINT NOT NULL,
     FOREIGN KEY (token_id, denom_id) REFERENCES nft_nft(id, denom_id)
 );
