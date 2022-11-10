@@ -10,14 +10,10 @@ func (db *Db) SaveMarketplaceCollection(txHash string, id uint64, denomID, mintR
 	return err
 }
 
-func (db *Db) SaveMarketplaceNft(txHash string, id, nftID uint64, denomID, price, creator string) error {
-	_, err := db.Sql.Exec(`INSERT INTO marketplace_nft (transaction_hash, id, token_id, denom_id, price, creator) 
-		VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING`, txHash, id, nftID, denomID, price, creator)
-	return err
-}
-
-func (tx *DbTx) RemoveMarketplaceNft(id uint64) error {
-	_, err := tx.Exec(`DELETE FROM marketplace_nft WHERE id = $1`, id)
+func (db *Db) SaveMarketplaceNft(txHash string, id, nftID uint64, denomID, uid, price, creator string) error {
+	_, err := db.Sql.Exec(`INSERT INTO marketplace_nft (transaction_hash, id, uid, token_id, denom_id, price, creator) 
+		VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (token_id, denom_id) DO UPDATE SET price = EXCLUDED.price, id = EXCLUDED.id`,
+		txHash, id, uid, nftID, denomID, price, creator)
 	return err
 }
 
@@ -44,6 +40,11 @@ func (tx *DbTx) saveMarketplaceNftBuy(txHash string, buyer string, timestamp, to
 
 func (tx *DbTx) SaveMarketplaceNftMint(txHash string, tokenID uint64, buyer, denomID, price string, timestamp uint64, usdPrice, btcPrice string) error {
 	return tx.saveMarketplaceNftBuy(txHash, buyer, timestamp, tokenID, denomID, price, "0x0", usdPrice, btcPrice)
+}
+
+func (tx *DbTx) SetMarketplaceNFTPrice(id uint64, price string) error {
+	_, err := tx.Exec(`UPDATE marketplace_nft SET price = $1 WHERE id = $2`, price, id)
+	return err
 }
 
 func (db *Db) SetMarketplaceCollectionVerificationStatus(id uint64, verified bool) error {

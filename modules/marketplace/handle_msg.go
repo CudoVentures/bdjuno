@@ -64,7 +64,7 @@ func (m *Module) handleMsgPublishNft(index int, tx *juno.Tx, msg *marketplaceTyp
 		return err
 	}
 
-	return m.db.SaveMarketplaceNft(tx.TxHash, nftID, tokenID, msg.DenomId, msg.Price.String(), msg.Creator)
+	return m.db.SaveMarketplaceNft(tx.TxHash, nftID, tokenID, msg.DenomId, "", msg.Price.Amount.String(), msg.Creator)
 }
 
 func (m *Module) handleMsgMintNft(index int, tx *juno.Tx, msg *marketplaceTypes.MsgMintNft) error {
@@ -100,12 +100,16 @@ func (m *Module) handleMsgMintNft(index int, tx *juno.Tx, msg *marketplaceTypes.
 	}
 
 	if err := m.db.ExecuteTx(func(dbTx *database.DbTx) error {
-		return dbTx.SaveMarketplaceNftMint(tx.TxHash, tokenID, msg.Creator, msg.DenomId, msg.Price.String(), uint64(timestamp), usdPrice, btcPrice)
+		return dbTx.SaveMarketplaceNftMint(tx.TxHash, tokenID, msg.Recipient, msg.DenomId, msg.Price.Amount.String(), uint64(timestamp), usdPrice, btcPrice)
 	}); err != nil {
 		return err
 	}
 
-	return m.db.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, "0x0", msg.Creator, uint64(timestamp))
+	if err := m.db.SaveMarketplaceNft(tx.TxHash, 0, tokenID, msg.DenomId, msg.Uid, msg.Price.Amount.String(), msg.Recipient); err != nil {
+		return err
+	}
+
+	return m.db.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, "0x0", msg.Recipient, uint64(timestamp))
 }
 
 func (m *Module) handleMsgBuyNft(tx *juno.Tx, msg *marketplaceTypes.MsgBuyNft) error {
@@ -128,14 +132,13 @@ func (m *Module) handleMsgBuyNft(tx *juno.Tx, msg *marketplaceTypes.MsgBuyNft) e
 		if err := dbTx.SaveMarketplaceNftBuy(tx.TxHash, msg.Id, msg.Creator, uint64(timestamp), usdPrice, btcPrice); err != nil {
 			return err
 		}
-		return dbTx.RemoveMarketplaceNft(msg.Id)
+
+		return dbTx.SetMarketplaceNFTPrice(msg.Id, "0")
 	})
 }
 
 func (m *Module) handleMsgRemoveNft(msg *marketplaceTypes.MsgRemoveNft) error {
-	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
-		return dbTx.RemoveMarketplaceNft(msg.Id)
-	})
+	return m.db.SetMarketplaceNFTPrice(msg.Id, "0")
 }
 
 func (m *Module) handleMsgVerifyCollection(msg *marketplaceTypes.MsgVerifyCollection) error {
@@ -147,7 +150,7 @@ func (m *Module) handleMsgUnverifyCollection(msg *marketplaceTypes.MsgUnverifyCo
 }
 
 func (m *Module) handleMsgUpdatePrice(msg *marketplaceTypes.MsgUpdatePrice) error {
-	return m.db.SetMarketplaceNFTPrice(msg.Id, msg.Price.String())
+	return m.db.SetMarketplaceNFTPrice(msg.Id, msg.Price.Amount.String())
 }
 
 func (m *Module) handleMsgUpdateRoyalties(msg *marketplaceTypes.MsgUpdateRoyalties) error {
