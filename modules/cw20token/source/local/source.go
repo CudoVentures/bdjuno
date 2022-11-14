@@ -52,10 +52,10 @@ func (s *Source) Balance(tokenAddr string, address string, height int64) (uint64
 	return s.q.Balance(ctx, tokenAddr, address, height)
 }
 
-func (s *Source) TotalSupply(tokenAddr string, height int64) (uint64, error) {
+func (s *Source) TotalSupply(tokenAddr string, height int64) (string, error) {
 	ctx, err := s.LoadHeight(height)
 	if err != nil {
-		return 0, err
+		return "0", err
 	}
 
 	return s.q.TotalSupply(ctx, tokenAddr, height)

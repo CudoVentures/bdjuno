@@ -2,6 +2,7 @@ package source
 
 import (
 	"encoding/json"
+	"strconv"
 
 	"github.com/forbole/bdjuno/v2/modules/cw20token/source"
 	"github.com/forbole/bdjuno/v2/types"
@@ -41,7 +42,7 @@ func (s *MockSource) Balance(tokenAddr string, address string, height int64) (ui
 	return 0, nil
 }
 
-func (s *MockSource) TotalSupply(tokenAddr string, height int64) (uint64, error) {
+func (s *MockSource) TotalSupply(tokenAddr string, height int64) (string, error) {
 	return s.T.TotalSupply, nil
 }
 
@@ -78,13 +79,19 @@ func (s *MockSource) Burn(sender string, amount uint64) {
 		s.T.Balances = append(s.T.Balances[:i], s.T.Balances[i+1:]...)
 	}
 
-	s.T.TotalSupply -= amount
+	totalSupply, _ := strconv.ParseUint(s.T.TotalSupply, 10, 64)
+	totalSupply -= amount
+	s.T.TotalSupply = strconv.FormatUint(totalSupply, 10)
+
 }
 
 func (s *MockSource) Mint(recipient string, amount uint64) {
 	i := s.getBalanceIndex(recipient)
 	s.T.Balances[i].Amount += amount
-	s.T.TotalSupply += amount
+
+	totalSupply, _ := strconv.ParseUint(s.T.TotalSupply, 10, 64)
+	totalSupply += amount
+	s.T.TotalSupply = strconv.FormatUint(totalSupply, 10)
 }
 
 func (s *MockSource) UpdateMinter(newMinter string) {

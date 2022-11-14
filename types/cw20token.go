@@ -4,7 +4,7 @@ import "encoding/json"
 
 type Mint struct {
 	Minter    string `json:"minter"`
-	MaxSupply uint64 `json:"cap,string"`
+	MaxSupply string `json:"cap"`
 }
 
 type Marketing struct {
@@ -20,15 +20,16 @@ type TokenBalance struct {
 }
 
 type TokenInfo struct {
-	Address     string         `json:"address,omitempty"`
-	Name        string         `json:"name"`
-	Symbol      string         `json:"symbol"`
-	Decimals    int8           `json:"decimals"`
-	TotalSupply uint64         `json:"total_supply,string"`
-	Mint        Mint           `json:"mint,omitempty"`
-	Marketing   Marketing      `json:"marketing_info,omitempty"`
-	CodeID      uint64         `json:"code_id"`
-	Balances    []TokenBalance `json:"initial_balances,omitempty"`
+	Address       string         `json:"address,omitempty"`
+	Name          string         `json:"name"`
+	Symbol        string         `json:"symbol"`
+	Decimals      int8           `json:"decimals"`
+	TotalSupply   string         `json:"total_supply"`
+	Mint          Mint           `json:"mint,omitempty"`
+	Marketing     Marketing      `json:"marketing_info,omitempty"`
+	CodeID        uint64         `json:"code_id"`
+	Balances      []TokenBalance `json:"initial_balances,omitempty"`
+	InitialSupply string
 }
 
 type TypeMsgExecute string

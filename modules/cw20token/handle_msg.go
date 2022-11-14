@@ -84,6 +84,7 @@ func (m *Module) handleMsgExecuteContract(dbTx *database.DbTx, msg *wasm.MsgExec
 
 	msgType := mutils.GetValueFromLogs(uint32(index), tx.Logs, wasm.WasmModuleEventType, sdk.AttributeKeyAction)
 	addresses := []string{}
+
 	switch types.TypeMsgExecute(msgType) {
 	case types.TypeTransfer:
 		addresses = append(addresses, msgExecute.Transfer.Recipient, msg.Sender)
