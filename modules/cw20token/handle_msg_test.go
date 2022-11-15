@@ -121,8 +121,8 @@ func TestCW20Token_HandleMsg(t *testing.T) {
 			require.NoError(t, err)
 
 			_, err = db.Sqlx.Exec(
-				`INSERT INTO cw20token_info VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-				s.T.Address, s.T.CodeID, s.T.Name, s.T.Symbol, s.T.Decimals, s.T.TotalSupply, s.T.Mint.MaxSupply,
+				`INSERT INTO cw20token_info VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+				s.T.Address, s.T.CodeID, s.T.Name, s.T.Symbol, s.T.Decimals, s.T.TotalSupply, s.T.TotalSupply, s.T.Mint.MaxSupply,
 				s.T.Mint.Minter, s.T.Marketing.Admin, s.T.Marketing.Project, s.T.Marketing.Description, s.T.Marketing.Logo,
 			)
 			require.NoError(t, err)
@@ -181,15 +181,16 @@ var (
 )
 
 var mockTokenInfo = types.TokenInfo{
-	Address:     tokenAddr1,
-	Name:        str1,
-	Symbol:      str1,
-	Decimals:    num1,
-	TotalSupply: fund * 2,
-	Mint:        types.Mint{addr1, fund * 10},
-	Marketing:   types.Marketing{str1, str1, addr1, logo1},
-	CodeID:      num1,
-	Balances:    []types.TokenBalance{{addr1, fund}, {addr2, fund}},
+	Address:       tokenAddr1,
+	Name:          str1,
+	Symbol:        str1,
+	Decimals:      num1,
+	InitialSupply: "20",
+	TotalSupply:   "20",
+	Mint:          types.Mint{addr1, "200"},
+	Marketing:     types.Marketing{str1, str1, addr1, logo1},
+	CodeID:        num1,
+	Balances:      []types.TokenBalance{{addr1, fund}, {addr2, fund}},
 }
 
 func mockMsgExecute(t *testing.T, msg types.MsgExecute) *wasm.MsgExecuteContract {
@@ -205,13 +206,14 @@ func mockMsgExecute(t *testing.T, msg types.MsgExecute) *wasm.MsgExecuteContract
 
 func parseTokenInfoFromDbRow(t dbtypes.TokenInfoRow) types.TokenInfo {
 	return types.TokenInfo{
-		Address:     t.Address,
-		Name:        t.Name,
-		Symbol:      t.Symbol,
-		Decimals:    t.Decimals,
-		TotalSupply: t.TotalSupply,
-		Mint:        types.Mint{t.Minter, t.MaxSupply},
-		Marketing:   types.Marketing{t.ProjectURL, t.Description, t.MarketingAdmin, json.RawMessage(t.Logo)},
-		CodeID:      t.CodeID,
-		Balances:    []types.TokenBalance{}}
+		Address:       t.Address,
+		Name:          t.Name,
+		Symbol:        t.Symbol,
+		Decimals:      t.Decimals,
+		InitialSupply: t.InitialSupply,
+		TotalSupply:   t.TotalSupply,
+		Mint:          types.Mint{t.Minter, t.MaxSupply},
+		Marketing:     types.Marketing{t.ProjectURL, t.Description, t.MarketingAdmin, json.RawMessage(t.Logo)},
+		CodeID:        t.CodeID,
+		Balances:      []types.TokenBalance{}}
 }

@@ -11,15 +11,15 @@ func (dbTx *DbTx) SaveCodeID(codeID uint64) error {
 	return err
 }
 
-func (dbTx *DbTx) SaveInfo(token types.TokenInfo) error {
+func (dbTx *DbTx) SaveInfo(t types.TokenInfo) error {
 	_, err := dbTx.Exec(
-		`INSERT INTO cw20token_info VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		`INSERT INTO cw20token_info VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		ON CONFLICT (address) DO UPDATE SET
 		code_id = excluded.code_id, name = excluded.name, symbol = excluded.symbol, decimals = excluded.decimals,
 		circulating_supply = excluded.circulating_supply, max_supply = excluded.max_supply, minter = excluded.minter,
 		marketing_admin = excluded.marketing_admin, project_url = excluded.project_url, description = excluded.description, logo = excluded.logo`,
-		token.Address, token.CodeID, token.Name, token.Symbol, token.Decimals, token.TotalSupply, token.Mint.MaxSupply,
-		token.Mint.Minter, token.Marketing.Admin, token.Marketing.Project, token.Marketing.Description, token.Marketing.Logo,
+		t.Address, t.CodeID, t.Name, t.Symbol, t.Decimals, t.TotalSupply, t.TotalSupply, t.Mint.MaxSupply,
+		t.Mint.Minter, t.Marketing.Admin, t.Marketing.Project, t.Marketing.Description, t.Marketing.Logo,
 	)
 
 	return err
@@ -45,7 +45,7 @@ func (dbTx *DbTx) SaveBalances(token string, balances []types.TokenBalance) erro
 	return err
 }
 
-func (dbTx *DbTx) UpdateSupply(token string, supply uint64) error {
+func (dbTx *DbTx) UpdateSupply(token string, supply string) error {
 	_, err := dbTx.Exec(`UPDATE cw20token_info SET circulating_supply = $1 WHERE address = $2`, supply, token)
 	return err
 }

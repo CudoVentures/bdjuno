@@ -34,13 +34,9 @@ func (q *QueryHandler) TokenInfo(ctx context.Context, tokenAddr string, height i
 		return types.TokenInfo{}, err
 	}
 
-	if err := q.query(ctx, tokenAddr, `{"minter":{}}`, &tokenInfo.Mint); err != nil {
-		return types.TokenInfo{}, err
-	}
+	q.query(ctx, tokenAddr, `{"minter":{}}`, &tokenInfo.Mint)
 
-	if err := q.query(ctx, tokenAddr, `{"marketing_info":{}}`, &tokenInfo.Marketing); err != nil {
-		return types.TokenInfo{}, err
-	}
+	q.query(ctx, tokenAddr, `{"marketing_info":{}}`, &tokenInfo.Marketing)
 
 	tokenInfo.Address = tokenAddr
 	return tokenInfo, nil
@@ -91,9 +87,9 @@ func (q *QueryHandler) Balance(ctx context.Context, tokenAddr string, address st
 	return balance.Balance, err
 }
 
-func (q *QueryHandler) TotalSupply(ctx context.Context, tokenAddr string, height int64) (uint64, error) {
+func (q *QueryHandler) TotalSupply(ctx context.Context, tokenAddr string, height int64) (string, error) {
 	supply := struct {
-		TotalSupply uint64 `json:"total_supply,string"`
+		TotalSupply string `json:"total_supply"`
 	}{}
 
 	err := q.query(ctx, tokenAddr, `{"token_info":{}}`, &supply)
