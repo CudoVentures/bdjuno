@@ -17,6 +17,7 @@ select_permissions:
     columns:
     - transaction_hash
     - id
+    - uid
     - token_id
     - denom_id
     - price
