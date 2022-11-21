@@ -18,6 +18,7 @@ select_permissions:
     - name
     - symbol
     - decimals
+    - initial_supply
     - circulating_supply
     - max_supply
     - minter
