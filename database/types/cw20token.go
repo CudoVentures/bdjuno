@@ -14,4 +14,6 @@ type TokenInfoRow struct {
 	ProjectURL     string `db:"project_url"`
 	Description    string `db:"description"`
 	Logo           string `db:"logo"`
+	Type           string `db:"type"`
+	Creator        string `db:"creator"`
 }

@@ -34,7 +34,7 @@ func (s *Source) AllBalances(tokenAddr string, height int64) ([]types.TokenBalan
 	return s.q.AllBalances(ctx, tokenAddr, height)
 }
 
-func (s *Source) Balance(tokenAddr string, address string, height int64) (uint64, error) {
+func (s *Source) Balance(tokenAddr string, address string, height int64) (string, error) {
 	ctx := remote.GetHeightRequestContext(s.Ctx, height)
 	return s.q.Balance(ctx, tokenAddr, address, height)
 }

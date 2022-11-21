@@ -3,6 +3,7 @@ package cw20token
 import (
 	"encoding/json"
 	"strconv"
+	"strings"
 
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -59,6 +60,19 @@ func (m *Module) handleMsgInstantiateContract(dbTx *database.DbTx, msg *wasm.Msg
 		return err
 	}
 	tokenInfo.CodeID = msg.CodeID
+	tokenInfo.Creator = msg.Sender
+
+	if !strings.Contains(string(msg.Msg), "token_type") {
+		tokenInfo.Type = ""
+	} else if strings.Contains(string(msg.Msg), "standard") {
+		tokenInfo.Type = "standard"
+	} else if strings.Contains(string(msg.Msg), "mintable") {
+		tokenInfo.Type = "mintable"
+	} else if strings.Contains(string(msg.Msg), "burnable") {
+		tokenInfo.Type = "burnable"
+	} else if strings.Contains(string(msg.Msg), "unlimited") {
+		tokenInfo.Type = "unlimited"
+	}
 
 	if err := dbTx.SaveInfo(tokenInfo); err != nil {
 		return err

@@ -17,16 +17,18 @@ CREATE TABLE cw20token_info
     marketing_admin    TEXT NULL,
     project_url        TEXT NULL,
     description        TEXT NULL,
-    logo               TEXT NULL
+    logo               TEXT NULL,
+    type               TEXT NULL,
+    creator            TEXT NOT NULL
 );
 
 CREATE INDEX cw20token_info_code_id_index ON cw20token_info (code_id);
 
 CREATE TABLE cw20token_balance
 (
-    address TEXT   NOT NULL,
-    token   TEXT   NOT NULL REFERENCES cw20token_info(address) ON DELETE CASCADE,
-    balance BIGINT NOT NULL,
+    address TEXT NOT NULL,
+    token   TEXT NOT NULL REFERENCES cw20token_info(address) ON DELETE CASCADE,
+    balance TEXT NOT NULL,
     PRIMARY KEY (address, token)
 );
 
