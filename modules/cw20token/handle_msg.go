@@ -62,18 +62,24 @@ func (m *Module) handleMsgInstantiateContract(dbTx *database.DbTx, msg *wasm.Msg
 	tokenInfo.CodeID = msg.CodeID
 	tokenInfo.Creator = msg.Sender
 
-	if !strings.Contains(string(msg.Msg), "token_type") {
-		tokenInfo.Type = ""
-	} else if strings.Contains(string(msg.Msg), "standard") {
+	switch {
+
+	case strings.Contains(string(msg.Msg), "standard"):
 		tokenInfo.Type = "standard"
 		tokenInfo.Mint.MaxSupply = tokenInfo.TotalSupply
-	} else if strings.Contains(string(msg.Msg), "mintable") {
+
+	case strings.Contains(string(msg.Msg), "mintable"):
 		tokenInfo.Type = "mintable"
-	} else if strings.Contains(string(msg.Msg), "burnable") {
+
+	case strings.Contains(string(msg.Msg), "burnable"):
 		tokenInfo.Type = "burnable"
+
 		tokenInfo.Mint.MaxSupply = tokenInfo.TotalSupply
-	} else if strings.Contains(string(msg.Msg), "unlimited") {
+	case strings.Contains(string(msg.Msg), "unlimited"):
 		tokenInfo.Type = "unlimited"
+
+	default:
+		tokenInfo.Type = ""
 	}
 
 	if err := dbTx.SaveInfo(tokenInfo); err != nil {
