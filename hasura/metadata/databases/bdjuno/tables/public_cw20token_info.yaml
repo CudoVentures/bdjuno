@@ -25,5 +25,7 @@ select_permissions:
     - project_url
     - description
     - logo
+    - creator
+    - type
     filter: {}
   role: anonymous
