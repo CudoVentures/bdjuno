@@ -16,7 +16,7 @@ type Marketing struct {
 
 type TokenBalance struct {
 	Address string `json:"address"`
-	Amount  uint64 `json:"amount,string"`
+	Amount  string `json:"amount"`
 }
 
 type TokenInfo struct {
@@ -30,6 +30,8 @@ type TokenInfo struct {
 	CodeID        uint64         `json:"code_id"`
 	Balances      []TokenBalance `json:"initial_balances,omitempty"`
 	InitialSupply string
+	Type          string
+	Creator       string
 }
 
 type TypeMsgExecute string

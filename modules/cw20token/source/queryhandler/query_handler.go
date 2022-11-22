@@ -76,9 +76,9 @@ func (q *QueryHandler) AllBalances(ctx context.Context, tokenAddr string, height
 	return balances, nil
 }
 
-func (q *QueryHandler) Balance(ctx context.Context, tokenAddr string, address string, height int64) (uint64, error) {
+func (q *QueryHandler) Balance(ctx context.Context, tokenAddr string, address string, height int64) (string, error) {
 	balance := struct {
-		Balance uint64 `json:"balance,string"`
+		Balance string `json:"balance"`
 	}{}
 
 	query := fmt.Sprintf(`{"balance":{"address":"%s"}}`, address)

@@ -32,14 +32,14 @@ func (s *MockSource) AllBalances(tokenAddr string, height int64) ([]types.TokenB
 	return s.T.Balances, nil
 }
 
-func (s *MockSource) Balance(tokenAddr string, address string, height int64) (uint64, error) {
+func (s *MockSource) Balance(tokenAddr string, address string, height int64) (string, error) {
 	for _, b := range s.T.Balances {
 		if b.Address == address {
 			return b.Amount, nil
 		}
 	}
 
-	return 0, nil
+	return "0", nil
 }
 
 func (s *MockSource) TotalSupply(tokenAddr string, height int64) (string, error) {
@@ -60,22 +60,28 @@ func (s *MockSource) getBalanceIndex(addr string) int {
 func (s *MockSource) Transfer(sender string, recipient string, amount uint64) {
 	i := s.getBalanceIndex(sender)
 
-	s.T.Balances[i].Amount -= amount
+	balance, _ := strconv.ParseUint(s.T.Balances[i].Amount, 10, 64)
+	balance -= amount
+	s.T.Balances[i].Amount = strconv.FormatUint(balance, 10)
 
-	if s.T.Balances[i].Amount == 0 {
+	if s.T.Balances[i].Amount == "0" {
 		s.T.Balances = append(s.T.Balances[:i], s.T.Balances[i+1:]...)
 	}
 
 	i = s.getBalanceIndex(recipient)
-	s.T.Balances[i].Amount += amount
+	balance, _ = strconv.ParseUint(s.T.Balances[i].Amount, 10, 64)
+	balance += amount
+	s.T.Balances[i].Amount = strconv.FormatUint(balance, 10)
 }
 
 func (s *MockSource) Burn(sender string, amount uint64) {
 	i := s.getBalanceIndex(sender)
 
-	s.T.Balances[i].Amount -= amount
+	balance, _ := strconv.ParseUint(s.T.Balances[i].Amount, 10, 64)
+	balance -= amount
+	s.T.Balances[i].Amount = strconv.FormatUint(balance, 10)
 
-	if s.T.Balances[i].Amount == 0 {
+	if s.T.Balances[i].Amount == "0" {
 		s.T.Balances = append(s.T.Balances[:i], s.T.Balances[i+1:]...)
 	}
 
@@ -87,7 +93,10 @@ func (s *MockSource) Burn(sender string, amount uint64) {
 
 func (s *MockSource) Mint(recipient string, amount uint64) {
 	i := s.getBalanceIndex(recipient)
-	s.T.Balances[i].Amount += amount
+
+	balance, _ := strconv.ParseUint(s.T.Balances[i].Amount, 10, 64)
+	balance += amount
+	s.T.Balances[i].Amount = strconv.FormatUint(balance, 10)
 
 	totalSupply, _ := strconv.ParseUint(s.T.TotalSupply, 10, 64)
 	totalSupply += amount

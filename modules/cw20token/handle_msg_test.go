@@ -121,15 +121,15 @@ func TestCW20Token_HandleMsg(t *testing.T) {
 			require.NoError(t, err)
 
 			_, err = db.Sqlx.Exec(
-				`INSERT INTO cw20token_info VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+				`INSERT INTO cw20token_info VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
 				s.T.Address, s.T.CodeID, s.T.Name, s.T.Symbol, s.T.Decimals, s.T.TotalSupply, s.T.TotalSupply, s.T.Mint.MaxSupply,
-				s.T.Mint.Minter, s.T.Marketing.Admin, s.T.Marketing.Project, s.T.Marketing.Description, s.T.Marketing.Logo,
+				s.T.Mint.Minter, s.T.Marketing.Admin, s.T.Marketing.Project, s.T.Marketing.Description, s.T.Marketing.Logo, s.T.Type, s.T.Creator,
 			)
 			require.NoError(t, err)
 
 			_, err = db.Sqlx.Exec(
 				`INSERT INTO cw20token_balance VALUES ($1, $2, $3), ($4, $5, $6)`,
-				s.T.Balances[0].Address, s.T.Address, fund, s.T.Balances[1].Address, s.T.Address, fund,
+				s.T.Balances[0].Address, s.T.Address, fund, s.T.Balances[1].Address, s.T.Address, "20",
 			)
 			require.NoError(t, err)
 
@@ -155,7 +155,7 @@ func TestCW20Token_HandleMsg(t *testing.T) {
 			require.Equal(t, s.T, have)
 
 			for _, b := range balances {
-				var have uint64
+				var have string
 				err = db.Sqlx.QueryRow(`SELECT balance FROM cw20token_balance WHERE address = $1 AND token = $2`, b.Address, s.T.Address).Scan(&have)
 				require.NoError(t, err)
 				require.Equal(t, b.Amount, have)
@@ -190,7 +190,7 @@ var mockTokenInfo = types.TokenInfo{
 	Mint:          types.Mint{addr1, "200"},
 	Marketing:     types.Marketing{str1, str1, addr1, logo1},
 	CodeID:        num1,
-	Balances:      []types.TokenBalance{{addr1, fund}, {addr2, fund}},
+	Balances:      []types.TokenBalance{{addr1, "20"}, {addr2, "20"}},
 }
 
 func mockMsgExecute(t *testing.T, msg types.MsgExecute) *wasm.MsgExecuteContract {

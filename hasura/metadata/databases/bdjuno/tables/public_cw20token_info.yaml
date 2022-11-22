@@ -18,6 +18,7 @@ select_permissions:
     - name
     - symbol
     - decimals
+    - initial_supply
     - circulating_supply
     - max_supply
     - minter
@@ -25,5 +26,7 @@ select_permissions:
     - project_url
     - description
     - logo
+    - creator
+    - type
     filter: {}
   role: anonymous

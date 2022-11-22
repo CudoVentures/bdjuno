@@ -43,10 +43,10 @@ func (s *Source) AllBalances(tokenAddr string, height int64) ([]types.TokenBalan
 	return s.q.AllBalances(ctx, tokenAddr, height)
 }
 
-func (s *Source) Balance(tokenAddr string, address string, height int64) (uint64, error) {
+func (s *Source) Balance(tokenAddr string, address string, height int64) (string, error) {
 	ctx, err := s.LoadHeight(height)
 	if err != nil {
-		return 0, err
+		return "0", err
 	}
 
 	return s.q.Balance(ctx, tokenAddr, address, height)
