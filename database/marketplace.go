@@ -10,8 +10,8 @@ func (db *Db) SaveMarketplaceCollection(txHash string, id uint64, denomID, mintR
 	return err
 }
 
-func (db *Db) SaveMarketplaceNft(txHash string, id, nftID uint64, denomID, uid, price, creator string) error {
-	_, err := db.Sql.Exec(`INSERT INTO marketplace_nft (transaction_hash, id, uid, token_id, denom_id, price, creator) 
+func (tx *DbTx) SaveMarketplaceNft(txHash string, id, nftID uint64, denomID, uid, price, creator string) error {
+	_, err := tx.Exec(`INSERT INTO marketplace_nft (transaction_hash, id, uid, token_id, denom_id, price, creator) 
 		VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (token_id, denom_id) DO UPDATE SET price = EXCLUDED.price, id = EXCLUDED.id`,
 		txHash, id, uid, nftID, denomID, price, creator)
 	return err

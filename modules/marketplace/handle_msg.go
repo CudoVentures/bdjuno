@@ -64,7 +64,9 @@ func (m *Module) handleMsgPublishNft(index int, tx *juno.Tx, msg *marketplaceTyp
 		return err
 	}
 
-	return m.db.SaveMarketplaceNft(tx.TxHash, nftID, tokenID, msg.DenomId, "", msg.Price.Amount.String(), msg.Creator)
+	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
+		return dbTx.SaveMarketplaceNft(tx.TxHash, nftID, tokenID, msg.DenomId, "", msg.Price.Amount.String(), msg.Creator)
+	})
 }
 
 func (m *Module) handleMsgMintNft(index int, tx *juno.Tx, msg *marketplaceTypes.MsgMintNft) error {
@@ -85,10 +87,6 @@ func (m *Module) handleMsgMintNft(index int, tx *juno.Tx, msg *marketplaceTypes.
 
 	dataJSON, dataText := utils.GetData(msg.Data)
 
-	if err := m.db.SaveNFT(tx.TxHash, tokenID, msg.DenomId, msg.Name, msg.Uri, utils.SanitizeUTF8(dataJSON), dataText, msg.Recipient, msg.Creator, ""); err != nil {
-		return err
-	}
-
 	usdPrice, err := coingecko.GetCUDOSPrice("usd")
 	if err != nil {
 		return err
@@ -99,17 +97,21 @@ func (m *Module) handleMsgMintNft(index int, tx *juno.Tx, msg *marketplaceTypes.
 		return err
 	}
 
-	if err := m.db.ExecuteTx(func(dbTx *database.DbTx) error {
-		return dbTx.SaveMarketplaceNftMint(tx.TxHash, tokenID, msg.Recipient, msg.DenomId, msg.Price.Amount.String(), uint64(timestamp), usdPrice, btcPrice)
-	}); err != nil {
-		return err
-	}
+	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
+		if err := dbTx.SaveNFT(tx.TxHash, tokenID, msg.DenomId, msg.Name, msg.Uri, utils.SanitizeUTF8(dataJSON), dataText, msg.Recipient, msg.Creator, ""); err != nil {
+			return err
+		}
 
-	if err := m.db.SaveMarketplaceNft(tx.TxHash, 0, tokenID, msg.DenomId, msg.Uid, msg.Price.Amount.String(), msg.Recipient); err != nil {
-		return err
-	}
+		if err := dbTx.SaveMarketplaceNftMint(tx.TxHash, tokenID, msg.Recipient, msg.DenomId, msg.Price.Amount.String(), uint64(timestamp), usdPrice, btcPrice); err != nil {
+			return err
+		}
 
-	return m.db.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, "0x0", msg.Recipient, uint64(timestamp))
+		if err := dbTx.SaveMarketplaceNft(tx.TxHash, 0, tokenID, msg.DenomId, msg.Uid, msg.Price.Amount.String(), msg.Recipient); err != nil {
+			return err
+		}
+
+		return dbTx.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, "0x0", msg.Recipient, uint64(timestamp))
+	})
 }
 
 func (m *Module) handleMsgBuyNft(tx *juno.Tx, msg *marketplaceTypes.MsgBuyNft) error {
