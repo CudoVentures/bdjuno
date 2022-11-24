@@ -12,8 +12,8 @@ func (db *Db) UpdateDenom(denomID, owner string) error {
 	return err
 }
 
-func (db *Db) SaveNFT(txHash string, tokenID uint64, denomID, name, uri, dataJSON, dataText, owner, sender, contractAddressSigner string) error {
-	_, err := db.Sqlx.Exec(`INSERT INTO nft_nft (transaction_hash, id, denom_id, name, uri, owner, data_json, data_text, sender, contract_address_signer) 
+func (tx *DbTx) SaveNFT(txHash string, tokenID uint64, denomID, name, uri, dataJSON, dataText, owner, sender, contractAddressSigner string) error {
+	_, err := tx.Exec(`INSERT INTO nft_nft (transaction_hash, id, denom_id, name, uri, owner, data_json, data_text, sender, contract_address_signer) 
 	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT DO NOTHING`, txHash, tokenID, denomID, name, uri, owner, dataJSON, dataText, sender, contractAddressSigner)
 	return err
 }
@@ -23,18 +23,18 @@ func (db *Db) UpdateNFT(id, denomID, name, uri, dataJSON, dataText string) error
 	return err
 }
 
-func (db *Db) UpdateNFTOwner(id, denomID, owner string) error {
-	_, err := db.Sql.Exec(`UPDATE nft_nft SET owner = $1 WHERE id = $2 AND denom_id = $3`, owner, id, denomID)
+func (tx *DbTx) UpdateNFTOwner(id, denomID, owner string) error {
+	_, err := tx.Exec(`UPDATE nft_nft SET owner = $1 WHERE id = $2 AND denom_id = $3`, owner, id, denomID)
 	return err
 }
 
-func (db *Db) BurnNFT(id, denomID string) error {
-	_, err := db.Sql.Exec(`UPDATE nft_nft SET burned = true WHERE id = $1 AND denom_id = $2`, id, denomID)
+func (tx *DbTx) BurnNFT(id, denomID string) error {
+	_, err := tx.Exec(`UPDATE nft_nft SET burned = true WHERE id = $1 AND denom_id = $2`, id, denomID)
 	return err
 }
 
-func (db *Db) UpdateNFTHistory(txHash string, tokenID uint64, denomID, from, to string, timestamp uint64) error {
-	_, err := db.Sql.Exec(`INSERT INTO nft_transfer_history (transaction_hash, id, denom_id, old_owner, new_owner, timestamp) VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING`,
+func (tx *DbTx) UpdateNFTHistory(txHash string, tokenID uint64, denomID, from, to string, timestamp uint64) error {
+	_, err := tx.Exec(`INSERT INTO nft_transfer_history (transaction_hash, id, denom_id, old_owner, new_owner, timestamp) VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING`,
 		txHash, tokenID, denomID, from, to, timestamp)
 	return err
 }

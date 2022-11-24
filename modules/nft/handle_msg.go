@@ -7,6 +7,7 @@ import (
 	marketplaceTypes "github.com/CudoVentures/cudos-node/x/marketplace/types"
 	nftTypes "github.com/CudoVentures/cudos-node/x/nft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/forbole/bdjuno/v2/database"
 	utils "github.com/forbole/bdjuno/v2/modules/utils"
 	generalUtils "github.com/forbole/bdjuno/v2/utils"
 	juno "github.com/forbole/juno/v2/types"
@@ -65,13 +66,15 @@ func (m *Module) handleMsgMintNFT(index int, tx *juno.Tx, msg *nftTypes.MsgMintN
 		return err
 	}
 
-	if error := m.db.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, "0x0", msg.Sender, uint64(timestamp)); error != nil {
-		return error
-	}
-
 	dataJSON, dataText := utils.GetData(msg.Data)
 
-	return m.db.SaveNFT(tx.TxHash, tokenID, msg.DenomId, msg.Name, msg.URI, utils.SanitizeUTF8(dataJSON), dataText, msg.Recipient, msg.Sender, msg.ContractAddressSigner)
+	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
+		if error := dbTx.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, "0x0", msg.Sender, uint64(timestamp)); error != nil {
+			return error
+		}
+
+		return dbTx.SaveNFT(tx.TxHash, tokenID, msg.DenomId, msg.Name, msg.URI, utils.SanitizeUTF8(dataJSON), dataText, msg.Recipient, msg.Sender, msg.ContractAddressSigner)
+	})
 }
 
 func (m *Module) handleMsgEditNFT(msg *nftTypes.MsgEditNFT) error {
@@ -91,11 +94,13 @@ func (m *Module) handleMsgTransferNFT(tx *juno.Tx, msg *nftTypes.MsgTransferNft)
 		return err
 	}
 
-	if error := m.db.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, msg.Sender, msg.To, uint64(timestamp)); error != nil {
-		return error
-	}
+	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
+		if error := dbTx.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, msg.Sender, msg.To, uint64(timestamp)); error != nil {
+			return error
+		}
 
-	return m.db.UpdateNFTOwner(msg.TokenId, msg.DenomId, msg.To)
+		return dbTx.UpdateNFTOwner(msg.TokenId, msg.DenomId, msg.To)
+	})
 }
 
 func (m *Module) handleMsgBurnNFT(index int, tx *juno.Tx, msg *nftTypes.MsgBurnNFT) error {
@@ -114,11 +119,13 @@ func (m *Module) handleMsgBurnNFT(index int, tx *juno.Tx, msg *nftTypes.MsgBurnN
 		return err
 	}
 
-	if error := m.db.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, msg.Sender, "0x0", uint64(timestamp)); error != nil {
-		return error
-	}
+	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
+		if error := dbTx.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, msg.Sender, "0x0", uint64(timestamp)); error != nil {
+			return error
+		}
 
-	return m.db.BurnNFT(msg.Id, msg.DenomId)
+		return dbTx.BurnNFT(msg.Id, msg.DenomId)
+	})
 }
 
 func (m *Module) handleMsgCreateCollection(tx *juno.Tx, msg *marketplaceTypes.MsgCreateCollection) error {
