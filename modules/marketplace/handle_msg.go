@@ -1,6 +1,7 @@
 package marketplace
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -50,7 +51,18 @@ func (m *Module) handleMsgPublishCollection(index int, tx *juno.Tx, msg *marketp
 	if err != nil {
 		return err
 	}
-	return m.db.SaveMarketplaceCollection(tx.TxHash, collectionID, msg.DenomId, royaltiesToText(msg.MintRoyalties), royaltiesToText(msg.ResaleRoyalties), msg.Creator, false)
+
+	mintRoyaltiesJSON, err := json.Marshal(msg.MintRoyalties)
+	if err != nil {
+		return err
+	}
+
+	resaleRoyaltiesJSON, err := json.Marshal(msg.ResaleRoyalties)
+	if err != nil {
+		return err
+	}
+
+	return m.db.SaveMarketplaceCollection(tx.TxHash, collectionID, msg.DenomId, string(mintRoyaltiesJSON), string(resaleRoyaltiesJSON), msg.Creator, false)
 }
 
 func (m *Module) handleMsgPublishNft(index int, tx *juno.Tx, msg *marketplaceTypes.MsgPublishNft) error {
@@ -156,7 +168,17 @@ func (m *Module) handleMsgUpdatePrice(msg *marketplaceTypes.MsgUpdatePrice) erro
 }
 
 func (m *Module) handleMsgUpdateRoyalties(msg *marketplaceTypes.MsgUpdateRoyalties) error {
-	return m.db.SetMarketplaceCollectionRoyalties(msg.Id, royaltiesToText(msg.MintRoyalties), royaltiesToText(msg.ResaleRoyalties))
+	mintRoyaltiesJSON, err := json.Marshal(msg.MintRoyalties)
+	if err != nil {
+		return err
+	}
+
+	resaleRoyaltiesJSON, err := json.Marshal(msg.ResaleRoyalties)
+	if err != nil {
+		return err
+	}
+
+	return m.db.SetMarketplaceCollectionRoyalties(msg.Id, string(mintRoyaltiesJSON), string(resaleRoyaltiesJSON))
 }
 
 func (m *Module) handleMsgCreateCollection(index int, tx *juno.Tx, msg *marketplaceTypes.MsgCreateCollection) error {
@@ -165,13 +187,15 @@ func (m *Module) handleMsgCreateCollection(index int, tx *juno.Tx, msg *marketpl
 		return err
 	}
 
-	return m.db.SaveMarketplaceCollection(tx.TxHash, collectionID, msg.Name, royaltiesToText(msg.MintRoyalties), royaltiesToText(msg.ResaleRoyalties), msg.Creator, msg.Verified)
-}
-
-func royaltiesToText(royalties []marketplaceTypes.Royalty) string {
-	text := ""
-	for _, royalty := range royalties {
-		text += royalty.String()
+	mintRoyaltiesJSON, err := json.Marshal(msg.MintRoyalties)
+	if err != nil {
+		return err
 	}
-	return text
+
+	resaleRoyaltiesJSON, err := json.Marshal(msg.ResaleRoyalties)
+	if err != nil {
+		return err
+	}
+
+	return m.db.SaveMarketplaceCollection(tx.TxHash, collectionID, msg.Name, string(mintRoyaltiesJSON), string(resaleRoyaltiesJSON), msg.Creator, msg.Verified)
 }
