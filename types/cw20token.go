@@ -51,40 +51,40 @@ const (
 
 type MsgTransfer struct {
 	Recipient string
-	Amount    uint64 `json:"amount,string"`
+	Amount    string `json:"amount"`
 }
 
 type MsgTransferFrom struct {
 	Owner     string
 	Recipient string
-	Amount    uint64 `json:"amount,string"`
+	Amount    string `json:"amount"`
 }
 
 type MsgBurn struct {
-	Amount uint64 `json:"amount,string"`
+	Amount string `json:"amount"`
 }
 
 type MsgBurnFrom struct {
 	Owner  string
-	Amount uint64 `json:"amount,string"`
+	Amount string `json:"amount"`
 }
 
 type MsgSend struct {
 	Contract string
-	Amount   uint64 `json:"amount,string"`
+	Amount   string `json:"amount"`
 	Msg      json.RawMessage
 }
 
 type MsgSendFrom struct {
 	Owner    string
 	Contract string
-	Amount   uint64 `json:"amount,string"`
+	Amount   string `json:"amount"`
 	Msg      json.RawMessage
 }
 
 type MsgMint struct {
 	Recipient string
-	Amount    uint64 `json:"amount,string"`
+	Amount    string `json:"amount"`
 }
 
 type MsgUpdateMinter struct {
