@@ -70,6 +70,7 @@ func (m *Module) handleMsgInstantiateContract(dbTx *database.DbTx, msg *wasm.Msg
 
 	case strings.Contains(string(msg.Msg), "mintable"):
 		tokenInfo.Type = "mintable"
+		tokenInfo.Mint.MaxSupply = tokenInfo.TotalSupply
 
 	case strings.Contains(string(msg.Msg), "burnable"):
 		tokenInfo.Type = "burnable"
