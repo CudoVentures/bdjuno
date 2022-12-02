@@ -29,51 +29,51 @@ func TestCW20Token_HandleMsg(t *testing.T) {
 		},
 		"execute transfer": {
 			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
-				s.Transfer(addr1, addr2, fund)
+				s.Transfer(addr1, addr2, num1)
 				txb.WithEventWasmAction(string(types.TypeTransfer))
-				return mockMsgExecute(t, types.MsgExecute{Transfer: types.MsgTransfer{addr2, fund}})
+				return mockMsgExecute(t, types.MsgExecute{Transfer: types.MsgTransfer{addr2, str1}})
 			},
 		},
 		"execute transfer_from": {
 			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
 				s.Transfer(addr2, addr1, num1)
 				txb.WithEventWasmAction(string(types.TypeTransferFrom))
-				return mockMsgExecute(t, types.MsgExecute{TransferFrom: types.MsgTransferFrom{addr2, addr1, num1}})
+				return mockMsgExecute(t, types.MsgExecute{TransferFrom: types.MsgTransferFrom{addr2, addr1, str1}})
 			},
 		},
 		"execute send": {
 			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
 				s.Transfer(addr1, addr2, num1)
 				txb.WithEventWasmAction(string(types.TypeSend))
-				return mockMsgExecute(t, types.MsgExecute{Send: types.MsgSend{addr2, num1, nil}})
+				return mockMsgExecute(t, types.MsgExecute{Send: types.MsgSend{addr2, str1, nil}})
 			},
 		},
 		"execute send_from": {
 			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
 				s.Transfer(addr2, addr1, num1)
 				txb.WithEventWasmAction(string(types.TypeSendFrom))
-				return mockMsgExecute(t, types.MsgExecute{SendFrom: types.MsgSendFrom{addr2, addr1, num1, nil}})
+				return mockMsgExecute(t, types.MsgExecute{SendFrom: types.MsgSendFrom{addr2, addr1, str1, nil}})
 			},
 		},
 		"execute burn": {
 			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
 				s.Burn(addr1, num1)
 				txb.WithEventWasmAction(string(types.TypeBurn))
-				return mockMsgExecute(t, types.MsgExecute{Burn: types.MsgBurn{num1}})
+				return mockMsgExecute(t, types.MsgExecute{Burn: types.MsgBurn{str1}})
 			},
 		},
 		"execute burn_from": {
 			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
 				s.Burn(addr2, num1)
 				txb.WithEventWasmAction(string(types.TypeBurnFrom))
-				return mockMsgExecute(t, types.MsgExecute{BurnFrom: types.MsgBurnFrom{addr2, num1}})
+				return mockMsgExecute(t, types.MsgExecute{BurnFrom: types.MsgBurnFrom{addr2, str1}})
 			},
 		},
 		"execute mint": {
 			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
 				s.Mint(addr2, num1)
 				txb.WithEventWasmAction(string(types.TypeMint))
-				return mockMsgExecute(t, types.MsgExecute{Mint: types.MsgMint{addr2, num1}})
+				return mockMsgExecute(t, types.MsgExecute{Mint: types.MsgMint{addr2, str1}})
 			},
 		},
 		"execute upload_logo": {
