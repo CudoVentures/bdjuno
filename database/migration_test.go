@@ -15,6 +15,7 @@ var expectedAppliedMigrations = []database.Migration{
 	{ID: int64(7), Name: "006-marketplace_module.sql", CreatedAt: int64(0)},
 	{ID: int64(8), Name: "007-cw20token_module.sql", CreatedAt: int64(0)},
 	{ID: int64(9), Name: "008-block_parsed_data.sql", CreatedAt: int64(0)},
+	{ID: int64(10), Name: "009-cw20token_update.sql", CreatedAt: int64(0)},
 }
 
 func (suite *DbTestSuite) TestExecuteMigrations() {
