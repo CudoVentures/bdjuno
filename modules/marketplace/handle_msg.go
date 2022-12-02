@@ -197,5 +197,5 @@ func (m *Module) handleMsgCreateCollection(index int, tx *juno.Tx, msg *marketpl
 		return err
 	}
 
-	return m.db.SaveMarketplaceCollection(tx.TxHash, collectionID, msg.Name, string(mintRoyaltiesJSON), string(resaleRoyaltiesJSON), msg.Creator, msg.Verified)
+	return m.db.SaveMarketplaceCollection(tx.TxHash, collectionID, msg.Id, string(mintRoyaltiesJSON), string(resaleRoyaltiesJSON), msg.Creator, msg.Verified)
 }
