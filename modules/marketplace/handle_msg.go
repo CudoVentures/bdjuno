@@ -82,10 +82,11 @@ func (m *Module) handleMsgPublishNft(index int, tx *juno.Tx, msg *marketplaceTyp
 }
 
 func (m *Module) handleMsgMintNft(index int, tx *juno.Tx, msg *marketplaceTypes.MsgMintNft) error {
-	tokenIDStr := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventMintNftType, marketplaceTypes.AttributeKeyNftID)
+	tokenIDStr := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventMintNftType, marketplaceTypes.AttributeKeyTokenID)
 	if tokenIDStr == "" {
 		return fmt.Errorf("token id not found in tx %s", tx.TxHash)
 	}
+
 
 	tokenID, err := strconv.ParseUint(tokenIDStr, 10, 64)
 	if err != nil {
