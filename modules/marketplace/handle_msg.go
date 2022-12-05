@@ -118,7 +118,7 @@ func (m *Module) handleMsgMintNft(index int, tx *juno.Tx, msg *marketplaceTypes.
 			return err
 		}
 
-		if err := dbTx.SaveMarketplaceNft(tx.TxHash, 0, tokenID, msg.DenomId, msg.Uid, msg.Price.Amount.String(), msg.Recipient); err != nil {
+		if err := dbTx.SaveMarketplaceNft(tx.TxHash, 0, tokenID, msg.DenomId, msg.Uid, "0", msg.Recipient); err != nil {
 			return err
 		}
 
