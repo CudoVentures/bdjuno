@@ -87,7 +87,6 @@ func (m *Module) handleMsgMintNft(index int, tx *juno.Tx, msg *marketplaceTypes.
 		return fmt.Errorf("token id not found in tx %s", tx.TxHash)
 	}
 
-
 	tokenID, err := strconv.ParseUint(tokenIDStr, 10, 64)
 	if err != nil {
 		return err

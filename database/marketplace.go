@@ -29,7 +29,7 @@ func (tx *DbTx) SaveMarketplaceNftBuy(txHash string, id uint64, buyer string, ti
 		return fmt.Errorf("nft (%d) not found for sale", id)
 	}
 
-	return tx.saveMarketplaceNftBuy(txHash, buyer, timestamp, id, denomID, price, seller, usdPrice, btcPrice)
+	return tx.saveMarketplaceNftBuy(txHash, buyer, timestamp, tokenID, denomID, price, seller, usdPrice, btcPrice)
 }
 
 func (tx *DbTx) saveMarketplaceNftBuy(txHash string, buyer string, timestamp, tokenID uint64, denomID, price, seller, usdPrice, btcPrice string) error {
