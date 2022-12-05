@@ -144,11 +144,11 @@ func (m *Module) handleMsgBuyNft(tx *juno.Tx, msg *marketplaceTypes.MsgBuyNft) e
 	}
 
 	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
-		if err := dbTx.SetMarketplaceNFTPrice(msg.Id, "0"); err != nil {
+		if err := dbTx.SaveMarketplaceNftBuy(tx.TxHash, msg.Id, msg.Creator, uint64(timestamp), usdPrice, btcPrice); err != nil {
 			return err
 		}
-		
-		return dbTx.SaveMarketplaceNftBuy(tx.TxHash, msg.Id, msg.Creator, uint64(timestamp), usdPrice, btcPrice)
+
+		return dbTx.SetMarketplaceNFTPrice(msg.Id, "0")
 	})
 }
 
