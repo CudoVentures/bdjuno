@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/CosmWasm/wasmd v0.25.0
 	github.com/CosmWasm/wasmvm v1.0.0-beta10
-	github.com/CudoVentures/cudos-node v1.0.1-0.20221124124559-4c2b4c80ba67
+	github.com/CudoVentures/cudos-node v1.0.1-0.20221205141302-2c6a9098d44b
 	github.com/althea-net/cosmos-gravity-bridge/module v0.0.0-00010101000000-000000000000
 	github.com/cosmos/cosmos-sdk v0.45.3
 	github.com/forbole/juno/v2 v2.0.0-20220223115732-dbb226a91ce9

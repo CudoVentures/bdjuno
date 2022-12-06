@@ -34,6 +34,8 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 		return m.handleMsgBurnNFT(index, tx, cosmosMsg)
 	case *marketplaceTypes.MsgCreateCollection:
 		return m.handleMsgCreateCollection(tx, cosmosMsg)
+	case *marketplaceTypes.MsgBuyNft:
+		return m.handleMsgBuyNft(index, tx, cosmosMsg)
 	default:
 		return nil
 	}
@@ -133,4 +135,20 @@ func (m *Module) handleMsgCreateCollection(tx *juno.Tx, msg *marketplaceTypes.Ms
 
 	return m.db.SaveDenom(tx.TxHash, msg.Id, msg.Name, msg.Schema, msg.Symbol, msg.Creator, "",
 		msg.Traits, msg.Minter, msg.Description, dataText, utils.SanitizeUTF8(dataJSON))
+}
+
+func (m *Module) handleMsgBuyNft(index int, tx *juno.Tx, msg *marketplaceTypes.MsgBuyNft) error {
+	tokenID := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventBuyNftType, marketplaceTypes.AttributeKeyTokenID)
+	if tokenID == "" {
+		return fmt.Errorf("token id not found in tx %s", tx.TxHash)
+	}
+
+	denomID := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventBuyNftType, marketplaceTypes.AttributeKeyDenomID)
+	if denomID == "" {
+		return fmt.Errorf("denom id not found in tx %s", tx.TxHash)
+	}
+
+	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
+		return dbTx.UpdateNFTOwner(tokenID, denomID, msg.Creator)
+	})
 }
