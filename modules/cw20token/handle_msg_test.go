@@ -85,7 +85,7 @@ func TestCW20Token_HandleMsg(t *testing.T) {
 		},
 		"execute update_marketing": {
 			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
-				s.UpdateMarketing(types.Marketing{str2, str2, addr2, logo1})
+				s.UpdateMarketing(types.Marketing{str2, str2, addr2, &logo1})
 				txb.WithEventWasmAction(string(types.TypeUpdateMarketing))
 				return mockMsgExecute(t, types.MsgExecute{UpdateMarketing: types.MsgUpdateMarketing{str2, str2, addr2}})
 			},
@@ -188,7 +188,7 @@ var mockTokenInfo = types.TokenInfo{
 	InitialSupply: "20",
 	TotalSupply:   "20",
 	Mint:          types.Mint{addr1, "200"},
-	Marketing:     types.Marketing{str1, str1, addr1, logo1},
+	Marketing:     types.Marketing{str1, str1, addr1, &logo1},
 	CodeID:        num1,
 	Balances:      []types.TokenBalance{{addr1, "20"}, {addr2, "20"}},
 }
@@ -205,6 +205,7 @@ func mockMsgExecute(t *testing.T, msg types.MsgExecute) *wasm.MsgExecuteContract
 }
 
 func parseTokenInfoFromDbRow(t dbtypes.TokenInfoRow) types.TokenInfo {
+	logo := json.RawMessage(t.Logo)
 	return types.TokenInfo{
 		Address:       t.Address,
 		Name:          t.Name,
@@ -213,7 +214,7 @@ func parseTokenInfoFromDbRow(t dbtypes.TokenInfoRow) types.TokenInfo {
 		InitialSupply: t.InitialSupply,
 		TotalSupply:   t.TotalSupply,
 		Mint:          types.Mint{t.Minter, t.MaxSupply},
-		Marketing:     types.Marketing{t.ProjectURL, t.Description, t.MarketingAdmin, json.RawMessage(t.Logo)},
+		Marketing:     types.Marketing{t.ProjectURL, t.Description, t.MarketingAdmin, &logo},
 		CodeID:        t.CodeID,
 		Balances:      []types.TokenBalance{}}
 }

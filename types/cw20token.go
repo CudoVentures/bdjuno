@@ -3,27 +3,27 @@ package types
 import "encoding/json"
 
 type Mint struct {
-	Minter    string `json:"minter"`
+	Minter    string
 	MaxSupply string `json:"cap"`
 }
 
 type Marketing struct {
-	Project     string          `json:"project"`
-	Description string          `json:"description"`
-	Admin       string          `json:"marketing"`
-	Logo        json.RawMessage `json:"logo"`
+	Project     string
+	Description string
+	Admin       string `json:"marketing"`
+	Logo        *json.RawMessage
 }
 
 type TokenBalance struct {
-	Address string `json:"address"`
-	Amount  string `json:"amount"`
+	Address string
+	Amount  string
 }
 
 type TokenInfo struct {
+	Name          string
+	Symbol        string
+	Decimals      int8
 	Address       string         `json:"address,omitempty"`
-	Name          string         `json:"name"`
-	Symbol        string         `json:"symbol"`
-	Decimals      int8           `json:"decimals"`
 	TotalSupply   string         `json:"total_supply"`
 	Mint          Mint           `json:"mint,omitempty"`
 	Marketing     Marketing      `json:"marketing_info,omitempty"`
@@ -51,48 +51,48 @@ const (
 
 type MsgTransfer struct {
 	Recipient string
-	Amount    string `json:"amount"`
+	Amount    string
 }
 
 type MsgTransferFrom struct {
 	Owner     string
 	Recipient string
-	Amount    string `json:"amount"`
+	Amount    string
 }
 
 type MsgBurn struct {
-	Amount string `json:"amount"`
+	Amount string
 }
 
 type MsgBurnFrom struct {
 	Owner  string
-	Amount string `json:"amount"`
+	Amount string
 }
 
 type MsgSend struct {
 	Contract string
-	Amount   string `json:"amount"`
+	Amount   string
 	Msg      json.RawMessage
 }
 
 type MsgSendFrom struct {
 	Owner    string
 	Contract string
-	Amount   string `json:"amount"`
+	Amount   string
 	Msg      json.RawMessage
 }
 
 type MsgMint struct {
 	Recipient string
-	Amount    string `json:"amount"`
+	Amount    string
 }
 
 type MsgUpdateMinter struct {
 	NewMinter string `json:"new_minter"`
 }
 type MsgUpdateMarketing struct {
-	Project     string `json:"project"`
-	Description string `json:"description"`
+	Project     string
+	Description string
 	Admin       string `json:"marketing"`
 }
 
