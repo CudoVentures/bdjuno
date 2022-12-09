@@ -108,7 +108,8 @@ func (s *MockSource) UpdateMinter(newMinter string) {
 }
 
 func (s *MockSource) UpdateLogo(newLogo string) {
-	s.T.Marketing.Logo = json.RawMessage(newLogo)
+	logo := json.RawMessage(newLogo)
+	s.T.Marketing.Logo = &logo
 }
 
 func (s *MockSource) UpdateMarketing(marketing types.Marketing) {
