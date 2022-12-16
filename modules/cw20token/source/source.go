@@ -9,4 +9,5 @@ type Source interface {
 	AllBalances(tokenAddr string, height int64) ([]types.TokenBalance, error)
 	Balance(tokenAddr string, address string, height int64) (string, error)
 	TotalSupply(tokenAddr string, height int64) (string, error)
+	Allowance(tokenAddr string, owner string, spender string, height int64) (types.Allowance, error)
 }

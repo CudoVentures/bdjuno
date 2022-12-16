@@ -9,8 +9,9 @@ import (
 )
 
 var (
-	_ modules.Module        = &Module{}
-	_ modules.MessageModule = &Module{}
+	_ modules.Module                   = &Module{}
+	_ modules.MessageModule            = &Module{}
+	_ modules.PeriodicOperationsModule = &Module{}
 )
 
 type Module struct {

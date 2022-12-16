@@ -105,25 +105,36 @@ func (m *Module) handleMsgExecuteContract(dbTx *database.DbTx, msg *wasm.MsgExec
 	}
 
 	msgType := mutils.GetValueFromLogs(uint32(index), tx.Logs, wasm.WasmModuleEventType, sdk.AttributeKeyAction)
-	addresses := []string{}
+	transfer := struct {
+		from      string
+		spender   string
+		recipient string
+	}{}
 
 	switch types.TypeMsgExecute(msgType) {
 	case types.TypeTransfer:
-		addresses = append(addresses, msgExecute.Transfer.Recipient, msg.Sender)
+		transfer.from = msg.Sender
+		transfer.recipient = msgExecute.Transfer.Recipient
 	case types.TypeTransferFrom:
 		mm := msgExecute.TransferFrom
-		addresses = append(addresses, mm.Owner, mm.Recipient)
+		transfer.from = mm.Owner
+		transfer.spender = msg.Sender
+		transfer.recipient = mm.Recipient
 	case types.TypeSend:
-		addresses = append(addresses, msgExecute.Send.Contract, msg.Sender)
+		transfer.from = msg.Sender
+		transfer.recipient = msgExecute.Send.Contract
 	case types.TypeSendFrom:
 		mm := msgExecute.SendFrom
-		addresses = append(addresses, mm.Owner, mm.Contract)
+		transfer.from = mm.Owner
+		transfer.spender = msg.Sender
+		transfer.recipient = mm.Contract
 	case types.TypeBurn:
-		addresses = append(addresses, msg.Sender)
+		transfer.from = msg.Sender
 	case types.TypeBurnFrom:
-		addresses = append(addresses, msgExecute.BurnFrom.Owner)
+		transfer.from = msgExecute.BurnFrom.Owner
+		transfer.spender = msg.Sender
 	case types.TypeMint:
-		addresses = append(addresses, msgExecute.Mint.Recipient)
+		transfer.recipient = msgExecute.Mint.Recipient
 	case types.TypeUpdateMinter:
 		return dbTx.UpdateMinter(msg.Contract, msgExecute.UpdateMinter.NewMinter)
 	case types.TypeUpdateMarketing:
@@ -131,6 +142,16 @@ func (m *Module) handleMsgExecuteContract(dbTx *database.DbTx, msg *wasm.MsgExec
 		return dbTx.UpdateMarketing(msg.Contract, types.Marketing{mm.Project, mm.Description, mm.Admin, nil})
 	case types.TypeUploadLogo:
 		return dbTx.UpdateLogo(msg.Contract, mutils.SanitizeUTF8(string(msgExecute.UploadLogo)))
+	case types.TypeIncreaseAllowance, types.TypeDecreaseAllowance:
+		mm := msgExecute.IncreaseAllowance
+		if types.TypeMsgExecute(msgType) == types.TypeDecreaseAllowance {
+			mm = msgExecute.DecreaseAllowance
+		}
+		a, err := m.source.Allowance(msg.Contract, msg.Sender, mm.Spender, tx.Height)
+		if err != nil {
+			return err
+		}
+		return dbTx.SaveAllowance(msg.Contract, msg.Sender, mm.Spender, a.Amount, mutils.SanitizeUTF8(string(a.Expires)))
 	}
 
 	supply, err := m.source.TotalSupply(msg.Contract, tx.Height)
@@ -142,17 +163,36 @@ func (m *Module) handleMsgExecuteContract(dbTx *database.DbTx, msg *wasm.MsgExec
 		return err
 	}
 
-	balances := make([]types.TokenBalance, len(addresses))
-	for i, a := range addresses {
-		b, err := m.source.Balance(msg.Contract, a, tx.Height)
+	balances := []types.TokenBalance{}
+	if transfer.from != "" {
+		b, err := m.source.Balance(msg.Contract, transfer.from, tx.Height)
 		if err != nil {
 			return err
 		}
-
-		balances[i] = types.TokenBalance{a, b}
+		balances = append(balances, types.TokenBalance{transfer.from, b})
+	}
+	if transfer.recipient != "" {
+		b, err := m.source.Balance(msg.Contract, transfer.recipient, tx.Height)
+		if err != nil {
+			return err
+		}
+		balances = append(balances, types.TokenBalance{transfer.recipient, b})
 	}
 
-	return dbTx.SaveBalances(msg.Contract, balances)
+	if err := dbTx.SaveBalances(msg.Contract, balances); err != nil {
+		return err
+	}
+
+	if transfer.spender == "" {
+		return nil
+	}
+
+	a, err := m.source.Allowance(msg.Contract, transfer.from, transfer.spender, tx.Height)
+	if err != nil {
+		return err
+	}
+
+	return dbTx.SaveAllowance(msg.Contract, transfer.from, transfer.spender, a.Amount, mutils.SanitizeUTF8(string(a.Expires)))
 }
 
 func (m *Module) handleMsgMigrateContract(dbTx *database.DbTx, msg *wasm.MsgMigrateContract) error {

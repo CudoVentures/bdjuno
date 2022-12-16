@@ -17,3 +17,11 @@ type TokenInfoRow struct {
 	Type           string `db:"type"`
 	Creator        string `db:"creator"`
 }
+
+type AllowanceRow struct {
+	Token   string `db:"token"`
+	Owner   string `db:"owner"`
+	Spender string `db:"spender"`
+	Amount  string `db:"amount"`
+	Expires string `db:"expires"`
+}
