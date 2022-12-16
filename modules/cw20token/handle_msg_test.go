@@ -31,49 +31,52 @@ func TestCW20Token_HandleMsg(t *testing.T) {
 			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
 				s.Transfer(addr1, addr2, num1)
 				txb.WithEventWasmAction(string(types.TypeTransfer))
-				return mockMsgExecute(t, types.MsgExecute{Transfer: types.MsgTransfer{addr2, str1}})
+				return mockMsgExecute(t, types.MsgExecute{Transfer: types.MsgTransfer{addr2, "1"}})
 			},
 		},
 		"execute transfer_from": {
 			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
-				s.Transfer(addr2, addr1, num1)
+				s.Transfer(addr2, addr1, num1*2)
+				s.DecreaseAllowance(addr2, addr1, num1*2, expires)
 				txb.WithEventWasmAction(string(types.TypeTransferFrom))
-				return mockMsgExecute(t, types.MsgExecute{TransferFrom: types.MsgTransferFrom{addr2, addr1, str1}})
+				return mockMsgExecute(t, types.MsgExecute{TransferFrom: types.MsgTransferFrom{addr2, addr1, "2"}})
 			},
 		},
 		"execute send": {
 			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
 				s.Transfer(addr1, addr2, num1)
 				txb.WithEventWasmAction(string(types.TypeSend))
-				return mockMsgExecute(t, types.MsgExecute{Send: types.MsgSend{addr2, str1, nil}})
+				return mockMsgExecute(t, types.MsgExecute{Send: types.MsgSend{addr2, "1", nil}})
 			},
 		},
 		"execute send_from": {
 			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
 				s.Transfer(addr2, addr1, num1)
+				s.DecreaseAllowance(addr2, addr1, num1, expires)
 				txb.WithEventWasmAction(string(types.TypeSendFrom))
-				return mockMsgExecute(t, types.MsgExecute{SendFrom: types.MsgSendFrom{addr2, addr1, str1, nil}})
+				return mockMsgExecute(t, types.MsgExecute{SendFrom: types.MsgSendFrom{addr2, addr1, "1", nil}})
 			},
 		},
 		"execute burn": {
 			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
 				s.Burn(addr1, num1)
 				txb.WithEventWasmAction(string(types.TypeBurn))
-				return mockMsgExecute(t, types.MsgExecute{Burn: types.MsgBurn{str1}})
+				return mockMsgExecute(t, types.MsgExecute{Burn: types.MsgBurn{"1"}})
 			},
 		},
 		"execute burn_from": {
 			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
 				s.Burn(addr2, num1)
+				s.DecreaseAllowance(addr2, addr1, num1, expires)
 				txb.WithEventWasmAction(string(types.TypeBurnFrom))
-				return mockMsgExecute(t, types.MsgExecute{BurnFrom: types.MsgBurnFrom{addr2, str1}})
+				return mockMsgExecute(t, types.MsgExecute{BurnFrom: types.MsgBurnFrom{addr2, "1"}})
 			},
 		},
 		"execute mint": {
 			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
 				s.Mint(addr2, num1)
 				txb.WithEventWasmAction(string(types.TypeMint))
-				return mockMsgExecute(t, types.MsgExecute{Mint: types.MsgMint{addr2, str1}})
+				return mockMsgExecute(t, types.MsgExecute{Mint: types.MsgMint{addr2, "1"}})
 			},
 		},
 		"execute upload_logo": {
@@ -97,11 +100,26 @@ func TestCW20Token_HandleMsg(t *testing.T) {
 				return mockMsgExecute(t, types.MsgExecute{UpdateMinter: types.MsgUpdateMinter{addr2}})
 			},
 		},
+		"execute increase_allowance": {
+			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
+				s.IncreaseAllowance(addr1, addr2, num1, expires)
+				txb.WithEventWasmAction(string(types.TypeIncreaseAllowance))
+				return mockMsgExecute(t, types.MsgExecute{IncreaseAllowance: types.MsgIncreaseDecreaseAllowance{addr2, "1", expires}})
+			},
+		},
+		"execute decrease_allowance": {
+			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
+				s.DecreaseAllowance(addr1, addr2, num1, expires)
+				txb.WithEventWasmAction(string(types.TypeDecreaseAllowance))
+				return mockMsgExecute(t, types.MsgExecute{DecreaseAllowance: types.MsgIncreaseDecreaseAllowance{addr2, "1", expires}})
+			},
+		},
 		"migrate to invalid codeID": {
 			arrange: func(s *source.MockSource, txb *utils.MockTxBuilder) sdk.Msg {
 				contractAddr := s.T.Address
 				codeID := s.T.CodeID + 1
 				s.T = types.TokenInfo{}
+				s.A = []dbtypes.AllowanceRow{}
 				return &wasm.MsgMigrateContract{Contract: contractAddr, CodeID: codeID}
 			},
 		},
@@ -115,7 +133,7 @@ func TestCW20Token_HandleMsg(t *testing.T) {
 			db, err := utils.NewTestDb("cw20TokenTest_handleMsg")
 			require.NoError(t, err)
 
-			s := source.NewMockSource(mockTokenInfo)
+			s := source.NewMockSource(mockTokenInfo, mockAllowances)
 
 			_, err = db.Sqlx.Exec(`INSERT INTO cw20token_code_id VALUES ($1)`, s.T.CodeID)
 			require.NoError(t, err)
@@ -133,6 +151,14 @@ func TestCW20Token_HandleMsg(t *testing.T) {
 			)
 			require.NoError(t, err)
 
+			for _, a := range s.A {
+				_, err = db.Sqlx.Exec(
+					`INSERT INTO cw20token_allowance VALUES ($1, $2, $3, $4, $5)`,
+					s.T.Address, a.Owner, a.Spender, a.Amount, a.Expires,
+				)
+				require.NoError(t, err)
+			}
+
 			m := NewModule(simapp.MakeTestEncodingConfig().Marshaler, db, s)
 			txb := utils.NewMockTxBuilder(t, time.Time{}, "", num1)
 			msg := tc.arrange(s, txb)
@@ -149,17 +175,22 @@ func TestCW20Token_HandleMsg(t *testing.T) {
 				have = parseTokenInfoFromDbRow(res[0])
 			}
 
-			balances := s.T.Balances
+			wantBalances := s.T.Balances
 			s.T.Balances = []types.TokenBalance{}
 
 			require.Equal(t, s.T, have)
 
-			for _, b := range balances {
-				var have string
-				err = db.Sqlx.QueryRow(`SELECT balance FROM cw20token_balance WHERE address = $1 AND token = $2`, b.Address, s.T.Address).Scan(&have)
+			for _, b := range wantBalances {
+				var haveBalance string
+				err = db.Sqlx.QueryRow(`SELECT balance FROM cw20token_balance WHERE address = $1 AND token = $2`, b.Address, s.T.Address).Scan(&haveBalance)
 				require.NoError(t, err)
-				require.Equal(t, b.Amount, have)
+				require.Equal(t, b.Amount, haveBalance)
 			}
+
+			haveAllowances := []dbtypes.AllowanceRow{}
+			err = db.Sqlx.Select(&haveAllowances, `SELECT * FROM cw20token_allowance`)
+			require.NoError(t, err)
+			require.Equal(t, s.A, haveAllowances)
 		})
 	}
 }
@@ -176,8 +207,9 @@ const (
 )
 
 var (
-	logo1 = json.RawMessage(`{"url":"url"}`)
-	logo2 = json.RawMessage(`{"newUrl":"newUrl"}`)
+	logo1   = json.RawMessage(`{"url":"url"}`)
+	logo2   = json.RawMessage(`{"newUrl":"newUrl"}`)
+	expires = json.RawMessage(`{}`)
 )
 
 var mockTokenInfo = types.TokenInfo{
@@ -191,6 +223,10 @@ var mockTokenInfo = types.TokenInfo{
 	Marketing:     types.Marketing{str1, str1, addr1, &logo1},
 	CodeID:        num1,
 	Balances:      []types.TokenBalance{{addr1, "20"}, {addr2, "20"}},
+}
+
+var mockAllowances = []dbtypes.AllowanceRow{
+	{tokenAddr1, addr2, addr1, "2", string(expires)},
 }
 
 func mockMsgExecute(t *testing.T, msg types.MsgExecute) *wasm.MsgExecuteContract {

@@ -34,19 +34,26 @@ type TokenInfo struct {
 	Creator       string
 }
 
+type Allowance struct {
+	Amount  string          `json:"allowance"`
+	Expires json.RawMessage `json:"expires"`
+}
+
 type TypeMsgExecute string
 
 const (
-	TypeTransfer        TypeMsgExecute = "transfer"
-	TypeTransferFrom    TypeMsgExecute = "transfer_from"
-	TypeSend            TypeMsgExecute = "send"
-	TypeSendFrom        TypeMsgExecute = "send_from"
-	TypeBurn            TypeMsgExecute = "burn"
-	TypeBurnFrom        TypeMsgExecute = "burn_from"
-	TypeMint            TypeMsgExecute = "mint"
-	TypeUpdateMinter    TypeMsgExecute = "update_minter"
-	TypeUpdateMarketing TypeMsgExecute = "update_marketing"
-	TypeUploadLogo      TypeMsgExecute = "upload_logo"
+	TypeTransfer          TypeMsgExecute = "transfer"
+	TypeTransferFrom      TypeMsgExecute = "transfer_from"
+	TypeSend              TypeMsgExecute = "send"
+	TypeSendFrom          TypeMsgExecute = "send_from"
+	TypeBurn              TypeMsgExecute = "burn"
+	TypeBurnFrom          TypeMsgExecute = "burn_from"
+	TypeMint              TypeMsgExecute = "mint"
+	TypeUpdateMinter      TypeMsgExecute = "update_minter"
+	TypeUpdateMarketing   TypeMsgExecute = "update_marketing"
+	TypeUploadLogo        TypeMsgExecute = "upload_logo"
+	TypeIncreaseAllowance TypeMsgExecute = "increase_allowance"
+	TypeDecreaseAllowance TypeMsgExecute = "decrease_allowance"
 )
 
 type MsgTransfer struct {
@@ -90,23 +97,29 @@ type MsgMint struct {
 type MsgUpdateMinter struct {
 	NewMinter string `json:"new_minter"`
 }
+
 type MsgUpdateMarketing struct {
 	Project     string
 	Description string
 	Admin       string `json:"marketing"`
 }
 
-type MsgUploadLogo json.RawMessage
-
+type MsgIncreaseDecreaseAllowance struct {
+	Spender string          `json:"spender"`
+	Amount  string          `json:"amount"`
+	Expires json.RawMessage `json:"expires,omitempty"`
+}
 type MsgExecute struct {
-	Transfer        MsgTransfer        `json:"transfer"`
-	TransferFrom    MsgTransferFrom    `json:"transfer_from"`
-	Send            MsgSend            `json:"send"`
-	SendFrom        MsgSendFrom        `json:"send_from"`
-	Burn            MsgBurn            `json:"burn"`
-	BurnFrom        MsgBurnFrom        `json:"burn_from"`
-	Mint            MsgMint            `json:"mint"`
-	UpdateMinter    MsgUpdateMinter    `json:"update_minter"`
-	UpdateMarketing MsgUpdateMarketing `json:"update_marketing"`
-	UploadLogo      json.RawMessage    `json:"upload_logo"`
+	Transfer          MsgTransfer                  `json:"transfer"`
+	TransferFrom      MsgTransferFrom              `json:"transfer_from"`
+	Send              MsgSend                      `json:"send"`
+	SendFrom          MsgSendFrom                  `json:"send_from"`
+	Burn              MsgBurn                      `json:"burn"`
+	BurnFrom          MsgBurnFrom                  `json:"burn_from"`
+	Mint              MsgMint                      `json:"mint"`
+	UpdateMinter      MsgUpdateMinter              `json:"update_minter"`
+	UpdateMarketing   MsgUpdateMarketing           `json:"update_marketing"`
+	UploadLogo        json.RawMessage              `json:"upload_logo"`
+	IncreaseAllowance MsgIncreaseDecreaseAllowance `json:"increase_allowance"`
+	DecreaseAllowance MsgIncreaseDecreaseAllowance `json:"decrease_allowance"`
 }

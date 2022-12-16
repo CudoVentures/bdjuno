@@ -97,6 +97,14 @@ func (q *QueryHandler) TotalSupply(ctx context.Context, tokenAddr string, height
 	return supply.TotalSupply, err
 }
 
+func (q *QueryHandler) Allowance(ctx context.Context, tokenAddr string, owner string, spender string, height int64) (types.Allowance, error) {
+	allowance := types.Allowance{}
+	query := fmt.Sprintf(`{"allowance":{"owner":"%s","spender":"%s"}}`, owner, spender)
+	err := q.query(ctx, tokenAddr, query, &allowance)
+
+	return allowance, err
+}
+
 func (q *QueryHandler) query(ctx context.Context, tokenAddr string, query string, dest interface{}) error {
 	if dest == nil {
 		return nil

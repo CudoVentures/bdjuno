@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strconv"
 
+	dbtypes "github.com/forbole/bdjuno/v2/database/types"
 	"github.com/forbole/bdjuno/v2/modules/cw20token/source"
 	"github.com/forbole/bdjuno/v2/types"
 )
@@ -14,14 +15,18 @@ var (
 
 type MockSource struct {
 	T types.TokenInfo
+	A []dbtypes.AllowanceRow
 }
 
-func NewMockSource(token types.TokenInfo) *MockSource {
+func NewMockSource(token types.TokenInfo, allowances []dbtypes.AllowanceRow) *MockSource {
 	tokenCopy := token
 	tokenCopy.Balances = []types.TokenBalance{}
 	tokenCopy.Balances = append(tokenCopy.Balances, token.Balances...)
 
-	return &MockSource{tokenCopy}
+	allowancesCopy := []dbtypes.AllowanceRow{}
+	allowancesCopy = append(allowancesCopy, allowances...)
+
+	return &MockSource{tokenCopy, allowancesCopy}
 }
 
 func (s *MockSource) TokenInfo(tokenAddr string, height int64) (types.TokenInfo, error) {
@@ -44,6 +49,15 @@ func (s *MockSource) Balance(tokenAddr string, address string, height int64) (st
 
 func (s *MockSource) TotalSupply(tokenAddr string, height int64) (string, error) {
 	return s.T.TotalSupply, nil
+}
+
+func (s *MockSource) Allowance(tokenAddr string, owner string, spender string, height int64) (types.Allowance, error) {
+	for _, a := range s.A {
+		if a.Owner == owner && a.Spender == spender {
+			return types.Allowance{a.Amount, json.RawMessage(a.Expires)}, nil
+		}
+	}
+	return types.Allowance{"0", []byte(nil)}, nil
 }
 
 func (s *MockSource) getBalanceIndex(addr string) int {
@@ -114,4 +128,31 @@ func (s *MockSource) UpdateLogo(newLogo string) {
 
 func (s *MockSource) UpdateMarketing(marketing types.Marketing) {
 	s.T.Marketing = marketing
+}
+
+func (s *MockSource) IncreaseAllowance(owner string, spender string, amount uint64, expires json.RawMessage) {
+	for i, a := range s.A {
+		if a.Owner == owner && a.Spender == spender {
+			allowance, _ := strconv.ParseUint(a.Amount, 10, 64)
+			allowance += amount
+			s.A[i].Amount = strconv.FormatUint(allowance, 10)
+			s.A[i].Expires = string(expires)
+			return
+		}
+	}
+	s.A = append(s.A, dbtypes.AllowanceRow{s.T.Address, owner, spender, strconv.FormatUint(amount, 10), string(expires)})
+}
+
+func (s *MockSource) DecreaseAllowance(owner string, spender string, amount uint64, expires json.RawMessage) {
+	for i, a := range s.A {
+		if a.Owner == owner && a.Spender == spender {
+			allowance, _ := strconv.ParseUint(a.Amount, 10, 64)
+			allowance -= amount
+			s.A[i].Amount = strconv.FormatUint(allowance, 10)
+			s.A[i].Expires = string(expires)
+			if allowance <= 0 {
+				s.A = append(s.A[:i], s.A[i+1:]...)
+			}
+		}
+	}
 }

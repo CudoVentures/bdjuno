@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 
+	dbtypes "github.com/forbole/bdjuno/v2/database/types"
 	"github.com/forbole/bdjuno/v2/types"
 )
 
@@ -78,6 +79,24 @@ func (dbTx *DbTx) DeleteToken(token string) error {
 	return err
 }
 
+func (dbTx *DbTx) SaveAllowance(token, owner, spender, amount, expires string) error {
+	if amount == "0" {
+		_, err := dbTx.Exec(
+			`DELETE FROM cw20token_allowance WHERE token = $1 AND owner = $2 AND spender = $3`,
+			token, owner, spender,
+		)
+		return err
+	}
+
+	_, err := dbTx.Exec(
+		`INSERT INTO cw20token_allowance VALUES ($1, $2, $3, $4, $5)
+		ON CONFLICT (token, owner, spender) DO UPDATE SET
+		amount = excluded.amount, expires = excluded.expires`,
+		token, owner, spender, amount, expires,
+	)
+	return err
+}
+
 func (dbTx *DbTx) TokenExists(token string) (bool, error) {
 	var found bool
 	err := dbTx.QueryRow(
@@ -92,4 +111,25 @@ func (dbTx *DbTx) CodeIDExists(codeID uint64) (bool, error) {
 		`SELECT EXISTS (SELECT 1 FROM cw20token_code_id WHERE id = $1)`, codeID,
 	).Scan(&found)
 	return found, err
+}
+
+func (dbTx *DbTx) GetAllAllowances() ([]dbtypes.AllowanceRow, error) {
+	rows, err := dbTx.Query(`SELECT * FROM cw20token_allowance`)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	allowances := []dbtypes.AllowanceRow{}
+	for rows.Next() {
+		var a dbtypes.AllowanceRow
+		if err := rows.Scan(&a.Token, &a.Owner, &a.Spender, &a.Amount, &a.Expires); err != nil {
+			return nil, err
+		}
+
+		allowances = append(allowances, a)
+	}
+
+	return allowances, rows.Err()
 }

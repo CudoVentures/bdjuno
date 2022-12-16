@@ -43,3 +43,8 @@ func (s *Source) TotalSupply(tokenAddr string, height int64) (string, error) {
 	ctx := remote.GetHeightRequestContext(s.Ctx, height)
 	return s.q.TotalSupply(ctx, tokenAddr, height)
 }
+
+func (s *Source) Allowance(tokenAddr string, owner string, spender string, height int64) (types.Allowance, error) {
+	ctx := remote.GetHeightRequestContext(s.Ctx, height)
+	return s.q.Allowance(ctx, tokenAddr, owner, spender, height)
+}

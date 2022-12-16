@@ -60,3 +60,12 @@ func (s *Source) TotalSupply(tokenAddr string, height int64) (string, error) {
 
 	return s.q.TotalSupply(ctx, tokenAddr, height)
 }
+
+func (s *Source) Allowance(tokenAddr string, owner string, spender string, height int64) (types.Allowance, error) {
+	ctx, err := s.LoadHeight(height)
+	if err != nil {
+		return types.Allowance{}, err
+	}
+
+	return s.q.Allowance(ctx, tokenAddr, owner, spender, height)
+}
