@@ -16,7 +16,7 @@ func (db *Db) UpdateDenom(denomID, owner string) error {
 
 func (tx *DbTx) SaveNFT(txHash string, tokenID uint64, denomID, name, uri, dataJSON, dataText, owner, sender, contractAddressSigner string) error {
 	_, err := tx.Exec(`INSERT INTO nft_nft (transaction_hash, id, denom_id, name, uri, owner, data_json, data_text, sender, contract_address_signer, uniq_id) 
-	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT DO NOTHING`, txHash, tokenID, denomID, name, uri, owner,
+	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (id, denom_id) DO UPDATE SET uniq_id = EXCLUDED.uniq_id`, txHash, tokenID, denomID, name, uri, owner,
 		dataJSON, dataText, sender, contractAddressSigner, utils.FormatUniqID(tokenID, denomID))
 	return err
 }
