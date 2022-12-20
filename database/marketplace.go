@@ -2,6 +2,8 @@ package database
 
 import (
 	"fmt"
+
+	"github.com/forbole/bdjuno/v2/database/utils"
 )
 
 func (db *Db) SaveMarketplaceCollection(txHash string, id uint64, denomID, mintRoyalties, resaleRoyalties, creator string, verified bool) error {
@@ -12,8 +14,8 @@ func (db *Db) SaveMarketplaceCollection(txHash string, id uint64, denomID, mintR
 
 func (tx *DbTx) SaveMarketplaceNft(txHash string, id, nftID uint64, denomID, uid, price, creator string) error {
 	_, err := tx.Exec(`INSERT INTO marketplace_nft (transaction_hash, id, uid, token_id, denom_id, price, creator) 
-		VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (token_id, denom_id) DO UPDATE SET price = EXCLUDED.price, id = EXCLUDED.id`,
-		txHash, id, uid, nftID, denomID, price, creator)
+		VALUES($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (token_id, denom_id) DO UPDATE SET price = EXCLUDED.price, id = EXCLUDED.id`,
+		txHash, id, uid, nftID, denomID, price, creator, utils.FormatUniqID(nftID, denomID))
 	return err
 }
 
@@ -33,8 +35,8 @@ func (tx *DbTx) SaveMarketplaceNftBuy(txHash string, id uint64, buyer string, ti
 }
 
 func (tx *DbTx) saveMarketplaceNftBuy(txHash string, buyer string, timestamp, tokenID uint64, denomID, price, seller, usdPrice, btcPrice string) error {
-	_, err := tx.Exec(`INSERT INTO marketplace_nft_buy_history (transaction_hash, token_id, denom_id, price, seller, buyer, usd_price, btc_price, timestamp) 
-	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)`, txHash, tokenID, denomID, price, seller, buyer, usdPrice, btcPrice, timestamp)
+	_, err := tx.Exec(`INSERT INTO marketplace_nft_buy_history (transaction_hash, token_id, denom_id, price, seller, buyer, usd_price, btc_price, timestamp, uniq_id) 
+	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`, txHash, tokenID, denomID, price, seller, buyer, usdPrice, btcPrice, timestamp, utils.FormatUniqID(tokenID, denomID))
 	return err
 }
 

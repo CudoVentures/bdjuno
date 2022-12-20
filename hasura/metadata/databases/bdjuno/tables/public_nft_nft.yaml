@@ -23,5 +23,6 @@ select_permissions:
     - sender
     - contract_address_signer
     - burned
+    - uniq_id
     filter: {}
   role: anonymous

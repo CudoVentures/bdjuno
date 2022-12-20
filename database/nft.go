@@ -1,5 +1,7 @@
 package database
 
+import "github.com/forbole/bdjuno/v2/database/utils"
+
 func (db *Db) SaveDenom(txHash, denomID, name, schema, symbol, owner, contractAddressSigner, traits, minter, description, dataText, dataJSON string) error {
 	_, err := db.Sql.Exec(`INSERT INTO nft_denom (transaction_hash, id, name, schema, symbol, owner, contract_address_signer, 
 		traits, minter, description, data_text, data_json) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) ON CONFLICT DO NOTHING`,
@@ -13,8 +15,9 @@ func (db *Db) UpdateDenom(denomID, owner string) error {
 }
 
 func (tx *DbTx) SaveNFT(txHash string, tokenID uint64, denomID, name, uri, dataJSON, dataText, owner, sender, contractAddressSigner string) error {
-	_, err := tx.Exec(`INSERT INTO nft_nft (transaction_hash, id, denom_id, name, uri, owner, data_json, data_text, sender, contract_address_signer) 
-	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT DO NOTHING`, txHash, tokenID, denomID, name, uri, owner, dataJSON, dataText, sender, contractAddressSigner)
+	_, err := tx.Exec(`INSERT INTO nft_nft (transaction_hash, id, denom_id, name, uri, owner, data_json, data_text, sender, contract_address_signer, uniq_id) 
+	VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT DO NOTHING`, txHash, tokenID, denomID, name, uri, owner,
+		dataJSON, dataText, sender, contractAddressSigner, utils.FormatUniqID(tokenID, denomID))
 	return err
 }
 
@@ -34,7 +37,8 @@ func (tx *DbTx) BurnNFT(id, denomID string) error {
 }
 
 func (tx *DbTx) UpdateNFTHistory(txHash string, tokenID uint64, denomID, from, to string, timestamp uint64) error {
-	_, err := tx.Exec(`INSERT INTO nft_transfer_history (transaction_hash, id, denom_id, old_owner, new_owner, timestamp) VALUES($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING`,
-		txHash, tokenID, denomID, from, to, timestamp)
+	_, err := tx.Exec(`INSERT INTO nft_transfer_history (transaction_hash, id, denom_id, old_owner, new_owner, timestamp, uniq_id) 
+		VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING`,
+		txHash, tokenID, denomID, from, to, timestamp, utils.FormatUniqID(tokenID, denomID))
 	return err
 }
