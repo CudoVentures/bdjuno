@@ -22,5 +22,6 @@ select_permissions:
     - denom_id
     - price
     - creator
+    - uniq_id
     filter: {}
   role: anonymous

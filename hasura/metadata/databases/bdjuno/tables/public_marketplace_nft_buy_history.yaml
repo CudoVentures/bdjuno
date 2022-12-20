@@ -24,5 +24,6 @@ select_permissions:
     - usd_price
     - btc_price
     - timestamp
+    - uniq_id
     filter: {}
   role: anonymous

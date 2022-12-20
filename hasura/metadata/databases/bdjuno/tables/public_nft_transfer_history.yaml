@@ -18,5 +18,6 @@ select_permissions:
     - old_owner
     - new_owner
     - timestamp
+    - uniq_id
     filter: {}
   role: anonymous
