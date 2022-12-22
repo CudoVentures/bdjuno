@@ -26,7 +26,7 @@ func NftTransferEvents(ctx *actionstypes.Context, payload *actionstypes.NftTrans
 		return nil, err
 	}
 
-	mintQuery := fmt.Sprintf("mint_nft.token_id=%d AND mint_nft.denom_id='%s'", payload.Input.TokenID, payload.Input.DenomID)
+	mintQuery := fmt.Sprintf("marketplace_mint_nft.token_id=%d AND marketpalce_mint_nft.denom_id='%s'", payload.Input.TokenID, payload.Input.DenomID)
 	mintJunoTxs, err := searchTxsByFilter(mintQuery, ctx)
 	if err != nil {
 		return nil, err
