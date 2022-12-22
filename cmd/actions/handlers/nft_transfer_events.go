@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	marketplaceTypes "github.com/CudoVentures/cudos-node/x/marketplace/types"
 	nftTypes "github.com/CudoVentures/cudos-node/x/nft/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -117,7 +118,7 @@ func getTxNftChangeOwnershipEvents(cdc codec.Codec, tx *types.Tx) ([]actionstype
 		}
 
 		switch cosmosMsg := stdMsg.(type) {
-		case *nftTypes.MsgMintNFT:
+		case *marketplaceTypes.MsgMintNft:
 			appendIfNotDuplicated(actionstypes.TransferEvent{
 				From:      "0x0",
 				To:        cosmosMsg.Recipient,
