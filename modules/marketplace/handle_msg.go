@@ -28,7 +28,7 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 	case *marketplaceTypes.MsgMintNft:
 		return m.handleMsgMintNft(index, tx, cosmosMsg)
 	case *marketplaceTypes.MsgBuyNft:
-		return m.handleMsgBuyNft(index, tx, cosmosMsg)
+		return m.handleMsgBuyNft(tx, cosmosMsg)
 	case *marketplaceTypes.MsgRemoveNft:
 		return m.handleMsgRemoveNft(cosmosMsg)
 	case *marketplaceTypes.MsgVerifyCollection:
@@ -126,7 +126,7 @@ func (m *Module) handleMsgMintNft(index int, tx *juno.Tx, msg *marketplaceTypes.
 	})
 }
 
-func (m *Module) handleMsgBuyNft(index int, tx *juno.Tx, msg *marketplaceTypes.MsgBuyNft) error {
+func (m *Module) handleMsgBuyNft(tx *juno.Tx, msg *marketplaceTypes.MsgBuyNft) error {
 	timestamp, err := generalUtils.ISO8601ToTimestamp(tx.Timestamp)
 	if err != nil {
 		return err
@@ -142,21 +142,8 @@ func (m *Module) handleMsgBuyNft(index int, tx *juno.Tx, msg *marketplaceTypes.M
 		return err
 	}
 
-	tokenIDStr := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventBuyNftType, marketplaceTypes.AttributeKeyTokenID)
-	tokenID, err := strconv.ParseUint(tokenIDStr, 10, 64)
-	if err != nil {
-		return err
-	}
-
-	denomIDStr := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventBuyNftType, marketplaceTypes.AttributeKeyDenomID)
-	fromOwner := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventBuyNftType, marketplaceTypes.AttributeKeyOwner)
-
 	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
 		if err := dbTx.SaveMarketplaceNftBuy(tx.TxHash, msg.Id, msg.Creator, uint64(timestamp), usdPrice, btcPrice); err != nil {
-			return err
-		}
-
-		if err := dbTx.UpdateNFTHistory(tx.TxHash, tokenID, denomIDStr, fromOwner, msg.Creator, uint64(timestamp)); err != nil {
 			return err
 		}
 

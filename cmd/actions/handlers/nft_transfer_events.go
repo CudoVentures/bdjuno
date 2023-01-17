@@ -37,6 +37,7 @@ func NftTransferEvents(ctx *actionstypes.Context, payload *actionstypes.NftTrans
 
 	buyQuery := fmt.Sprintf("buy_nft.token_id=%d AND buy_nft.denom_id='%s'", payload.Input.TokenID, payload.Input.DenomID)
 	buyJunoTxs, err := searchTxsByFilter(buyQuery, ctx)
+	fmt.Println(buyJunoTxs)
 	if err != nil {
 		return nil, err
 	}
