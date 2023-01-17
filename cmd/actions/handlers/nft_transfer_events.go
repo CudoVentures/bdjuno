@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strings"
 
 	marketplaceTypes "github.com/CudoVentures/cudos-node/x/marketplace/types"
 	nftTypes "github.com/CudoVentures/cudos-node/x/nft/types"
@@ -12,6 +13,7 @@ import (
 	actionstypes "github.com/forbole/bdjuno/v2/cmd/actions/types"
 	"github.com/forbole/bdjuno/v2/utils"
 	"github.com/forbole/juno/v2/types"
+	tendermintTypes "github.com/tendermint/tendermint/abci/types"
 )
 
 func NftTransferEvents(ctx *actionstypes.Context, payload *actionstypes.NftTransferEventsPayload) (interface{}, error) {
@@ -33,7 +35,14 @@ func NftTransferEvents(ctx *actionstypes.Context, payload *actionstypes.NftTrans
 		return nil, err
 	}
 
+	buyQuery := fmt.Sprintf("buy_nft.token_id=%d AND buy_nft.denom_id='%s'", payload.Input.TokenID, payload.Input.DenomID)
+	buyJunoTxs, err := searchTxsByFilter(buyQuery, ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	junoTxs = append(junoTxs, mintJunoTxs...)
+	junoTxs = append(junoTxs, buyJunoTxs...)
 
 	if payload.Input.FromTime != 0 {
 		var err error
@@ -125,6 +134,22 @@ func getTxNftChangeOwnershipEvents(cdc codec.Codec, tx *types.Tx) ([]actionstype
 				Timestamp: timestamp,
 			})
 
+		case *marketplaceTypes.MsgBuyNft:
+			{
+				events := tx.Events
+				for _, event := range events {
+					if event.Type == marketplaceTypes.EventBuyNftType {
+						from := getAttributeValueFromEvent(event, marketplaceTypes.AttributeKeyOwner)
+						to := getAttributeValueFromEvent(event, marketplaceTypes.AttributeKeyBuyer)
+						appendIfNotDuplicated(actionstypes.TransferEvent{
+							From:      from,
+							To:        to,
+							Timestamp: timestamp,
+						})
+						break
+					}
+				}
+			}
 		case *nftTypes.MsgTransferNft:
 			appendIfNotDuplicated(actionstypes.TransferEvent{
 				From:      cosmosMsg.From,
@@ -158,4 +183,12 @@ func filterTxsByTimeRange(junoTxs []*types.Tx, from, to int) ([]*types.Tx, error
 		}
 	}
 	return filtered, nil
+}
+
+func getAttributeValueFromEvent(event tendermintTypes.Event, attributeKey string) string {
+	for _, attr := range event.Attributes {
+		if string(attr.Key) == attributeKey {
+			return strings.ReplaceAll(string(attr.Value), "\"", "")
+		}
+	}
 }
