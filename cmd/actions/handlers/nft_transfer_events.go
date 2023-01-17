@@ -191,4 +191,6 @@ func getAttributeValueFromEvent(event tendermintTypes.Event, attributeKey string
 			return strings.ReplaceAll(string(attr.Value), "\"", "")
 		}
 	}
+
+	return ""
 }
