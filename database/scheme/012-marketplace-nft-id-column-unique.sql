@@ -1,0 +1,2 @@
+ALTER TABLE marketplace_nft 
+ALTER COLUMN id TYPE BIGINT UNIQUE;
