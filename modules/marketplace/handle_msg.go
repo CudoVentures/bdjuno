@@ -77,7 +77,7 @@ func (m *Module) handleMsgPublishNft(index int, tx *juno.Tx, msg *marketplaceTyp
 	}
 
 	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
-		_, err := m.db.GetNft(tokenID, msg.DenomId)
+		err := m.db.CheckIfNftExists(tokenID, msg.DenomId)
 
 		if err != nil {
 			fmt.Println(err)

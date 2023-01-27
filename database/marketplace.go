@@ -3,26 +3,20 @@ package database
 import (
 	"fmt"
 
-	"github.com/CudoVentures/cudos-node/x/marketplace/types"
-	marketplaceTypes "github.com/CudoVentures/cudos-node/x/marketplace/types"
 	"github.com/forbole/bdjuno/v2/database/utils"
 )
 
-func (db *Db) GetNft(tokenId uint64, denomId string) (types.Nft, error) {
-	var rows []marketplaceTypes.Nft
+func (db *Db) CheckIfNftExists(tokenId uint64, denomId string) error {
+	var rows string
 
-	err := db.Sqlx.Select(&rows, `SELECT * FROM marketplace_nft WHERE token_id=$1 AND denom_id=$2`, tokenId, denomId)
+	err := db.Sqlx.Select(&rows, `SELECT token_id FROM marketplace_nft WHERE token_id=$1 AND denom_id=$2`, tokenId, denomId)
 	if err != nil {
-		return types.Nft{}, err
+		return err
 	}
 
 	if len(rows) != 1 {
-		return types.Nft{}, fmt.Errorf("Not found.")
+		return fmt.Errorf("Not found.")
 	}
-
-	row := rows[0]
-
-	return row, nil
 }
 
 func (db *Db) SaveMarketplaceCollection(txHash string, id uint64, denomID, mintRoyalties, resaleRoyalties, creator string, verified bool) error {
@@ -76,12 +70,12 @@ func (tx *DbTx) SetMarketplaceNFTPrice(id uint64, price string) error {
 }
 
 func (tx *DbTx) UnlistNft(id uint64) error {
-	_, err := tx.Exec(`UPDATE marketplace_nft SET price = '0', id = null WHERE id = $2`, id)
+	_, err := tx.Exec(`UPDATE marketplace_nft SET price = '0', id = null WHERE id = $1`, id)
 	return err
 }
 
 func (db *Db) UnlistNft(id uint64) error {
-	_, err := db.Sql.Exec(`UPDATE marketplace_nft SET price = '0', id = null WHERE id = $2`, id)
+	_, err := db.Sql.Exec(`UPDATE marketplace_nft SET price = '0', id = null WHERE id = $1`, id)
 	return err
 }
 
