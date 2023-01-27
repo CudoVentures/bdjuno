@@ -17,6 +17,8 @@ func (db *Db) CheckIfNftExists(tokenId uint64, denomId string) error {
 	if len(rows) != 1 {
 		return fmt.Errorf("Not found.")
 	}
+
+	return nil
 }
 
 func (db *Db) SaveMarketplaceCollection(txHash string, id uint64, denomID, mintRoyalties, resaleRoyalties, creator string, verified bool) error {
