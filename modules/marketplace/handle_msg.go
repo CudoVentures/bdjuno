@@ -77,7 +77,13 @@ func (m *Module) handleMsgPublishNft(index int, tx *juno.Tx, msg *marketplaceTyp
 	}
 
 	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
-		return dbTx.SaveMarketplaceNft(tx.TxHash, nftID, tokenID, msg.DenomId, "", msg.Price.Amount.String(), msg.Creator)
+		_, err := m.db.GetNft(tokenID, msg.DenomId)
+
+		if err != nil {
+			return err
+		}
+
+		return dbTx.ListNft(tx.TxHash, nftID, tokenID, msg.DenomId, msg.Price.Amount.String())
 	})
 }
 
@@ -118,7 +124,7 @@ func (m *Module) handleMsgMintNft(index int, tx *juno.Tx, msg *marketplaceTypes.
 			return err
 		}
 
-		if err := dbTx.SaveMarketplaceNft(tx.TxHash, 0, tokenID, msg.DenomId, msg.Uid, "0", msg.Recipient); err != nil {
+		if err := dbTx.SaveMarketplaceNft(tx.TxHash, tokenID, msg.DenomId, msg.Uid, "0", msg.Recipient); err != nil {
 			return err
 		}
 
@@ -160,12 +166,12 @@ func (m *Module) handleMsgBuyNft(index int, tx *juno.Tx, msg *marketplaceTypes.M
 			return err
 		}
 
-		return dbTx.SetMarketplaceNFTPrice(msg.Id, "0")
+		return dbTx.UnlistNft(msg.Id)
 	})
 }
 
 func (m *Module) handleMsgRemoveNft(msg *marketplaceTypes.MsgRemoveNft) error {
-	return m.db.SetMarketplaceNFTPrice(msg.Id, "0")
+	return m.db.UnlistNft(msg.Id)
 }
 
 func (m *Module) handleMsgVerifyCollection(msg *marketplaceTypes.MsgVerifyCollection) error {

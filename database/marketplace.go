@@ -3,8 +3,27 @@ package database
 import (
 	"fmt"
 
+	"github.com/CudoVentures/cudos-node/x/marketplace/types"
+	marketplaceTypes "github.com/CudoVentures/cudos-node/x/marketplace/types"
 	"github.com/forbole/bdjuno/v2/database/utils"
 )
+
+func (db *Db) GetNft(tokenId uint64, denomId string) (types.Nft, error) {
+	var rows []marketplaceTypes.Nft
+
+	err := db.Sqlx.Select(&rows, `SELECT * FROM marketplace_nft WHERE token_id=$1 AND denom_id=$2`, tokenId, denomId)
+	if err != nil {
+		return types.Nft{}, err
+	}
+
+	if len(rows) != 1 {
+		return types.Nft{}, fmt.Errorf("Not found.")
+	}
+
+	row := rows[0]
+
+	return row, nil
+}
 
 func (db *Db) SaveMarketplaceCollection(txHash string, id uint64, denomID, mintRoyalties, resaleRoyalties, creator string, verified bool) error {
 	_, err := db.Sql.Exec(`INSERT INTO marketplace_collection (transaction_hash, id, denom_id, mint_royalties, resale_royalties, verified, creator) 
@@ -12,10 +31,16 @@ func (db *Db) SaveMarketplaceCollection(txHash string, id uint64, denomID, mintR
 	return err
 }
 
-func (tx *DbTx) SaveMarketplaceNft(txHash string, id, nftID uint64, denomID, uid, price, creator string) error {
-	_, err := tx.Exec(`INSERT INTO marketplace_nft (transaction_hash, id, uid, token_id, denom_id, price, creator, uniq_id) 
-		VALUES($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (token_id, denom_id) DO UPDATE SET price = EXCLUDED.price, id = EXCLUDED.id`,
-		txHash, id, uid, nftID, denomID, price, creator, utils.FormatUniqID(nftID, denomID))
+func (tx *DbTx) ListNft(txHash string, id, tokenId uint64, denomID, price string) error {
+	_, err := tx.Exec(`UPDATE marketplace_nft SET transaction_hash=$1, id=$2, price=$3 WHERE token_id=$4 AND denom_id=$5`,
+		txHash, id, price, tokenId, denomID)
+	return err
+}
+
+func (tx *DbTx) SaveMarketplaceNft(txHash string, tokenId uint64, denomID, uid, price, creator string) error {
+	_, err := tx.Exec(`INSERT INTO marketplace_nft (transaction_hash, uid, token_id, denom_id, price, creator, uniq_id) 
+		VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (token_id, denom_id) DO UPDATE SET price = EXCLUDED.price, id = EXCLUDED.id`,
+		txHash, uid, tokenId, denomID, price, creator, utils.FormatUniqID(tokenId, denomID))
 	return err
 }
 
@@ -46,6 +71,16 @@ func (tx *DbTx) SaveMarketplaceNftMint(txHash string, tokenID uint64, buyer, den
 
 func (tx *DbTx) SetMarketplaceNFTPrice(id uint64, price string) error {
 	_, err := tx.Exec(`UPDATE marketplace_nft SET price = $1 WHERE id = $2`, price, id)
+	return err
+}
+
+func (tx *DbTx) UnlistNft(id uint64) error {
+	_, err := tx.Exec(`UPDATE marketplace_nft SET price = '0', id = null WHERE id = $2`, id)
+	return err
+}
+
+func (db *Db) UnlistNft(id uint64) error {
+	_, err := db.Sql.Exec(`UPDATE marketplace_nft SET price = '0', id = null WHERE id = $2`, id)
 	return err
 }
 
