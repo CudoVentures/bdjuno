@@ -7,7 +7,7 @@ import (
 )
 
 func (db *Db) CheckIfNftExists(tokenId uint64, denomId string) error {
-	var rows string
+	var rows []string
 
 	err := db.Sqlx.Select(&rows, `SELECT denom_id FROM marketplace_nft WHERE token_id=$1 AND denom_id=$2`, tokenId, denomId)
 	if err != nil {
