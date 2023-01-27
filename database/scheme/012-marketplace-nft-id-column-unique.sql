@@ -1,2 +1,2 @@
 ALTER TABLE marketplace_nft 
-ALTER COLUMN id TYPE BIGINT UNIQUE;
+ADD CONSTRAINT unique_id UNIQUE (id);
