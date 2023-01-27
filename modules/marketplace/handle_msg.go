@@ -80,6 +80,7 @@ func (m *Module) handleMsgPublishNft(index int, tx *juno.Tx, msg *marketplaceTyp
 		_, err := m.db.GetNft(tokenID, msg.DenomId)
 
 		if err != nil {
+			fmt.Println(err)
 			return err
 		}
 

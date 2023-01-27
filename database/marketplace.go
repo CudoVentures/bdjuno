@@ -34,6 +34,7 @@ func (db *Db) SaveMarketplaceCollection(txHash string, id uint64, denomID, mintR
 func (tx *DbTx) ListNft(txHash string, id, tokenId uint64, denomID, price string) error {
 	_, err := tx.Exec(`UPDATE marketplace_nft SET transaction_hash=$1, id=$2, price=$3 WHERE token_id=$4 AND denom_id=$5`,
 		txHash, id, price, tokenId, denomID)
+	fmt.Println(err)
 	return err
 }
 
