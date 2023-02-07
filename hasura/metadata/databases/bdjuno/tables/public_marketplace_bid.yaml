@@ -1,0 +1,21 @@
+table:
+  name: marketplace_bid
+  schema: public
+object_relationships:
+- name: marketplace_auction
+  using:
+    foreign_key_constraint_on: auction_id
+- name: transaction
+  using:
+    foreign_key_constraint_on: transaction_hash
+select_permissions:
+- permission:
+    allow_aggregations: true
+    columns:
+    - auction_id
+    - bidder
+    - price
+    - timestamp
+    - transaction_hash
+    filter: {}
+  role: anonymous

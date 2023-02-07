@@ -10,6 +10,7 @@ import (
 var (
 	_ modules.Module        = &Module{}
 	_ modules.MessageModule = &Module{}
+	_ modules.BlockModule   = &Module{}
 )
 
 // Module represents the nft module

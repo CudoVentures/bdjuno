@@ -65,3 +65,5 @@
 - "!include public_cw20token_info.yaml"
 - "!include public_cw20token_code_id.yaml"
 - "!include public_nft_transfer_history.yaml"
+- "!include public_marketplace_auction.yaml"
+- "!include public_marketplace_bid.yaml"

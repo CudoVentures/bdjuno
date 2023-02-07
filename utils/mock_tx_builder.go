@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"strconv"
 	"testing"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	juno "github.com/forbole/juno/v2/types"
 
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
+	marketplace "github.com/CudoVentures/cudos-node/x/marketplace/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/group"
 )
@@ -28,57 +30,104 @@ func NewMockTxBuilder(t *testing.T, timestamp time.Time, txHash string, height u
 
 func (b *MockTxBuilder) WithEventCreateGroup(groupID uint64, address string) *MockTxBuilder {
 	require.NotEmpty(b.t, address)
-	e, err := sdk.TypedEventToEvent(&group.EventCreateGroup{GroupId: groupID})
-	require.NoError(b.t, err)
+	e := abcitypes.Event(sdk.NewEvent(
+		"cosmos.group.v1.EventCreateGroup",
+		sdk.NewAttribute("group_id", strconv.FormatUint(groupID, 10)),
+	))
 
-	e2, err := sdk.TypedEventToEvent(&group.EventCreateGroupPolicy{Address: address})
-	require.NoError(b.t, err)
+	e2 := abcitypes.Event(sdk.NewEvent(
+		"cosmos.group.v1.EventCreateGroupPolicy",
+		sdk.NewAttribute("address", address),
+	))
 
-	b.events = append(b.events, abcitypes.Event(e), abcitypes.Event(e2))
+	b.events = append(b.events, e, e2)
 	return b
 }
 
 func (b *MockTxBuilder) WithEventSubmitProposal(proposalID uint64) *MockTxBuilder {
-	e, err := sdk.TypedEventToEvent(&group.EventSubmitProposal{ProposalId: proposalID})
-	require.NoError(b.t, err)
+	e := abcitypes.Event(sdk.NewEvent(
+		"cosmos.group.v1.EventSubmitProposal",
+		sdk.NewAttribute("proposal_id", strconv.FormatUint(proposalID, 10))),
+	)
 
-	b.events = append(b.events, abcitypes.Event(e))
+	b.events = append(b.events, e)
 	return b
 }
 
 func (b *MockTxBuilder) WithEventExec(result group.ProposalExecutorResult) *MockTxBuilder {
-	e, err := sdk.TypedEventToEvent(&group.EventExec{Result: result, Logs: "1"})
-	require.NoError(b.t, err)
+	e := abcitypes.Event(sdk.NewEvent(
+		"cosmos.group.v1.EventExec",
+		sdk.NewAttribute("result", result.String()),
+		sdk.NewAttribute("logs", "1"),
+	))
 
-	b.events = append(b.events, abcitypes.Event(e))
+	b.events = append(b.events, e)
 	return b
 }
 
 func (b *MockTxBuilder) WithEventVote() *MockTxBuilder {
-	e, err := sdk.TypedEventToEvent(&group.EventVote{ProposalId: 1})
-	require.NoError(b.t, err)
+	e := abcitypes.Event(sdk.NewEvent(
+		"cosmos.group.v1.EventVote",
+		sdk.NewAttribute("proposal_id", "1"),
+	))
 
-	b.events = append(b.events, abcitypes.Event(e))
+	b.events = append(b.events, e)
 	return b
 }
 
 func (b *MockTxBuilder) WithEventWithdrawProposal() *MockTxBuilder {
-	e, err := sdk.TypedEventToEvent(&group.EventWithdrawProposal{ProposalId: 1})
-	require.NoError(b.t, err)
+	e := abcitypes.Event(sdk.NewEvent(
+		"cosmos.group.v1.EventWithdrawProposal",
+		sdk.NewAttribute("proposal_id", "1"),
+	))
 
-	b.events = append(b.events, abcitypes.Event(e))
+	b.events = append(b.events, e)
 	return b
 }
 
 func (b *MockTxBuilder) WithEventInstantiateContract(contractAddr string) *MockTxBuilder {
-	e := sdk.NewEvent(wasm.EventTypeInstantiate, sdk.NewAttribute(wasm.AttributeKeyContractAddr, contractAddr))
-	b.events = append(b.events, abcitypes.Event(e))
+	e := abcitypes.Event(sdk.NewEvent(
+		wasm.EventTypeInstantiate,
+		sdk.NewAttribute(wasm.AttributeKeyContractAddr, contractAddr),
+	))
+
+	b.events = append(b.events, e)
 	return b
 }
 
 func (b *MockTxBuilder) WithEventWasmAction(msgType string) *MockTxBuilder {
-	e := sdk.NewEvent(wasm.WasmModuleEventType, sdk.NewAttribute("action", msgType))
-	b.events = append(b.events, abcitypes.Event(e))
+	e := abcitypes.Event(sdk.NewEvent(
+		wasm.WasmModuleEventType,
+		sdk.NewAttribute("action", msgType),
+	))
+
+	b.events = append(b.events, e)
+	return b
+}
+
+func (b *MockTxBuilder) WithEventPublishAuction(auctionID uint64, startTime time.Time, endTime time.Time, auctionInfo string) *MockTxBuilder {
+	e := abcitypes.Event(sdk.NewEvent(
+		marketplace.EventPublishAuctionType,
+		sdk.NewAttribute(marketplace.AttributeAuctionID, strconv.FormatUint(auctionID, 10)),
+		sdk.NewAttribute(marketplace.AttributeStartTime, startTime.Format(time.RFC3339)),
+		sdk.NewAttribute(marketplace.AttributeEndTime, endTime.Format(time.RFC3339)),
+		sdk.NewAttribute(marketplace.AttributeAuctionInfo, auctionInfo),
+	))
+
+	b.events = append(b.events, e)
+	return b
+}
+
+func (b *MockTxBuilder) WithEventBuyNftFromAuction(auctionID uint64, tokenID uint64, denomID string, buyer string) *MockTxBuilder {
+	e := abcitypes.Event(sdk.NewEvent(
+		marketplace.EventBuyNftType,
+		sdk.NewAttribute(marketplace.AttributeAuctionID, strconv.FormatUint(auctionID, 10)),
+		sdk.NewAttribute(marketplace.AttributeKeyTokenID, strconv.FormatUint(tokenID, 10)),
+		sdk.NewAttribute(marketplace.AttributeKeyDenomID, denomID),
+		sdk.NewAttribute(marketplace.AttributeKeyBuyer, buyer),
+	))
+
+	b.events = append(b.events, e)
 	return b
 }
 

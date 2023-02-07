@@ -405,10 +405,8 @@ github.com/CudoVentures/cosmos-gravity-bridge/module v0.0.0-20220908134551-c82e5
 github.com/CudoVentures/cosmos-gravity-bridge/module v0.0.0-20220908134551-c82e5d5a6ac3/go.mod h1:yhB9hRM0nPHH8k0HN+066glD0xaZjfB9WjgYeijYNBc=
 github.com/CudoVentures/cosmos-sdk v0.0.0-20220816082327-65532d606824 h1:6IkLkSVwMjH+qsyBZbOUwJRUHh72jXRzVNOMGKN8icI=
 github.com/CudoVentures/cosmos-sdk v0.0.0-20220816082327-65532d606824/go.mod h1:Zlp+5q+oliIV6SFlfspqcd/28Ra7v51Bt6Wy6H1b8PI=
-github.com/CudoVentures/cudos-node v1.0.1-0.20221124124559-4c2b4c80ba67 h1:2assj7VdMtkQpD394PQJaxrmlvm8hH6g0BXiWiZXrhE=
-github.com/CudoVentures/cudos-node v1.0.1-0.20221124124559-4c2b4c80ba67/go.mod h1:NSSTwYXNsoRHQT+TtLPMRcuoTv1t1ngwY5MufiyA6Bo=
-github.com/CudoVentures/cudos-node v1.0.1-0.20221205141302-2c6a9098d44b h1:e6wx/bp5G8CdVkLS1wxZq7eKdHIzIcDUBBDmpaq62dU=
-github.com/CudoVentures/cudos-node v1.0.1-0.20221205141302-2c6a9098d44b/go.mod h1:NSSTwYXNsoRHQT+TtLPMRcuoTv1t1ngwY5MufiyA6Bo=
+github.com/CudoVentures/cudos-node v1.0.1-0.20230207102951-f1acfc21d5b9 h1:fD72wHgKt5JkQikt8/og8FQYADuXWrx9Enbw/IZwE40=
+github.com/CudoVentures/cudos-node v1.0.1-0.20230207102951-f1acfc21d5b9/go.mod h1:jp1iaVOhA+a78rw68Dpzr90Bk6vV1jjSHVysGysH0X8=
 github.com/CudoVentures/juno/v2 v2.0.1-0.20220908075630-6618cc96377f h1:yWNnzclSePa0xJfKFCXDMSBdmFOPD84uwlE6zGaXreI=
 github.com/CudoVentures/juno/v2 v2.0.1-0.20220908075630-6618cc96377f/go.mod h1:lSiplsjZl8aFajq+DnRph947q6hMPHJqfGEb1WH+pGA=
 github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	marketplaceTypes "github.com/CudoVentures/cudos-node/x/marketplace/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -41,6 +42,12 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 		return m.handleMsgUpdateRoyalties(cosmosMsg)
 	case *marketplaceTypes.MsgCreateCollection:
 		return m.handleMsgCreateCollection(index, tx, cosmosMsg)
+	case *marketplaceTypes.MsgPublishAuction:
+		return m.handleMsgPublishAuction(index, tx, cosmosMsg)
+	case *marketplaceTypes.MsgPlaceBid:
+		return m.handleMsgPlaceBid(index, tx, cosmosMsg)
+	case *marketplaceTypes.MsgAcceptBid:
+		return m.handleMsgAcceptBid(tx, cosmosMsg)
 	default:
 		return nil
 	}
@@ -217,4 +224,95 @@ func (m *Module) handleMsgCreateCollection(index int, tx *juno.Tx, msg *marketpl
 	}
 
 	return m.db.SaveMarketplaceCollection(tx.TxHash, collectionID, msg.Id, string(mintRoyaltiesJSON), string(resaleRoyaltiesJSON), msg.Creator, msg.Verified)
+}
+
+func (m *Module) handleMsgPublishAuction(index int, tx *juno.Tx, msg *marketplaceTypes.MsgPublishAuction) error {
+	auctionIDStr := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventPublishAuctionType, marketplaceTypes.AttributeAuctionID)
+
+	auctionID, err := strconv.ParseUint(auctionIDStr, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	tokenID, err := strconv.ParseUint(msg.TokenId, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	startTimeStr := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventPublishAuctionType, marketplaceTypes.AttributeStartTime)
+
+	startTime, err := time.Parse(time.RFC3339, startTimeStr)
+	if err != nil {
+		return err
+	}
+
+	endTimeStr := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventPublishAuctionType, marketplaceTypes.AttributeEndTime)
+
+	endTime, err := time.Parse(time.RFC3339, endTimeStr)
+	if err != nil {
+		return err
+	}
+
+	auctionInfo := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventPublishAuctionType, marketplaceTypes.AttributeAuctionInfo)
+
+	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
+		return dbTx.SaveMarketplaceAuction(auctionID, tokenID, msg.DenomId, msg.Creator, startTime, endTime, auctionInfo)
+	})
+}
+
+func (m *Module) handleMsgPlaceBid(index int, tx *juno.Tx, msg *marketplaceTypes.MsgPlaceBid) error {
+	timestamp, err := time.Parse(time.RFC3339, tx.Timestamp)
+	if err != nil {
+		return fmt.Errorf("error while parsing time: %s", err)
+	}
+
+	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
+		err := dbTx.SaveMarketplaceBid(msg.AuctionId, msg.Bidder, msg.Amount.Amount.String(), timestamp, tx.TxHash)
+		if err != nil {
+			return err
+		}
+
+		nftSold := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventBuyNftType, marketplaceTypes.AttributeAuctionID)
+		if nftSold != "" {
+			timestamp, err := generalUtils.ISO8601ToTimestamp(tx.Timestamp)
+			if err != nil {
+				return err
+			}
+
+			usdPrice, err := coingecko.GetCUDOSPrice("usd")
+			if err != nil {
+				return err
+			}
+
+			btcPrice, err := coingecko.GetCUDOSPrice("btc")
+			if err != nil {
+				return err
+			}
+
+			return dbTx.SaveMarketplaceAuctionSold(msg.AuctionId, uint64(timestamp), usdPrice, btcPrice, "")
+		}
+
+		return nil
+	})
+}
+
+func (m *Module) handleMsgAcceptBid(tx *juno.Tx, msg *marketplaceTypes.MsgAcceptBid) error {
+	timestamp, err := generalUtils.ISO8601ToTimestamp(tx.Timestamp)
+	if err != nil {
+		return err
+	}
+
+	usdPrice, err := coingecko.GetCUDOSPrice("usd")
+	if err != nil {
+		return err
+	}
+
+	btcPrice, err := coingecko.GetCUDOSPrice("btc")
+	if err != nil {
+		return err
+	}
+
+	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
+		return dbTx.SaveMarketplaceAuctionSold(msg.AuctionId, uint64(timestamp), usdPrice, btcPrice, tx.TxHash)
+	})
 }
