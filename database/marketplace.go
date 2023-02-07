@@ -7,16 +7,16 @@ import (
 	"github.com/forbole/bdjuno/v2/database/utils"
 )
 
-func (db *Db) CheckIfNftExists(tokenId uint64, denomId string) error {
+func (db *Db) CheckIfNftExists(tokenID uint64, denomID string) error {
 	var rows []string
 
-	err := db.Sqlx.Select(&rows, `SELECT denom_id FROM marketplace_nft WHERE token_id=$1 AND denom_id=$2`, tokenId, denomId)
+	err := db.Sqlx.Select(&rows, `SELECT denom_id FROM marketplace_nft WHERE token_id=$1 AND denom_id=$2`, tokenID, denomID)
 	if err != nil {
 		return err
 	}
 
 	if len(rows) != 1 {
-		return fmt.Errorf("Not found.")
+		return fmt.Errorf("not found")
 	}
 
 	return nil
@@ -28,17 +28,17 @@ func (db *Db) SaveMarketplaceCollection(txHash string, id uint64, denomID, mintR
 	return err
 }
 
-func (tx *DbTx) ListNft(txHash string, id, tokenId uint64, denomID, price string) error {
+func (tx *DbTx) ListNft(txHash string, id, tokenID uint64, denomID, price string) error {
 	_, err := tx.Exec(`UPDATE marketplace_nft SET transaction_hash=$1, id=$2, price=$3 WHERE token_id=$4 AND denom_id=$5`,
-		txHash, id, price, tokenId, denomID)
+		txHash, id, price, tokenID, denomID)
 	fmt.Println(err)
 	return err
 }
 
-func (tx *DbTx) SaveMarketplaceNft(txHash string, tokenId uint64, denomID, uid, price, creator string) error {
+func (tx *DbTx) SaveMarketplaceNft(txHash string, tokenID uint64, denomID, uid, price, creator string) error {
 	_, err := tx.Exec(`INSERT INTO marketplace_nft (transaction_hash, uid, token_id, denom_id, price, creator, uniq_id) 
 		VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (token_id, denom_id) DO UPDATE SET price = EXCLUDED.price, id = EXCLUDED.id`,
-		txHash, uid, tokenId, denomID, price, creator, utils.FormatUniqID(tokenId, denomID))
+		txHash, uid, tokenID, denomID, price, creator, utils.FormatUniqID(tokenID, denomID))
 	return err
 }
 
