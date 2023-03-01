@@ -7,7 +7,6 @@ import (
 
 	marketplaceTypes "github.com/CudoVentures/cudos-node/x/marketplace/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/forbole/bdjuno/v2/client/coingecko"
 	"github.com/forbole/bdjuno/v2/database"
 	utils "github.com/forbole/bdjuno/v2/modules/utils"
 	generalUtils "github.com/forbole/bdjuno/v2/utils"
@@ -105,22 +104,12 @@ func (m *Module) handleMsgMintNft(index int, tx *juno.Tx, msg *marketplaceTypes.
 
 	dataJSON, dataText := utils.GetData(msg.Data)
 
-	usdPrice, err := coingecko.GetCUDOSPrice("usd")
-	if err != nil {
-		return err
-	}
-
-	btcPrice, err := coingecko.GetCUDOSPrice("btc")
-	if err != nil {
-		return err
-	}
-
 	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
 		if err := dbTx.SaveNFT(tx.TxHash, tokenID, msg.DenomId, msg.Name, msg.Uri, utils.SanitizeUTF8(dataJSON), dataText, msg.Recipient, msg.Creator, ""); err != nil {
 			return err
 		}
 
-		if err := dbTx.SaveMarketplaceNftMint(tx.TxHash, tokenID, msg.Recipient, msg.DenomId, msg.Price.Amount.String(), uint64(timestamp), usdPrice, btcPrice); err != nil {
+		if err := dbTx.SaveMarketplaceNftMint(tx.TxHash, tokenID, msg.Recipient, msg.DenomId, msg.Price.Amount.String(), uint64(timestamp), m.cudosPrice.USD, m.cudosPrice.BTC); err != nil {
 			return err
 		}
 
@@ -138,16 +127,6 @@ func (m *Module) handleMsgBuyNft(index int, tx *juno.Tx, msg *marketplaceTypes.M
 		return err
 	}
 
-	usdPrice, err := coingecko.GetCUDOSPrice("usd")
-	if err != nil {
-		return err
-	}
-
-	btcPrice, err := coingecko.GetCUDOSPrice("btc")
-	if err != nil {
-		return err
-	}
-
 	tokenIDStr := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventBuyNftType, marketplaceTypes.AttributeKeyTokenID)
 	tokenID, err := strconv.ParseUint(tokenIDStr, 10, 64)
 	if err != nil {
@@ -158,7 +137,7 @@ func (m *Module) handleMsgBuyNft(index int, tx *juno.Tx, msg *marketplaceTypes.M
 	fromOwner := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventBuyNftType, marketplaceTypes.AttributeKeyOwner)
 
 	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
-		if err := dbTx.SaveMarketplaceNftBuy(tx.TxHash, msg.Id, msg.Creator, uint64(timestamp), usdPrice, btcPrice); err != nil {
+		if err := dbTx.SaveMarketplaceNftBuy(tx.TxHash, msg.Id, msg.Creator, uint64(timestamp), m.cudosPrice.USD, m.cudosPrice.BTC); err != nil {
 			return err
 		}
 

@@ -17,6 +17,8 @@ var expectedAppliedMigrations = []database.Migration{
 	{ID: int64(9), Name: "008-block_parsed_data.sql", CreatedAt: int64(0)},
 	{ID: int64(10), Name: "009-cw20token_update.sql", CreatedAt: int64(0)},
 	{ID: int64(11), Name: "010-nft-uniq-id.sql", CreatedAt: int64(0)},
+	{ID: int64(12), Name: "011-nft-migrate-uniq-id-values.sql", CreatedAt: int64(0)},
+	{ID: int64(13), Name: "012-marketplace-nft-id-column-unique.sql", CreatedAt: int64(0)},
 }
 
 func (suite *DbTestSuite) TestExecuteMigrations() {
