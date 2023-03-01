@@ -12,7 +12,7 @@ import (
 func (m *Module) RegisterPeriodicOperations(scheduler *gocron.Scheduler) error {
 	log.Debug().Str("module", "marketplace").Msg("setting up periodic tasks")
 
-	if _, err := scheduler.Every(1).Minute().Do(func() {
+	if _, err := scheduler.Every(15).Minute().Do(func() {
 		utils.WatchMethod(m.fetchCudosPrice)
 	}); err != nil {
 		return err
