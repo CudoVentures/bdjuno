@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"strconv"
 
+	marketplaceTypes "github.com/CudoVentures/cudos-node/x/marketplace/types"
 	nftTypes "github.com/CudoVentures/cudos-node/x/nft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/forbole/bdjuno/v2/modules/utils"
+	"github.com/forbole/bdjuno/v2/database"
+	utils "github.com/forbole/bdjuno/v2/modules/utils"
+	generalUtils "github.com/forbole/bdjuno/v2/utils"
 	juno "github.com/forbole/juno/v2/types"
 )
 
@@ -19,29 +22,35 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 	switch cosmosMsg := msg.(type) {
 	case *nftTypes.MsgIssueDenom:
 		return m.handleMsgIssueDenom(tx, cosmosMsg)
-	// TODO: Uncomment when cudos-node with version supporting MsgTransferDenom is released
-	// case *nftTypes.MsgTransferDenom:
-	// 	return m.handleMsgTransferDenom(cosmosMsg)
+	case *nftTypes.MsgTransferDenom:
+		return m.handleMsgTransferDenom(cosmosMsg)
 	case *nftTypes.MsgMintNFT:
 		return m.handleMsgMintNFT(index, tx, cosmosMsg)
 	case *nftTypes.MsgEditNFT:
 		return m.handleMsgEditNFT(cosmosMsg)
 	case *nftTypes.MsgTransferNft:
-		return m.handleMsgTransferNFT(cosmosMsg)
+		return m.handleMsgTransferNFT(tx, cosmosMsg)
 	case *nftTypes.MsgBurnNFT:
-		return m.handleMsgBurnNFT(cosmosMsg)
+		return m.handleMsgBurnNFT(index, tx, cosmosMsg)
+	case *marketplaceTypes.MsgCreateCollection:
+		return m.handleMsgCreateCollection(tx, cosmosMsg)
+	case *marketplaceTypes.MsgBuyNft:
+		return m.handleMsgBuyNft(index, tx, cosmosMsg)
 	default:
 		return nil
 	}
 }
 
 func (m *Module) handleMsgIssueDenom(tx *juno.Tx, msg *nftTypes.MsgIssueDenom) error {
-	return m.db.SaveDenom(tx.TxHash, msg.Id, msg.Name, msg.Schema, msg.Symbol, msg.Sender, msg.ContractAddressSigner)
+	dataJSON, dataText := utils.GetData(msg.Data)
+
+	return m.db.SaveDenom(tx.TxHash, msg.Id, msg.Name, msg.Schema, msg.Symbol, msg.Sender, msg.ContractAddressSigner,
+		msg.Traits, msg.Minter, msg.Description, dataText, utils.SanitizeUTF8(dataJSON))
 }
 
-// func (m *Module) handleMsgTransferDenom(msg *nftTypes.MsgTransferDenom) error {
-// 	return m.db.UpdateDenom(msg.Id, msg.Recipient)
-// }
+func (m *Module) handleMsgTransferDenom(msg *nftTypes.MsgTransferDenom) error {
+	return m.db.UpdateDenom(msg.Id, msg.Recipient)
+}
 
 func (m *Module) handleMsgMintNFT(index int, tx *juno.Tx, msg *nftTypes.MsgMintNFT) error {
 	tokenIDStr := utils.GetValueFromLogs(uint32(index), tx.Logs, nftTypes.EventTypeMintNFT, nftTypes.AttributeKeyTokenID)
@@ -54,33 +63,92 @@ func (m *Module) handleMsgMintNFT(index int, tx *juno.Tx, msg *nftTypes.MsgMintN
 		return err
 	}
 
-	dataJSON, dataText := getData(msg.Data)
+	timestamp, err := generalUtils.ISO8601ToTimestamp(tx.Timestamp)
+	if err != nil {
+		return err
+	}
 
-	return m.db.SaveNFT(tx.TxHash, tokenID, msg.DenomId, msg.Name, msg.URI, utils.SanitizeUTF8(dataJSON), dataText, msg.Recipient, msg.Sender, msg.ContractAddressSigner)
+	dataJSON, dataText := utils.GetData(msg.Data)
+
+	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
+		if error := dbTx.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, "0x0", msg.Sender, uint64(timestamp)); error != nil {
+			return error
+		}
+
+		return dbTx.SaveNFT(tx.TxHash, tokenID, msg.DenomId, msg.Name, msg.URI, utils.SanitizeUTF8(dataJSON), dataText, msg.Recipient, msg.Sender, msg.ContractAddressSigner)
+	})
 }
 
 func (m *Module) handleMsgEditNFT(msg *nftTypes.MsgEditNFT) error {
-	dataJSON, dataText := getData(msg.Data)
+	dataJSON, dataText := utils.GetData(msg.Data)
 
 	return m.db.UpdateNFT(msg.Id, msg.DenomId, msg.Name, msg.URI, utils.SanitizeUTF8(dataJSON), dataText)
 }
 
-func (m *Module) handleMsgTransferNFT(msg *nftTypes.MsgTransferNft) error {
-	return m.db.UpdateNFTOwner(msg.TokenId, msg.DenomId, msg.To)
-}
-
-func (m *Module) handleMsgBurnNFT(msg *nftTypes.MsgBurnNFT) error {
-	return m.db.BurnNFT(msg.Id, msg.DenomId)
-}
-
-func getData(data string) (string, string) {
-	dataText := data
-	dataJSON := "{}"
-
-	if data != "" && utils.IsJSON(data) {
-		dataJSON = data
-		dataText = ""
+func (m *Module) handleMsgTransferNFT(tx *juno.Tx, msg *nftTypes.MsgTransferNft) error {
+	timestamp, err := generalUtils.ISO8601ToTimestamp(tx.Timestamp)
+	if err != nil {
+		return err
 	}
 
-	return dataJSON, dataText
+	tokenID, err := strconv.ParseUint(msg.TokenId, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
+		if error := dbTx.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, msg.Sender, msg.To, uint64(timestamp)); error != nil {
+			return error
+		}
+
+		return dbTx.UpdateNFTOwner(msg.TokenId, msg.DenomId, msg.To)
+	})
+}
+
+func (m *Module) handleMsgBurnNFT(index int, tx *juno.Tx, msg *nftTypes.MsgBurnNFT) error {
+	tokenIDStr := utils.GetValueFromLogs(uint32(index), tx.Logs, nftTypes.EventTypeBurnNFT, nftTypes.AttributeKeyTokenID)
+	if tokenIDStr == "" {
+		return fmt.Errorf("token id not found in tx %s", tx.TxHash)
+	}
+
+	tokenID, err := strconv.ParseUint(tokenIDStr, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	timestamp, err := generalUtils.ISO8601ToTimestamp(tx.Timestamp)
+	if err != nil {
+		return err
+	}
+
+	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
+		if error := dbTx.UpdateNFTHistory(tx.TxHash, tokenID, msg.DenomId, msg.Sender, "0x0", uint64(timestamp)); error != nil {
+			return error
+		}
+
+		return dbTx.BurnNFT(msg.Id, msg.DenomId)
+	})
+}
+
+func (m *Module) handleMsgCreateCollection(tx *juno.Tx, msg *marketplaceTypes.MsgCreateCollection) error {
+	dataJSON, dataText := utils.GetData(msg.Data)
+
+	return m.db.SaveDenom(tx.TxHash, msg.Id, msg.Name, msg.Schema, msg.Symbol, msg.Creator, "",
+		msg.Traits, msg.Minter, msg.Description, dataText, utils.SanitizeUTF8(dataJSON))
+}
+
+func (m *Module) handleMsgBuyNft(index int, tx *juno.Tx, msg *marketplaceTypes.MsgBuyNft) error {
+	tokenID := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventBuyNftType, marketplaceTypes.AttributeKeyTokenID)
+	if tokenID == "" {
+		return fmt.Errorf("token id not found in tx %s", tx.TxHash)
+	}
+
+	denomID := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventBuyNftType, marketplaceTypes.AttributeKeyDenomID)
+	if denomID == "" {
+		return fmt.Errorf("denom id not found in tx %s", tx.TxHash)
+	}
+
+	return m.db.ExecuteTx(func(dbTx *database.DbTx) error {
+		return dbTx.UpdateNFTOwner(tokenID, denomID, msg.Creator)
+	})
 }

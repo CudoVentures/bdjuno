@@ -1,0 +1,27 @@
+table:
+  name: marketplace_nft
+  schema: public
+object_relationships:
+- name: transaction
+  using:
+    foreign_key_constraint_on: transaction_hash
+- name: nft_denom
+  using:
+    foreign_key_constraint_on: denom_id
+- name: nft_nft
+  using:
+    foreign_key_constraint_on: [token_id, denom_id]
+select_permissions:
+- permission:
+    allow_aggregations: true
+    columns:
+    - transaction_hash
+    - id
+    - uid
+    - token_id
+    - denom_id
+    - price
+    - creator
+    - uniq_id
+    filter: {}
+  role: anonymous

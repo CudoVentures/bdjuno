@@ -292,7 +292,7 @@ func (m *Module) handleMsgUpdateGroup(dbTx *database.DbTx, tx *juno.Tx, proposal
 				return err
 			}
 		case "/cosmos.group.v1.MsgUpdateGroupMetadata":
-			var msg group.MsgUpdateGroupMetadata
+			var msg types.MsgUpdateGroupMetadata
 			if err := json.Unmarshal(msgs[i], &msg); err != nil {
 				return err
 			}
@@ -315,7 +315,19 @@ func (m *Module) handleMsgUpdateGroup(dbTx *database.DbTx, tx *juno.Tx, proposal
 				return err
 			}
 
-			if err := dbTx.UpdateDecisionPolicy(proposal.GroupID, msg.DecisionPolicy); err != nil {
+			votingPeriod, err := time.ParseDuration(msg.DecisionPolicy.Windows.VotingPeriod)
+			if err != nil {
+				return err
+			}
+			votingPeriodUint := uint64(votingPeriod.Seconds())
+
+			minExecutionPeriod, err := time.ParseDuration(msg.DecisionPolicy.Windows.MinExecutionPeriod)
+			if err != nil {
+				return err
+			}
+			minExecutionPeriodUint := uint64(minExecutionPeriod.Seconds())
+
+			if err := dbTx.UpdateDecisionPolicy(proposal.GroupID, msg.DecisionPolicy.Threshold, votingPeriodUint, minExecutionPeriodUint); err != nil {
 				return err
 			}
 		}

@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,4 +28,18 @@ func GetValueFromLogs(index uint32, logs sdk.ABCIMessageLogs, eventType, attribu
 	}
 
 	return ""
+}
+
+func GetUint64FromLogs(index int, logs sdk.ABCIMessageLogs, txHash, eventType, attributeKey string) (uint64, error) {
+	valueStr := GetValueFromLogs(uint32(index), logs, eventType, attributeKey)
+	if valueStr == "" {
+		return 0, fmt.Errorf("attribute %s for event %s not found in tx %s", attributeKey, eventType, txHash)
+	}
+
+	value, err := strconv.ParseUint(valueStr, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse %s from tx %s to uint64", valueStr, txHash)
+	}
+
+	return value, nil
 }

@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/cosmos/cosmos-sdk/codec"
 )
 
 // ActionsWorker represents the worker that is used to handle Hasura actions queries
 type ActionsWorker struct {
 	mux     *http.ServeMux
 	context *Context
+	cdc     codec.Codec
 }
 
 // NewActionsWorker returns a new ActionsWorker instance
@@ -18,6 +21,7 @@ func NewActionsWorker(context *Context) *ActionsWorker {
 	return &ActionsWorker{
 		mux:     http.NewServeMux(),
 		context: context,
+		cdc:     context.Cdc,
 	}
 }
 
@@ -37,6 +41,46 @@ func (w *ActionsWorker) RegisterHandler(path string, handler ActionHandler) {
 
 		// Get the actions payload
 		var payload Payload
+		err = json.Unmarshal(reqBody, &payload)
+		if err != nil {
+			http.Error(writer, "invalid payload: failed to unmarshal json", http.StatusInternalServerError)
+			return
+		}
+
+		// Handle the request
+		res, err := handler(w.context, &payload)
+		if err != nil {
+			w.handleError(writer, err)
+			return
+		}
+
+		// Marshal the response
+		data, err := json.Marshal(res)
+		if err != nil {
+			w.handleError(writer, err)
+			return
+		}
+
+		// Write the response
+		writer.Write(data)
+	})
+}
+
+func (w *ActionsWorker) RegisterNftTransferEventsHandler(path string, handler NftTransferEventsActionHandler) {
+	w.mux.HandleFunc(path, func(writer http.ResponseWriter, request *http.Request) {
+		// Set the content type
+		writer.Header().Set("Content-Type", "application/json")
+
+		// Read the body
+		reqBody, err := ioutil.ReadAll(request.Body)
+		if err != nil {
+			http.Error(writer, "invalid payload", http.StatusBadRequest)
+			return
+		}
+		defer request.Body.Close()
+
+		// Get the actions payload
+		var payload NftTransferEventsPayload
 		err = json.Unmarshal(reqBody, &payload)
 		if err != nil {
 			http.Error(writer, "invalid payload: failed to unmarshal json", http.StatusInternalServerError)

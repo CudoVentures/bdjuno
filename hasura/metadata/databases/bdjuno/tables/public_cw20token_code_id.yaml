@@ -1,0 +1,10 @@
+table:
+  name: cw20token_code_id
+  schema: public
+select_permissions:
+- permission:
+    columns:
+    - id
+    filter: {}
+  role: anonymous
+

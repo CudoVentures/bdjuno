@@ -51,6 +51,15 @@ issues:
     - text: "ST1016:"
       linters:
         - stylecheck
+    - text: "unkeyed fields"
+      linters:
+        - govet
+    - text: "G114:"
+      linters:
+        - gosec
+    - text: "sigchanyzer:"
+      linters:
+        - govet
   max-issues-per-linter: 10000
   max-same-issues: 10000
 

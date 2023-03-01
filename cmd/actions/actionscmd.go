@@ -74,7 +74,7 @@ func NewActionsCmd(parseCfg *parse.Config) *cobra.Command {
 			}
 
 			// Build the worker
-			context := actionstypes.NewContext(node, sources)
+			context := actionstypes.NewContext(node, sources, parseCtx.EncodingConfig.Marshaler)
 			worker := actionstypes.NewActionsWorker(context)
 
 			// Register the endpoints
@@ -98,6 +98,9 @@ func NewActionsCmd(parseCfg *parse.Config) *cobra.Command {
 			worker.RegisterHandler("/validator_delegations", handlers.ValidatorDelegation)
 			worker.RegisterHandler("/validator_redelegations_from", handlers.ValidatorRedelegationsFromHandler)
 			worker.RegisterHandler("/validator_unbonding_delegations", handlers.ValidatorUnbondingDelegationsHandler)
+
+			// -- Events --
+			worker.RegisterNftTransferEventsHandler("/nft_transfer_events", handlers.NftTransferEvents)
 
 			// Listen for and trap any OS signal to gracefully shutdown and exit
 			trapSignal(parseCtx)

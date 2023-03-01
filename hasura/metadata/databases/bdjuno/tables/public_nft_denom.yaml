@@ -16,5 +16,10 @@ select_permissions:
     - symbol
     - owner
     - contract_address_signer
+    - traits
+    - minter
+    - description
+    - data_text
+    - data_json
     filter: {}
   role: anonymous
