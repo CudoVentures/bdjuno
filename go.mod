@@ -136,7 +136,7 @@ replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
 	github.com/althea-net/cosmos-gravity-bridge/module => github.com/CudoVentures/cosmos-gravity-bridge/module v0.0.0-20220908134551-c82e5d5a6ac3
 	github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.0.0-20220816082327-65532d606824
-	github.com/forbole/juno/v2 => github.com/CudoVentures/juno/v2 v2.0.1-0.20220908075630-6618cc96377f
+	github.com/forbole/juno/v2 => github.com/CudoVentures/juno/v2 v2.0.1-0.20230306092307-474577f5815a
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	// github.com/tendermint/tendermint => github.com/forbole/tendermint v0.34.13-0.20210820072129-a2a4af55563d
 	google.golang.org/grpc => google.golang.org/grpc v1.33.2
