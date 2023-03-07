@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/CosmWasm/wasmd v0.25.0
 	github.com/CosmWasm/wasmvm v1.0.0-beta10
-	github.com/CudoVentures/cudos-node v1.0.1-0.20221205141302-2c6a9098d44b
+	github.com/CudoVentures/cudos-node v0.0.0-20230202091658-77e48478b170
 	github.com/althea-net/cosmos-gravity-bridge/module v0.0.0-00010101000000-000000000000
 	github.com/cosmos/cosmos-sdk v0.45.3
 	github.com/forbole/juno/v2 v2.0.0-20220223115732-dbb226a91ce9
@@ -16,7 +16,7 @@ require (
 	github.com/pelletier/go-toml v1.9.4
 	github.com/rs/zerolog v1.26.1
 	github.com/spf13/cobra v1.4.0
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.8.0
 	github.com/tendermint/tendermint v0.34.19
 	github.com/tendermint/tm-db v0.6.7
 	google.golang.org/grpc v1.50.1
