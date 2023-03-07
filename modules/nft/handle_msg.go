@@ -11,6 +11,7 @@ import (
 	utils "github.com/forbole/bdjuno/v2/modules/utils"
 	generalUtils "github.com/forbole/bdjuno/v2/utils"
 	juno "github.com/forbole/juno/v2/types"
+	"github.com/rs/zerolog/log"
 )
 
 // HandleMsg implements MessageModule
@@ -42,6 +43,8 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 }
 
 func (m *Module) handleMsgIssueDenom(tx *juno.Tx, msg *nftTypes.MsgIssueDenom) error {
+	log.Debug().Str("module", "nft").Str("denomId", msg.Id).Msg("handling message issue denom")
+
 	dataJSON, dataText := utils.GetData(msg.Data)
 
 	return m.db.SaveDenom(tx.TxHash, msg.Id, msg.Name, msg.Schema, msg.Symbol, msg.Sender, msg.ContractAddressSigner,
@@ -49,10 +52,14 @@ func (m *Module) handleMsgIssueDenom(tx *juno.Tx, msg *nftTypes.MsgIssueDenom) e
 }
 
 func (m *Module) handleMsgTransferDenom(msg *nftTypes.MsgTransferDenom) error {
+	log.Debug().Str("module", "nft").Str("denomId", msg.Id).Msg("handling message transfer denom")
+
 	return m.db.UpdateDenom(msg.Id, msg.Recipient)
 }
 
 func (m *Module) handleMsgMintNFT(index int, tx *juno.Tx, msg *nftTypes.MsgMintNFT) error {
+	log.Debug().Str("module", "nft").Str("denomId", msg.DenomId).Str("name", msg.Name).Msg("handling message mint nft")
+
 	tokenIDStr := utils.GetValueFromLogs(uint32(index), tx.Logs, nftTypes.EventTypeMintNFT, nftTypes.AttributeKeyTokenID)
 	if tokenIDStr == "" {
 		return fmt.Errorf("token id not found in tx %s", tx.TxHash)
@@ -80,12 +87,16 @@ func (m *Module) handleMsgMintNFT(index int, tx *juno.Tx, msg *nftTypes.MsgMintN
 }
 
 func (m *Module) handleMsgEditNFT(msg *nftTypes.MsgEditNFT) error {
+	log.Debug().Str("module", "nft").Str("denomId", msg.DenomId).Str("tokenId", msg.Id).Msg("handling message edit nft")
+
 	dataJSON, dataText := utils.GetData(msg.Data)
 
 	return m.db.UpdateNFT(msg.Id, msg.DenomId, msg.Name, msg.URI, utils.SanitizeUTF8(dataJSON), dataText)
 }
 
 func (m *Module) handleMsgTransferNFT(tx *juno.Tx, msg *nftTypes.MsgTransferNft) error {
+	log.Debug().Str("module", "nft").Str("denomId", msg.DenomId).Str("tokenId", msg.TokenId).Str("from", msg.From).Str("to", msg.To).Msg("handling message transfer nft")
+
 	timestamp, err := generalUtils.ISO8601ToTimestamp(tx.Timestamp)
 	if err != nil {
 		return err
@@ -106,6 +117,8 @@ func (m *Module) handleMsgTransferNFT(tx *juno.Tx, msg *nftTypes.MsgTransferNft)
 }
 
 func (m *Module) handleMsgBurnNFT(index int, tx *juno.Tx, msg *nftTypes.MsgBurnNFT) error {
+	log.Debug().Str("module", "nft").Str("denomId", msg.DenomId).Str("tokenId", msg.Id).Str("to", msg.To).Msg("handling message burn nft")
+
 	tokenIDStr := utils.GetValueFromLogs(uint32(index), tx.Logs, nftTypes.EventTypeBurnNFT, nftTypes.AttributeKeyTokenID)
 	if tokenIDStr == "" {
 		return fmt.Errorf("token id not found in tx %s", tx.TxHash)
@@ -131,6 +144,8 @@ func (m *Module) handleMsgBurnNFT(index int, tx *juno.Tx, msg *nftTypes.MsgBurnN
 }
 
 func (m *Module) handleMsgCreateCollection(tx *juno.Tx, msg *marketplaceTypes.MsgCreateCollection) error {
+	log.Debug().Str("module", "nft").Str("denomId", msg.Id).Msg("handling message create collection")
+
 	dataJSON, dataText := utils.GetData(msg.Data)
 
 	return m.db.SaveDenom(tx.TxHash, msg.Id, msg.Name, msg.Schema, msg.Symbol, msg.Creator, "",
@@ -138,6 +153,8 @@ func (m *Module) handleMsgCreateCollection(tx *juno.Tx, msg *marketplaceTypes.Ms
 }
 
 func (m *Module) handleMsgBuyNft(index int, tx *juno.Tx, msg *marketplaceTypes.MsgBuyNft) error {
+	log.Debug().Str("module", "nft").Uint64("Id", msg.Id).Str("msg creator", msg.Creator).Msg("handling message buy nft")
+
 	tokenID := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventBuyNftType, marketplaceTypes.AttributeKeyTokenID)
 	if tokenID == "" {
 		return fmt.Errorf("token id not found in tx %s", tx.TxHash)
