@@ -12,6 +12,7 @@ import (
 	"github.com/forbole/juno/v2/cmd/parse"
 	"github.com/forbole/juno/v2/parser"
 	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -78,6 +79,8 @@ func (fbw fixBlocksWorker) fixBlocks(parseCfg *parse.Config, parseCtx *parse.Con
 	parseCtx.Logger.Info(fmt.Sprintf("Refetching missing blocks and transactions from height %d... \n", startHeight))
 
 	for ; startHeight <= latestHeight; startHeight++ {
+		log.Debug().Str("worker", "fix_blocks_worker").Msg(fmt.Sprintf("Trying to process block at height %d", startHeight))
+
 		if err := worker.ProcessIfNotExists(startHeight); err != nil {
 			parseCtx.Logger.Error(fmt.Sprintf("Error while re-fetching block %d: %s", startHeight, err))
 			break

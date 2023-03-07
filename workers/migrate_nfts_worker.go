@@ -10,6 +10,7 @@ import (
 	"github.com/forbole/bdjuno/v2/database"
 	"github.com/forbole/bdjuno/v2/modules/nft"
 	"github.com/forbole/juno/v2/cmd/parse"
+	"github.com/rs/zerolog/log"
 )
 
 type migrateNftsWorker struct {
@@ -89,6 +90,8 @@ func (mnw migrateNftsWorker) migrateNfts(parseCfg *parse.Config, parseCtx *parse
 }
 
 func (mnw migrateNftsWorker) processBlock(module *nft.Module, parseCtx *parse.Context, currentHeight int64) error {
+	log.Debug().Str("worker", "migrate_nft_worker").Msg(fmt.Sprintf("Processing block at height %d", currentHeight))
+
 	block, err := parseCtx.Node.Block(currentHeight)
 	if err != nil {
 		return fmt.Errorf("failed to get block from node: %s", err)
@@ -100,6 +103,7 @@ func (mnw migrateNftsWorker) processBlock(module *nft.Module, parseCtx *parse.Co
 	}
 
 	for _, tx := range txs {
+		log.Debug().Str("worker", "migrate_nft_worker").Msg(fmt.Sprintf("Processing TX hash: %s at height %d", tx.TxHash, currentHeight))
 		msgIndex := 0
 		for _, msg := range tx.Body.Messages {
 			var stdMsg sdk.Msg
