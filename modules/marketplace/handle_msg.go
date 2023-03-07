@@ -53,7 +53,7 @@ func (m *Module) handleMsgPublishCollection(index int, tx *juno.Tx, msg *marketp
 	if err != nil {
 		return err
 	}
-	log.Debug().Str("module", "marketplace").Msg("collection id: " + fmt.Sprint(collectionID))
+	log.Debug().Str("module", "marketplace").Uint64("collectionId", collectionID)
 
 	mintRoyaltiesJSON, err := json.Marshal(msg.MintRoyalties)
 	if err != nil {
@@ -75,7 +75,7 @@ func (m *Module) handleMsgPublishNft(index int, tx *juno.Tx, msg *marketplaceTyp
 	if err != nil {
 		return err
 	}
-	log.Debug().Str("module", "marketplace").Msg("nft id: " + fmt.Sprint(nftID))
+	log.Debug().Str("module", "marketplace").Uint64("nftId", nftID)
 
 	tokenID, err := strconv.ParseUint(msg.TokenId, 10, 64)
 	if err != nil {
@@ -100,7 +100,7 @@ func (m *Module) handleMsgMintNft(index int, tx *juno.Tx, msg *marketplaceTypes.
 	if tokenIDStr == "" {
 		return fmt.Errorf("token id not found in tx %s", tx.TxHash)
 	}
-	log.Debug().Str("module", "marketplace").Msg("token id: " + tokenIDStr)
+	log.Debug().Str("module", "marketplace").Str("tokenId", tokenIDStr)
 
 	tokenID, err := strconv.ParseUint(tokenIDStr, 10, 64)
 	if err != nil {
@@ -140,7 +140,7 @@ func (m *Module) handleMsgBuyNft(index int, tx *juno.Tx, msg *marketplaceTypes.M
 	}
 
 	tokenIDStr := utils.GetValueFromLogs(uint32(index), tx.Logs, marketplaceTypes.EventBuyNftType, marketplaceTypes.AttributeKeyTokenID)
-	log.Debug().Str("module", "marketplace").Msg("token id: " + tokenIDStr)
+	log.Debug().Str("module", "marketplace").Str("tokenId", tokenIDStr)
 
 	tokenID, err := strconv.ParseUint(tokenIDStr, 10, 64)
 	if err != nil {
@@ -164,31 +164,31 @@ func (m *Module) handleMsgBuyNft(index int, tx *juno.Tx, msg *marketplaceTypes.M
 }
 
 func (m *Module) handleMsgRemoveNft(msg *marketplaceTypes.MsgRemoveNft) error {
-	log.Debug().Str("module", "marketplace").Msg(fmt.Sprintf("handling message remove nft. Id: %s", msg.Id))
+	log.Debug().Str("module", "marketplace").Uint64("ID", msg.Id).Msg("handling message remove nft")
 
 	return m.db.UnlistNft(msg.Id)
 }
 
 func (m *Module) handleMsgVerifyCollection(msg *marketplaceTypes.MsgVerifyCollection) error {
-	log.Debug().Str("module", "marketplace").Msg(fmt.Sprintf("handling message verify collection. Id: %s", msg.Id))
+	log.Debug().Str("module", "marketplace").Uint64("ID", msg.Id).Msg("handling message verify collection")
 
 	return m.db.SetMarketplaceCollectionVerificationStatus(msg.Id, true)
 }
 
 func (m *Module) handleMsgUnverifyCollection(msg *marketplaceTypes.MsgUnverifyCollection) error {
-	log.Debug().Str("module", "marketplace").Msg(fmt.Sprintf("handling message unverify collection. Id: %s", msg.Id))
+	log.Debug().Str("module", "marketplace").Uint64("ID", msg.Id).Msg("handling message unverify collection")
 
 	return m.db.SetMarketplaceCollectionVerificationStatus(msg.Id, false)
 }
 
 func (m *Module) handleMsgUpdatePrice(msg *marketplaceTypes.MsgUpdatePrice) error {
-	log.Debug().Str("module", "marketplace").Msg(fmt.Sprintf("handling message update price. Id: %s, Price: %s", msg.Id, msg.Price.Amount.String()))
+	log.Debug().Str("module", "marketplace").Uint64("ID", msg.Id).Str("Price", msg.Price.Amount.String()).Msg("handling message update price")
 
 	return m.db.SetMarketplaceNFTPrice(msg.Id, msg.Price.Amount.String())
 }
 
 func (m *Module) handleMsgUpdateRoyalties(msg *marketplaceTypes.MsgUpdateRoyalties) error {
-	log.Debug().Str("module", "marketplace").Msg(fmt.Sprintf("handling message update royalties. Id: %s, Mint Royalties: %s, Resale Royalties: %s", msg.Id, msg.MintRoyalties, msg.ResaleRoyalties))
+	log.Debug().Str("module", "marketplace").Uint64("ID", msg.Id).Str("Mint Royalties", fmt.Sprintf("%s", msg.MintRoyalties)).Str("Resale Royalties", fmt.Sprintf("%s", &msg.ResaleRoyalties)).Msg("handling message update royalties")
 
 	mintRoyaltiesJSON, err := json.Marshal(msg.MintRoyalties)
 	if err != nil {
@@ -210,7 +210,7 @@ func (m *Module) handleMsgCreateCollection(index int, tx *juno.Tx, msg *marketpl
 	if err != nil {
 		return err
 	}
-	log.Debug().Str("module", "marketplace").Msg(fmt.Sprintf("collection Id: %s", collectionID))
+	log.Debug().Str("module", "marketplace").Uint64("ID", collectionID)
 
 	mintRoyaltiesJSON, err := json.Marshal(msg.MintRoyalties)
 	if err != nil {
