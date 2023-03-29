@@ -33,7 +33,7 @@ func ConvertCoingeckoPrices(tokens map[string]map[string]MarketTicker) []types.T
 	for token, price := range tokens {
 		for _, marketTicker := range price {
 			tokenPrices = append(tokenPrices, types.NewTokenPrice(
-				token,
+				strings.ToLower(token),
 				marketTicker.CurrentPrice,
 				int64(math.Trunc(marketTicker.MarketCap)),
 				time.Unix(marketTicker.LastUpdated, 0),
