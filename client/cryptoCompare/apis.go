@@ -1,4 +1,4 @@
-package coingecko
+package cryptoCompare
 
 import (
 	"encoding/json"
@@ -7,31 +7,36 @@ import (
 	"math"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/forbole/bdjuno/v2/types"
 )
 
 // GetTokensPrices queries the remote APIs to get the token prices of all the tokens having the given ids
 func GetTokensPrices(currency string, ids []string) ([]types.TokenPrice, error) {
-	var prices []MarketTicker
+	var resStruct PricesRes
+
 	query := fmt.Sprintf("/data/pricemultifull?fsyms=%stsyms=%s", currency, strings.Join(ids, ","))
-	err := queryCoinGecko(query, &prices)
+	err := queryCoinGecko(query, &resStruct)
 	if err != nil {
 		return nil, err
 	}
 
-	return ConvertCoingeckoPrices(prices), nil
+	return ConvertCoingeckoPrices(resStruct.Tokens), nil
 }
 
-func ConvertCoingeckoPrices(prices []MarketTicker) []types.TokenPrice {
-	tokenPrices := make([]types.TokenPrice, len(prices))
-	for i, price := range prices {
-		tokenPrices[i] = types.NewTokenPrice(
-			price.Symbol,
-			price.CurrentPrice,
-			int64(math.Trunc(price.MarketCap)),
-			price.LastUpdated,
-		)
+func ConvertCoingeckoPrices(tokens map[string]TokenRes) []types.TokenPrice {
+	tokenPrices := make([]types.TokenPrice, len(tokens))
+
+	for token, price := range tokens {
+		for _, marketTicker := range price.Prices {
+			tokenPrices = append(tokenPrices, types.NewTokenPrice(
+				token,
+				marketTicker.CurrentPrice,
+				int64(math.Trunc(marketTicker.MarketCap)),
+				time.Unix(marketTicker.LastUpdated, 0),
+			))
+		}
 	}
 	return tokenPrices
 }

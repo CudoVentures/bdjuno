@@ -1,7 +1,7 @@
 package marketplace
 
 import (
-	"github.com/forbole/bdjuno/v2/client/coingecko"
+	"github.com/forbole/bdjuno/v2/client/cryptoCompare"
 	"github.com/forbole/bdjuno/v2/modules/utils"
 	"github.com/forbole/bdjuno/v2/types"
 
@@ -22,12 +22,12 @@ func (m *Module) RegisterPeriodicOperations(scheduler *gocron.Scheduler) error {
 }
 
 func (m *Module) fetchCudosPrice() error {
-	usdPrice, err := coingecko.GetCUDOSPrice("usd")
+	usdPrice, err := cryptoCompare.GetCUDOSPrice("usd")
 	if err != nil {
 		return err
 	}
 
-	btcPrice, err := coingecko.GetCUDOSPrice("btc")
+	btcPrice, err := cryptoCompare.GetCUDOSPrice("btc")
 	if err != nil {
 		return err
 	}

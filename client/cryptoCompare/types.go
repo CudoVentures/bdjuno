@@ -1,6 +1,4 @@
-package coingecko
-
-import "time"
+package cryptoCompare
 
 // Token contains the information of a single token
 type Token struct {
@@ -14,11 +12,16 @@ type Tokens []Token
 
 // MarketTicker contains the current market data for a single token
 type MarketTicker struct {
-	Symbol       string    `json:"symbol"`
-	CurrentPrice float64   `json:"current_price"`
-	MarketCap    float64   `json:"market_cap"`
-	LastUpdated  time.Time `json:"last_updated"`
+	Symbol       string  `json:"TOSYMBOL"`
+	CurrentPrice float64 `json:"PRICE"`
+	MarketCap    float64 `json:"MKTCAP"`
+	LastUpdated  int64   `json:"LASTUPDATE"`
 }
 
-// MarketTickers is an array of MarketTicker
-type MarketTickers []MarketTicker
+type TokenRes struct {
+	Prices map[string]MarketTicker
+}
+
+type PricesRes struct {
+	Tokens map[string]TokenRes `json:"Raw"`
+}

@@ -1,4 +1,4 @@
-package coingecko_test
+package cryptoCompare_test
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/forbole/bdjuno/v2/client/coingecko"
+	"github.com/forbole/bdjuno/v2/client/cryptoCompare"
 )
 
 func TestConvertCoingeckoPrices(t *testing.T) {
@@ -107,11 +107,11 @@ func TestConvertCoingeckoPrices(t *testing.T) {
 ]
 `
 
-	var apisPrices []coingecko.MarketTicker
+	var apisPrices []cryptoCompare.MarketTicker
 	err := json.Unmarshal([]byte(result), &apisPrices)
 	require.NoError(t, err)
 
-	prices := coingecko.ConvertCoingeckoPrices(apisPrices)
+	prices := cryptoCompare.ConvertCoingeckoPrices(apisPrices)
 	require.Equal(t, int64(8809250407), prices[0].MarketCap)
 	require.Equal(t, int64(0), prices[1].MarketCap)
 	require.Equal(t, int64(836648999243), prices[2].MarketCap)
