@@ -14,22 +14,24 @@ import (
 
 // GetTokensPrices queries the remote APIs to get the token prices of all the tokens having the given ids
 func GetTokensPrices(currency string, ids []string) ([]types.TokenPrice, error) {
-	var resStruct PricesRes
-
-	query := fmt.Sprintf("/data/pricemultifull?fsyms=%stsyms=%s", currency, strings.Join(ids, ","))
+	var resStruct struct {
+		Raw map[string]map[string]MarketTicker
+	}
+	query := fmt.Sprintf("/data/pricemultifull?fsyms=%s&tsyms=%s", currency, strings.Join(ids, ","))
 	err := queryCoinGecko(query, &resStruct)
 	if err != nil {
 		return nil, err
 	}
 
-	return ConvertCoingeckoPrices(resStruct.Tokens), nil
+	// return nil, nil
+	return ConvertCoingeckoPrices(resStruct.Raw), nil
 }
 
-func ConvertCoingeckoPrices(tokens map[string]TokenRes) []types.TokenPrice {
-	tokenPrices := make([]types.TokenPrice, len(tokens))
+func ConvertCoingeckoPrices(tokens map[string]map[string]MarketTicker) []types.TokenPrice {
+	var tokenPrices []types.TokenPrice
 
 	for token, price := range tokens {
-		for _, marketTicker := range price.Prices {
+		for _, marketTicker := range price {
 			tokenPrices = append(tokenPrices, types.NewTokenPrice(
 				token,
 				marketTicker.CurrentPrice,
@@ -40,7 +42,6 @@ func ConvertCoingeckoPrices(tokens map[string]TokenRes) []types.TokenPrice {
 	}
 	return tokenPrices
 }
-
 func GetCUDOSPrice(currency string) (string, error) {
 	ids := []string{"CUDOS"}
 	prices, err := GetTokensPrices(currency, ids)
