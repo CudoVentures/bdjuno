@@ -30,8 +30,8 @@ func GetTokensPrices(currency string, ids []string) ([]types.TokenPrice, error) 
 func ConvertCoingeckoPrices(tokens map[string]map[string]MarketTicker) []types.TokenPrice {
 	var tokenPrices []types.TokenPrice
 
-	for token, price := range tokens {
-		for _, marketTicker := range price {
+	for _, price := range tokens {
+		for token, marketTicker := range price {
 			tokenPrices = append(tokenPrices, types.NewTokenPrice(
 				strings.ToLower(token),
 				marketTicker.CurrentPrice,
