@@ -11,16 +11,10 @@ import (
 	"github.com/forbole/bdjuno/v2/types"
 )
 
-// GetCoinsList allows to fetch from the remote APIs the list of all the supported tokens
-func GetCoinsList() (coins Tokens, err error) {
-	err = queryCoinGecko("/coins/list", &coins)
-	return coins, err
-}
-
 // GetTokensPrices queries the remote APIs to get the token prices of all the tokens having the given ids
 func GetTokensPrices(currency string, ids []string) ([]types.TokenPrice, error) {
 	var prices []MarketTicker
-	query := fmt.Sprintf("/coins/markets?vs_currency=%s&ids=%s", currency, strings.Join(ids, ","))
+	query := fmt.Sprintf("/data/pricemultifull?fsyms=%stsyms=%s", currency, strings.Join(ids, ","))
 	err := queryCoinGecko(query, &prices)
 	if err != nil {
 		return nil, err
@@ -43,7 +37,7 @@ func ConvertCoingeckoPrices(prices []MarketTicker) []types.TokenPrice {
 }
 
 func GetCUDOSPrice(currency string) (string, error) {
-	ids := []string{"cudos"}
+	ids := []string{"CUDOS"}
 	prices, err := GetTokensPrices(currency, ids)
 	if err != nil {
 		return "", err
@@ -54,7 +48,16 @@ func GetCUDOSPrice(currency string) (string, error) {
 
 // queryCoinGecko queries the CoinGecko APIs for the given endpoint
 func queryCoinGecko(endpoint string, ptr interface{}) error {
-	resp, err := http.Get("https://api.coingecko.com/api/v3" + endpoint)
+	req, err := http.NewRequest("GET", "https://min-api.cryptocompare.com"+endpoint, nil)
+
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Accept", "application/json")
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
