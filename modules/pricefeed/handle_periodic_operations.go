@@ -81,7 +81,7 @@ func (m *Module) getPrices() ([]types.TokenPrice, error) {
 	}
 
 	// Get the tokens prices
-	prices, err := cryptoCompare.GetTokensPrices("usd", ids)
+	prices, err := cryptoCompare.GetTokensPrices("usd", ids, m.cryptoCompareCfg.Config.CryptoCompareApiKey)
 	if err != nil {
 		return []types.TokenPrice{}, fmt.Errorf("error while getting tokens prices: %s", err)
 	}

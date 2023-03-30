@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/tendermint/tendermint/libs/log"
+	"gopkg.in/yaml.v2"
 
 	"github.com/forbole/juno/v2/modules/pruning"
 	"github.com/forbole/juno/v2/modules/telemetry"
@@ -52,6 +53,7 @@ import (
 	"github.com/forbole/bdjuno/v2/modules/distribution"
 	"github.com/forbole/bdjuno/v2/modules/feegrant"
 
+	"github.com/forbole/bdjuno/v2/client/cryptoCompare"
 	"github.com/forbole/bdjuno/v2/modules/cw20token"
 	cw20tokensource "github.com/forbole/bdjuno/v2/modules/cw20token/source"
 	localcw20tokensource "github.com/forbole/bdjuno/v2/modules/cw20token/source/local"
@@ -115,6 +117,11 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		panic(err)
 	}
 
+	var cryptoCompareConfig cryptoCompare.Config
+	if err := yaml.Unmarshal(ctx.JunoConfig.GetBytes(), &cryptoCompareConfig); err != nil {
+		panic(fmt.Errorf("failed to parse cudomint config: %s", err))
+	}
+
 	authModule := auth.NewModule(r.parser, cdc, db)
 	bankModule := bank.NewModule(r.parser, sources.BankSource, cdc, db)
 	consensusModule := consensus.NewModule(db)
@@ -129,7 +136,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	gravityModule := gravity.NewModule(cdc, db)
 	nftModule := nft.NewModule(cdc, db)
 	groupModule := group.NewModule(cdc, db)
-	marketplaceModule := marketplace.NewModule(cdc, db, , ctx.JunoConfig.GetBytes())
+	marketplaceModule := marketplace.NewModule(cdc, db, ctx.JunoConfig.GetBytes(), cryptoCompareConfig)
 	cw20tokenModule := cw20token.NewModule(cdc, db, sources.CW20TokenSource)
 
 	return []jmodules.Module{
@@ -146,7 +153,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		historyModule,
 		cudoMintModule,
 		modules.NewModule(ctx.JunoConfig.Chain, db),
-		pricefeed.NewModule(ctx.JunoConfig, historyModule, cdc, db),
+		pricefeed.NewModule(ctx.JunoConfig, cryptoCompareConfig, historyModule, cdc, db),
 		slashingModule,
 		stakingModule,
 		cosmwasmModule,

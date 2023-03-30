@@ -25,3 +25,9 @@ type TokenRes struct {
 type PricesRes struct {
 	Tokens map[string]TokenRes `json:"Raw"`
 }
+
+type Config struct {
+	Config struct {
+		CryptoCompareApiKey string `yaml:"crypto_compare_api_key"`
+	} `yaml:"crypto-compare"`
+}

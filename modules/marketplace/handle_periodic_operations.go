@@ -22,12 +22,12 @@ func (m *Module) RegisterPeriodicOperations(scheduler *gocron.Scheduler) error {
 }
 
 func (m *Module) fetchCudosPrice() error {
-	usdPrice, err := cryptoCompare.GetCUDOSPrice("usd", m.cfg.CryptoCompareAPIKey)
+	usdPrice, err := cryptoCompare.GetCUDOSPrice("usd", m.cfg.Config.CryptoCompareApiKey)
 	if err != nil {
 		return err
 	}
 
-	btcPrice, err := cryptoCompare.GetCUDOSPrice("btc", m.cfg.CryptoCompareAPIKey)
+	btcPrice, err := cryptoCompare.GetCUDOSPrice("btc", m.cfg.Config.CryptoCompareApiKey)
 	if err != nil {
 		return err
 	}
