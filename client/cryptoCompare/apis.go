@@ -60,10 +60,7 @@ func queryCoinGecko(endpoint string, ptr interface{}, apiKey string) error {
 		return err
 	}
 
-	fmt.Println("apiKey")
-	fmt.Println(apiKey)
 	if apiKey != "" {
-		fmt.Println("wwefwegwegweg")
 		req.Header.Set("authorization", fmt.Sprintf("Apikey %s", apiKey))
 	}
 
