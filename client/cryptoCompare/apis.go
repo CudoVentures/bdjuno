@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/forbole/bdjuno/v2/types"
 )
 
@@ -61,7 +63,10 @@ func queryCoinGecko(endpoint string, ptr interface{}, apiKey string) error {
 	}
 
 	if apiKey != "" {
+		log.Debug().Str("module", "crypto-compare").Msg("using api key")
 		req.Header.Set("authorization", fmt.Sprintf("Apikey %s", apiKey))
+	} else {
+		log.Debug().Str("module", "crypto-compare").Msg("no api key provided")
 	}
 
 	client := &http.Client{}
