@@ -66,3 +66,5 @@ workers:
       interval: 1m
     - name: blocks_monitoring_worker
       interval: 30s
+marketplace:
+    crypto_compare_api_key: %CRYPTO_COMPARE_API_KEY%

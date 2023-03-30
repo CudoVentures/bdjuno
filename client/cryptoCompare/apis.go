@@ -13,12 +13,12 @@ import (
 )
 
 // GetTokensPrices queries the remote APIs to get the token prices of all the tokens having the given ids
-func GetTokensPrices(currency string, ids []string) ([]types.TokenPrice, error) {
+func GetTokensPrices(currency string, ids []string, apiKey string) ([]types.TokenPrice, error) {
 	var resStruct struct {
 		Raw map[string]map[string]MarketTicker
 	}
 	query := fmt.Sprintf("/data/pricemultifull?fsyms=%s&tsyms=%s", currency, strings.Join(ids, ","))
-	err := queryCoinGecko(query, &resStruct)
+	err := queryCoinGecko(query, &resStruct, apiKey)
 	if err != nil {
 		return nil, err
 	}
@@ -42,9 +42,9 @@ func ConvertCoingeckoPrices(tokens map[string]map[string]MarketTicker) []types.T
 	}
 	return tokenPrices
 }
-func GetCUDOSPrice(currency string) (string, error) {
+func GetCUDOSPrice(currency string, apiKey string) (string, error) {
 	ids := []string{"CUDOS"}
-	prices, err := GetTokensPrices(currency, ids)
+	prices, err := GetTokensPrices(currency, ids, apiKey)
 	if err != nil {
 		return "", err
 	}
@@ -53,14 +53,20 @@ func GetCUDOSPrice(currency string) (string, error) {
 }
 
 // queryCoinGecko queries the CoinGecko APIs for the given endpoint
-func queryCoinGecko(endpoint string, ptr interface{}) error {
+func queryCoinGecko(endpoint string, ptr interface{}, apiKey string) error {
 	req, err := http.NewRequest("GET", "https://min-api.cryptocompare.com"+endpoint, nil)
 
 	if err != nil {
 		return err
 	}
 
-	req.Header.Set("Accept", "application/json")
+	fmt.Println("apiKey")
+	fmt.Println(apiKey)
+	if apiKey != "" {
+		fmt.Println("wwefwegwegweg")
+		req.Header.Set("authorization", fmt.Sprintf("Apikey %s", apiKey))
+	}
+
 	client := &http.Client{}
 
 	resp, err := client.Do(req)

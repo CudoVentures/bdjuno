@@ -129,7 +129,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	gravityModule := gravity.NewModule(cdc, db)
 	nftModule := nft.NewModule(cdc, db)
 	groupModule := group.NewModule(cdc, db)
-	marketplaceModule := marketplace.NewModule(cdc, db)
+	marketplaceModule := marketplace.NewModule(cdc, db, , ctx.JunoConfig.GetBytes())
 	cw20tokenModule := cw20token.NewModule(cdc, db, sources.CW20TokenSource)
 
 	return []jmodules.Module{

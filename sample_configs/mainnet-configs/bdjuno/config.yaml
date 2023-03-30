@@ -66,3 +66,5 @@ workers:
       interval: 30s
 cudomint:
     stats_service_url: https://stats.cudos.org
+marketplace:
+    crypto_compare_api_key: %CRYPTO_COMPARE_API_KEY%

@@ -68,3 +68,5 @@ workers:
       interval: 30s
 cudomint:
     stats_service_url: http://34.123.153.6:3001
+marketplace:
+    crypto_compare_api_key: %CRYPTO_COMPARE_API_KEY%
