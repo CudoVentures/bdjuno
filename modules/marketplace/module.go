@@ -32,9 +32,9 @@ type Module struct {
 }
 
 // NewModule returns a new Module instance
-func NewModule(cdc codec.Codec, db *database.Db, , configBytes []byte) *Module {
+func NewModule(cdc codec.Codec, db *database.Db, configBytes []byte) *Module {
 	var config config
-	if err := yaml.Unmarshal(configBytes, &config,); err != nil {
+	if err := yaml.Unmarshal(configBytes, &config); err != nil {
 		panic(fmt.Errorf("failed to parse cudomint config: %s", err))
 	}
 	return &Module{
