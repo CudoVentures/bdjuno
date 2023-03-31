@@ -19,7 +19,7 @@ func GetTokensPrices(currency string, ids []string, apiKey string) ([]types.Toke
 	var resStruct struct {
 		Raw map[string]map[string]MarketTicker
 	}
-	query := fmt.Sprintf("/data/pricemultifull?fsyms=%s&tsyms=%s", currency, strings.Join(ids, ","))
+	query := fmt.Sprintf("/data/pricemultifull?fsyms=%s&tsyms=%s", strings.Join(ids, ","), currency)
 	err := queryCoinGecko(query, &resStruct, apiKey)
 	if err != nil {
 		return nil, err
