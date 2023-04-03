@@ -4,6 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/forbole/juno/v2/modules"
 
+	"github.com/forbole/bdjuno/v2/client/cryptoCompare"
 	"github.com/forbole/bdjuno/v2/database"
 	"github.com/forbole/bdjuno/v2/types"
 )
@@ -18,14 +19,17 @@ var (
 type Module struct {
 	cdc        codec.Codec
 	db         *database.Db
+	cfg        cryptoCompare.Config
 	cudosPrice types.CudosPrice
 }
 
 // NewModule returns a new Module instance
-func NewModule(cdc codec.Codec, db *database.Db) *Module {
+func NewModule(cdc codec.Codec, db *database.Db, configBytes []byte, cryptoCompareConfig cryptoCompare.Config) *Module {
+
 	return &Module{
 		cdc: cdc,
 		db:  db,
+		cfg: cryptoCompareConfig,
 	}
 }
 

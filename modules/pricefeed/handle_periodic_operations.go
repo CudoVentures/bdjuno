@@ -6,7 +6,7 @@ import (
 	"github.com/go-co-op/gocron"
 	"github.com/rs/zerolog/log"
 
-	"github.com/forbole/bdjuno/v2/client/coingecko"
+	"github.com/forbole/bdjuno/v2/client/cryptoCompare"
 	"github.com/forbole/bdjuno/v2/modules/utils"
 	"github.com/forbole/bdjuno/v2/types"
 )
@@ -81,7 +81,7 @@ func (m *Module) getPrices() ([]types.TokenPrice, error) {
 	}
 
 	// Get the tokens prices
-	prices, err := coingecko.GetTokensPrices("usd", ids)
+	prices, err := cryptoCompare.GetTokensPrices("usd", ids, m.cryptoCompareCfg.Config.CryptoCompareApiKey)
 	if err != nil {
 		return []types.TokenPrice{}, fmt.Errorf("error while getting tokens prices: %s", err)
 	}
