@@ -120,8 +120,18 @@ func TestConvertCoingeckoPrices(t *testing.T) {
 	var apisPrices map[string]map[string]cryptoCompare.MarketTicker
 	err := json.Unmarshal([]byte(result), &apisPrices)
 	require.NoError(t, err)
+	cfg := cryptoCompare.Config{
+		Config: struct {
+			CryptoCompareProdApiKey string "yaml:\"crypto_compare_prod_api_key\""
+			CryptoCompareFreeApiKey string "yaml:\"crypto_compare_free_api_key\""
+		}{
+			CryptoCompareProdApiKey: "test",
+			CryptoCompareFreeApiKey: "test",
+		},
+	}
 
-	prices := cryptoCompare.ConvertCoingeckoPrices(apisPrices)
+	ccc := cryptoCompare.NewClient(&cfg)
+	prices := ccc.ConvertCoingeckoPrices(apisPrices)
 	require.Equal(t, 2, len(prices))
 	require.Equal(t, "cudos", prices[0].UnitName)
 	require.Equal(t, 0.00237, prices[0].Price)

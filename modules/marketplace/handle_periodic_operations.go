@@ -1,7 +1,6 @@
 package marketplace
 
 import (
-	"github.com/forbole/bdjuno/v2/client/cryptoCompare"
 	"github.com/forbole/bdjuno/v2/modules/utils"
 	"github.com/forbole/bdjuno/v2/types"
 
@@ -12,7 +11,7 @@ import (
 func (m *Module) RegisterPeriodicOperations(scheduler *gocron.Scheduler) error {
 	log.Debug().Str("module", "marketplace").Msg("setting up periodic tasks")
 
-	if _, err := scheduler.Every(15).Minute().Do(func() {
+	if _, err := scheduler.Every(5).Minute().Do(func() {
 		utils.WatchMethod(m.fetchCudosPrice)
 	}); err != nil {
 		return err
@@ -22,12 +21,12 @@ func (m *Module) RegisterPeriodicOperations(scheduler *gocron.Scheduler) error {
 }
 
 func (m *Module) fetchCudosPrice() error {
-	usdPrice, err := cryptoCompare.GetCUDOSPrice("usd", m.cfg.Config.CryptoCompareApiKey)
+	usdPrice, err := m.ccc.GetCUDOSPrice("usd")
 	if err != nil {
 		return err
 	}
 
-	btcPrice, err := cryptoCompare.GetCUDOSPrice("btc", m.cfg.Config.CryptoCompareApiKey)
+	btcPrice, err := m.ccc.GetCUDOSPrice("btc")
 	if err != nil {
 		return err
 	}

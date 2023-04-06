@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,22 +15,30 @@ import (
 	"github.com/forbole/bdjuno/v2/types"
 )
 
+// NewModule returns a new Module instance
+func NewClient(cfg *Config) *CryptoCompareClient {
+	return &CryptoCompareClient{
+		useProdApiKey: true,
+		config:        cfg,
+	}
+}
+
 // GetTokensPrices queries the remote APIs to get the token prices of all the tokens having the given ids
-func GetTokensPrices(currency string, ids []string, apiKey string) ([]types.TokenPrice, error) {
+func (c *CryptoCompareClient) GetTokensPrices(currency string, ids []string) ([]types.TokenPrice, error) {
 	var resStruct struct {
 		Raw map[string]map[string]MarketTicker
 	}
 	query := fmt.Sprintf("/data/pricemultifull?fsyms=%s&tsyms=%s", strings.Join(ids, ","), currency)
-	err := queryCoinGecko(query, &resStruct, apiKey)
+	err := c.queryCoinGecko(query, &resStruct)
 	if err != nil {
 		return nil, err
 	}
 
 	// return nil, nil
-	return ConvertCoingeckoPrices(resStruct.Raw), nil
+	return c.ConvertCoingeckoPrices(resStruct.Raw), nil
 }
 
-func ConvertCoingeckoPrices(tokens map[string]map[string]MarketTicker) []types.TokenPrice {
+func (c *CryptoCompareClient) ConvertCoingeckoPrices(tokens map[string]map[string]MarketTicker) []types.TokenPrice {
 	var tokenPrices []types.TokenPrice
 
 	for token, price := range tokens {
@@ -44,9 +53,9 @@ func ConvertCoingeckoPrices(tokens map[string]map[string]MarketTicker) []types.T
 	}
 	return tokenPrices
 }
-func GetCUDOSPrice(currency string, apiKey string) (string, error) {
+func (c *CryptoCompareClient) GetCUDOSPrice(currency string) (string, error) {
 	ids := []string{"CUDOS"}
-	prices, err := GetTokensPrices(currency, ids, apiKey)
+	prices, err := c.GetTokensPrices(currency, ids)
 	if err != nil {
 		return "", err
 	}
@@ -55,16 +64,23 @@ func GetCUDOSPrice(currency string, apiKey string) (string, error) {
 }
 
 // queryCoinGecko queries the CoinGecko APIs for the given endpoint
-func queryCoinGecko(endpoint string, ptr interface{}, apiKey string) error {
+func (c *CryptoCompareClient) queryCoinGecko(endpoint string, ptr interface{}) error {
 	req, err := http.NewRequest("GET", "https://min-api.cryptocompare.com"+endpoint, nil)
 
 	if err != nil {
 		return err
 	}
 
+	var apiKey string
+	if c.useProdApiKey {
+		apiKey = c.config.Config.CryptoCompareProdApiKey
+	} else {
+		apiKey = c.config.Config.CryptoCompareFreeApiKey
+	}
+
 	if apiKey != "" {
 		log.Debug().Str("module", "crypto-compare").Msg("using api key")
-		req.Header.Set("authorization", fmt.Sprintf("Apikey %s", apiKey))
+		req.Header.Set("authorization", fmt.Sprintf("Apikey %s", c.useProdApiKey))
 	} else {
 		log.Debug().Str("module", "crypto-compare").Msg("no api key provided")
 	}
@@ -77,6 +93,21 @@ func queryCoinGecko(endpoint string, ptr interface{}, apiKey string) error {
 	}
 
 	defer resp.Body.Close()
+
+	rateLimitRemainderHeader := resp.Header.Get("x-ratelimit-remaining")
+	if rateLimitRemainderHeader == "" {
+		log.Error().Str("module", "crypto-compare").Msg("no rate limit header found")
+	}
+
+	rateLimitRemainder, err := strconv.Atoi(rateLimitRemainderHeader)
+	if err != nil {
+		log.Error().Str("module", "crypto-compare").Msg("error while parsing rate limit header")
+	}
+
+	if rateLimitRemainder < 600000 {
+		c.useProdApiKey = false
+		log.Warn().Str("module", "crypto-compare").Msg("Switching to crypto-compare free api key")
+	}
 
 	bz, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

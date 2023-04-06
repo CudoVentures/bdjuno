@@ -1,5 +1,10 @@
 package cryptoCompare
 
+type CryptoCompareClient struct {
+	useProdApiKey bool
+	config        *Config
+}
+
 // Token contains the information of a single token
 type Token struct {
 	ID     string `json:"id"`
@@ -28,6 +33,7 @@ type PricesRes struct {
 
 type Config struct {
 	Config struct {
-		CryptoCompareApiKey string `yaml:"crypto_compare_api_key"`
+		CryptoCompareProdApiKey string `yaml:"crypto_compare_prod_api_key"`
+		CryptoCompareFreeApiKey string `yaml:"crypto_compare_free_api_key"`
 	} `yaml:"crypto-compare"`
 }

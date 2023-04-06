@@ -19,17 +19,17 @@ var (
 type Module struct {
 	cdc        codec.Codec
 	db         *database.Db
-	cfg        cryptoCompare.Config
+	ccc        *cryptoCompare.CryptoCompareClient
 	cudosPrice types.CudosPrice
 }
 
 // NewModule returns a new Module instance
-func NewModule(cdc codec.Codec, db *database.Db, configBytes []byte, cryptoCompareConfig cryptoCompare.Config) *Module {
+func NewModule(cdc codec.Codec, db *database.Db, configBytes []byte, cryptoCompareClient *cryptoCompare.CryptoCompareClient) *Module {
 
 	return &Module{
 		cdc: cdc,
 		db:  db,
-		cfg: cryptoCompareConfig,
+		ccc: cryptoCompareClient,
 	}
 }
 
