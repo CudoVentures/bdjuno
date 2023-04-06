@@ -67,5 +67,5 @@ workers:
     - name: blocks_monitoring_worker
       interval: 30s
 crypto-compare:
-    crypto_compare_prod_api_key: %CRYPTO_COMPARE_PROD_API_KEY%
-    crypto_compare_free_api_key: %CRYPTO_COMPARE_FREE_API_KEY%
+    crypto_compare_prod_api_key: "%CRYPTO_COMPARE_PROD_API_KEY%"
+    crypto_compare_free_api_key: "%CRYPTO_COMPARE_FREE_API_KEY%"

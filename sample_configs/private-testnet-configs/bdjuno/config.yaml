@@ -69,5 +69,5 @@ workers:
 cudomint:
     stats_service_url: http://34.123.153.6:3001
 crypto-compare:
-    crypto_compare_prod_api_key: %CRYPTO_COMPARE_PROD_API_KEY%
-    crypto_compare_free_api_key: %CRYPTO_COMPARE_FREE_API_KEY%
+    crypto_compare_prod_api_key: "%CRYPTO_COMPARE_PROD_API_KEY%"
+    crypto_compare_free_api_key: "%CRYPTO_COMPARE_FREE_API_KEY%"
