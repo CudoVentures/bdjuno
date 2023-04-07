@@ -78,6 +78,10 @@ func (c *CryptoCompareClient) queryCoinGecko(endpoint string, ptr interface{}) e
 		apiKey = c.config.Config.CryptoCompareFreeApiKey
 	}
 
+	if apiKey != "" {
+		req.Header.Set("authorization", fmt.Sprintf("Apikey %s", apiKey))
+	}
+
 	var keyType string
 	switch apiKey {
 	case c.config.Config.CryptoCompareProdApiKey:
