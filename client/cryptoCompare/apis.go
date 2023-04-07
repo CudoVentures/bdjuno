@@ -79,8 +79,15 @@ func (c *CryptoCompareClient) queryCoinGecko(endpoint string, ptr interface{}) e
 	}
 
 	if apiKey != "" {
-		log.Debug().Str("module", "crypto-compare").Msg("using api key")
-		req.Header.Set("authorization", fmt.Sprintf("Apikey %s", c.useProdApiKey))
+		keyType := "production"
+		apiKey := c.config.Config.CryptoCompareProdApiKey
+		if !c.useProdApiKey {
+			apiKey = c.config.Config.CryptoCompareFreeApiKey
+			keyType = "free"
+		}
+
+		log.Debug().Str("module", "crypto-compare").Msg(fmt.Sprintf("using %s api key", keyType))
+		req.Header.Set("authorization", fmt.Sprintf("Apikey %s", apiKey))
 	} else {
 		log.Debug().Str("module", "crypto-compare").Msg("no api key provided")
 	}
@@ -102,6 +109,7 @@ func (c *CryptoCompareClient) queryCoinGecko(endpoint string, ptr interface{}) e
 	rateLimitRemainder, err := strconv.Atoi(rateLimitRemainderHeader)
 	if err != nil {
 		log.Error().Str("module", "crypto-compare").Msg("error while parsing rate limit header")
+		rateLimitRemainder = 0
 	}
 
 	if rateLimitRemainder < 600000 {
