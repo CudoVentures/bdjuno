@@ -18,26 +18,26 @@ var (
 
 // Module represents the module that allows to get the token prices
 type Module struct {
-	cfg              *Config
-	cryptoCompareCfg cryptoCompare.Config
-	cdc              codec.Codec
-	db               *database.Db
-	historyModule    HistoryModule
+	cfg           *Config
+	ccc           *cryptoCompare.CryptoCompareClient
+	cdc           codec.Codec
+	db            *database.Db
+	historyModule HistoryModule
 }
 
 // NewModule returns a new Module instance
-func NewModule(cfg config.Config, cryptoCompareCfg cryptoCompare.Config, historyModule HistoryModule, cdc codec.Codec, db *database.Db) *Module {
+func NewModule(cfg config.Config, cryptoCompareClient *cryptoCompare.CryptoCompareClient, historyModule HistoryModule, cdc codec.Codec, db *database.Db) *Module {
 	pricefeedCfg, err := ParseConfig(cfg.GetBytes())
 	if err != nil {
 		panic(err)
 	}
 
 	return &Module{
-		cfg:              pricefeedCfg,
-		cryptoCompareCfg: cryptoCompareCfg,
-		cdc:              cdc,
-		db:               db,
-		historyModule:    historyModule,
+		cfg:           pricefeedCfg,
+		ccc:           cryptoCompareClient,
+		cdc:           cdc,
+		db:            db,
+		historyModule: historyModule,
 	}
 }
 

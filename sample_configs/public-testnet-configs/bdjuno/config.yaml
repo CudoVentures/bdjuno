@@ -66,5 +66,6 @@ workers:
       interval: 30s
 cudomint:
     stats_service_url: https://stats.testnet.cudos.org
-marketplace:
-    crypto_compare_api_key: %CRYPTO_COMPARE_API_KEY%
+crypto-compare:
+    crypto_compare_prod_api_key: "%CRYPTO_COMPARE_PROD_API_KEY%"
+    crypto_compare_free_api_key: "%CRYPTO_COMPARE_FREE_API_KEY%"

@@ -122,6 +122,8 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		panic(fmt.Errorf("failed to parse cudomint config: %s", err))
 	}
 
+	cryptoCompareClient := cryptoCompare.NewClient(&cryptoCompareConfig)
+
 	authModule := auth.NewModule(r.parser, cdc, db)
 	bankModule := bank.NewModule(r.parser, sources.BankSource, cdc, db)
 	consensusModule := consensus.NewModule(db)
@@ -136,7 +138,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	gravityModule := gravity.NewModule(cdc, db)
 	nftModule := nft.NewModule(cdc, db)
 	groupModule := group.NewModule(cdc, db)
-	marketplaceModule := marketplace.NewModule(cdc, db, ctx.JunoConfig.GetBytes(), cryptoCompareConfig)
+	marketplaceModule := marketplace.NewModule(cdc, db, ctx.JunoConfig.GetBytes(), cryptoCompareClient)
 	cw20tokenModule := cw20token.NewModule(cdc, db, sources.CW20TokenSource)
 
 	return []jmodules.Module{
@@ -153,7 +155,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		historyModule,
 		cudoMintModule,
 		modules.NewModule(ctx.JunoConfig.Chain, db),
-		pricefeed.NewModule(ctx.JunoConfig, cryptoCompareConfig, historyModule, cdc, db),
+		pricefeed.NewModule(ctx.JunoConfig, cryptoCompareClient, historyModule, cdc, db),
 		slashingModule,
 		stakingModule,
 		cosmwasmModule,
