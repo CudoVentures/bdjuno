@@ -102,7 +102,7 @@ func (c *CryptoCompareClient) queryCoinGecko(endpoint string, ptr interface{}) e
 
 	defer resp.Body.Close()
 
-	rateLimitRemainderHeader := resp.Header.Get("x-ratelimit-remaining")
+	rateLimitRemainderHeader := resp.Header.Get("X-RateLimit-Remaining")
 	if rateLimitRemainderHeader == "" {
 		log.Error().Str("module", "crypto-compare").Msg("no rate limit header found")
 	}
