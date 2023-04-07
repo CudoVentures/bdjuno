@@ -95,9 +95,7 @@ func (c *CryptoCompareClient) queryCoinGecko(endpoint string, ptr interface{}) e
 
 	client := &http.Client{}
 
-	fmt.Println(req.Header)
 	resp, err := client.Do(req)
-	fmt.Println(resp.Header)
 
 	if err != nil {
 		return err
