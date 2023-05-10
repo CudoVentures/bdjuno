@@ -29,7 +29,7 @@ func (c *CryptoCompareClient) GetTokensPrices(currency string, ids []string) ([]
 		Raw map[string]map[string]MarketTicker
 	}
 	query := fmt.Sprintf("/data/pricemultifull?fsyms=%s&tsyms=%s", strings.Join(ids, ","), currency)
-	err := c.queryCoinGecko(query, &resStruct)
+	err := c.queryCryptoCompare(query, &resStruct)
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +63,8 @@ func (c *CryptoCompareClient) GetCUDOSPrice(currency string) (string, error) {
 	return price, err
 }
 
-// queryCoinGecko queries the CoinGecko APIs for the given endpoint
-func (c *CryptoCompareClient) queryCoinGecko(endpoint string, ptr interface{}) error {
+// queryCryptoCompare queries the CoinGecko APIs for the given endpoint
+func (c *CryptoCompareClient) queryCryptoCompare(endpoint string, ptr interface{}) error {
 	req, err := http.NewRequest("GET", "https://min-api.cryptocompare.com"+endpoint, nil)
 
 	if err != nil {
@@ -72,6 +72,7 @@ func (c *CryptoCompareClient) queryCoinGecko(endpoint string, ptr interface{}) e
 	}
 
 	var apiKey string
+	var keyType string = "empty"
 	if c.useProdApiKey {
 		apiKey = c.config.Config.CryptoCompareProdApiKey
 	} else {
@@ -80,23 +81,21 @@ func (c *CryptoCompareClient) queryCoinGecko(endpoint string, ptr interface{}) e
 
 	if apiKey != "" {
 		req.Header.Set("authorization", fmt.Sprintf("Apikey %s", apiKey))
+
+		switch apiKey {
+		case c.config.Config.CryptoCompareFreeApiKey:
+			keyType = "free"
+		case c.config.Config.CryptoCompareProdApiKey:
+			keyType = "production"
+		default:
+			keyType = "no"
+		}
 	}
 
-	var keyType string
-	switch apiKey {
-	case c.config.Config.CryptoCompareProdApiKey:
-		keyType = "production"
-	case c.config.Config.CryptoCompareFreeApiKey:
-		keyType = "free"
-	default:
-		keyType = "no"
-	}
 	log.Debug().Str("module", "crypto-compare").Msg(fmt.Sprintf("using %s api key", keyType))
 
 	client := &http.Client{}
-
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return err
 	}
@@ -105,12 +104,13 @@ func (c *CryptoCompareClient) queryCoinGecko(endpoint string, ptr interface{}) e
 
 	rateLimitRemainderHeader := resp.Header.Get("X-RateLimit-Remaining")
 	if rateLimitRemainderHeader == "" {
-		log.Error().Str("module", "crypto-compare").Msg("no rate limit header found")
+		log.Warn().Str("module", "crypto-compare").Msg("no rate limit header found")
+		rateLimitRemainderHeader = "0"
 	}
 
 	rateLimitRemainder, err := strconv.Atoi(rateLimitRemainderHeader)
 	if err != nil {
-		log.Error().Str("module", "crypto-compare").Msg("error while parsing rate limit header")
+		log.Warn().Str("module", "crypto-compare").Msg("error while parsing rate limit header")
 		rateLimitRemainder = 0
 	}
 
