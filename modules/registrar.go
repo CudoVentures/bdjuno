@@ -1,6 +1,10 @@
 package modules
 
 import (
+	"fmt"
+
+	"gopkg.in/yaml.v3"
+
 	"github.com/forbole/bdjuno/v4/modules/actions"
 	"github.com/forbole/bdjuno/v4/modules/types"
 
@@ -31,6 +35,9 @@ import (
 	"github.com/forbole/bdjuno/v4/modules/pricefeed"
 	"github.com/forbole/bdjuno/v4/modules/staking"
 	"github.com/forbole/bdjuno/v4/modules/upgrade"
+
+	"github.com/forbole/bdjuno/v4/client/cryptoCompare"
+	"github.com/forbole/bdjuno/v4/modules/history"
 )
 
 // UniqueAddressesParser returns a wrapper around the given parser that removes all duplicated addresses
@@ -73,6 +80,17 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		panic(err)
 	}
 
+	var cryptoCompareConfig cryptoCompare.Config
+	bytes, err := ctx.JunoConfig.GetBytes()
+	if err != nil {
+		panic(fmt.Errorf("failed to get bytes from JunoConfig: %s", err))
+	}
+	if err := yaml.Unmarshal(bytes, &cryptoCompareConfig); err != nil {
+		panic(fmt.Errorf("failed to parse cryptoCompare config: %s", err))
+	}
+
+	cryptoCompareClient := cryptoCompare.NewClient(&cryptoCompareConfig)
+
 	actionsModule := actions.NewModule(ctx.JunoConfig, ctx.EncodingConfig)
 	authModule := auth.NewModule(r.parser, cdc, db)
 	bankModule := bank.NewModule(r.parser, sources.BankSource, cdc, db)
@@ -80,6 +98,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	dailyRefetchModule := dailyrefetch.NewModule(ctx.Proxy, db)
 	distrModule := distribution.NewModule(sources.DistrSource, cdc, db)
 	feegrantModule := feegrant.NewModule(cdc, db)
+	historyModule := history.NewModule(ctx.JunoConfig.Chain, r.parser, cdc, db)
 	mintModule := mint.NewModule(sources.MintSource, cdc, db)
 	slashingModule := slashing.NewModule(sources.SlashingSource, cdc, db)
 	stakingModule := staking.NewModule(sources.StakingSource, cdc, db)
@@ -99,9 +118,10 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		distrModule,
 		feegrantModule,
 		govModule,
+		historyModule,
 		mintModule,
 		modules.NewModule(ctx.JunoConfig.Chain, db),
-		pricefeed.NewModule(ctx.JunoConfig, cdc, db),
+		pricefeed.NewModule(ctx.JunoConfig, cryptoCompareClient, historyModule, cdc, db),
 		slashingModule,
 		stakingModule,
 		upgradeModule,

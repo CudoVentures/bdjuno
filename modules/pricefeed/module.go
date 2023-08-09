@@ -6,6 +6,7 @@ import (
 
 	"github.com/forbole/bdjuno/v4/database"
 
+	"github.com/forbole/bdjuno/v4/client/cryptoCompare"
 	"github.com/forbole/juno/v5/modules"
 )
 
@@ -17,13 +18,15 @@ var (
 
 // Module represents the module that allows to get the token prices
 type Module struct {
-	cfg *Config
-	cdc codec.Codec
-	db  *database.Db
+	cfg           *Config
+	ccc           *cryptoCompare.CryptoCompareClient
+	cdc           codec.Codec
+	db            *database.Db
+	historyModule HistoryModule
 }
 
 // NewModule returns a new Module instance
-func NewModule(cfg config.Config, cdc codec.Codec, db *database.Db) *Module {
+func NewModule(cfg config.Config, cryptoCompareClient *cryptoCompare.CryptoCompareClient, historyModule HistoryModule, cdc codec.Codec, db *database.Db) *Module {
 	bz, err := cfg.GetBytes()
 	if err != nil {
 		panic(err)
@@ -35,9 +38,11 @@ func NewModule(cfg config.Config, cdc codec.Codec, db *database.Db) *Module {
 	}
 
 	return &Module{
-		cfg: pricefeedCfg,
-		cdc: cdc,
-		db:  db,
+		cfg:           pricefeedCfg,
+		ccc:           cryptoCompareClient,
+		cdc:           cdc,
+		db:            db,
+		historyModule: historyModule,
 	}
 }
 

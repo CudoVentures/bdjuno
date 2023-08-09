@@ -56,5 +56,5 @@ func (m *Module) storeTokens() error {
 		return fmt.Errorf("error while storing token prices: %s", err)
 	}
 
-	return nil
+	return m.historyModule.UpdatePricesHistory(prices)
 }
