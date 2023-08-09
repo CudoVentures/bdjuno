@@ -303,3 +303,5 @@ require (
 	pgregory.net/rapid v0.5.5 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
+
+replace github.com/forbole/juno/v5 => github.com/CudoVentures/juno/v5 v5.0.0-20230809124750-cf23f747fdde
