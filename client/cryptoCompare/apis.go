@@ -1,4 +1,4 @@
-package cryptoCompare
+package cryptocompare
 
 import (
 	"encoding/json"
@@ -16,15 +16,15 @@ import (
 )
 
 // NewModule returns a new Module instance
-func NewClient(cfg *Config) *CryptoCompareClient {
-	return &CryptoCompareClient{
-		useProdApiKey: true,
+func NewClient(cfg *Config) *Client {
+	return &Client{
+		useProdAPIKey: true,
 		config:        cfg,
 	}
 }
 
 // GetTokensPrices queries the remote APIs to get the token prices of all the tokens having the given ids
-func (c *CryptoCompareClient) GetTokensPrices(currency string, ids []string) ([]types.TokenPrice, error) {
+func (c *Client) GetTokensPrices(currency string, ids []string) ([]types.TokenPrice, error) {
 	var resStruct struct {
 		Raw map[string]map[string]MarketTicker
 	}
@@ -38,7 +38,7 @@ func (c *CryptoCompareClient) GetTokensPrices(currency string, ids []string) ([]
 	return c.ConvertCoingeckoPrices(resStruct.Raw), nil
 }
 
-func (c *CryptoCompareClient) ConvertCoingeckoPrices(tokens map[string]map[string]MarketTicker) []types.TokenPrice {
+func (c *Client) ConvertCoingeckoPrices(tokens map[string]map[string]MarketTicker) []types.TokenPrice {
 	var tokenPrices []types.TokenPrice
 
 	for token, price := range tokens {
@@ -53,7 +53,7 @@ func (c *CryptoCompareClient) ConvertCoingeckoPrices(tokens map[string]map[strin
 	}
 	return tokenPrices
 }
-func (c *CryptoCompareClient) GetCUDOSPrice(currency string) (string, error) {
+func (c *Client) GetCUDOSPrice(currency string) (string, error) {
 	ids := []string{"CUDOS"}
 	prices, err := c.GetTokensPrices(currency, ids)
 	if err != nil {
@@ -64,7 +64,7 @@ func (c *CryptoCompareClient) GetCUDOSPrice(currency string) (string, error) {
 }
 
 // queryCryptoCompare queries the CoinGecko APIs for the given endpoint
-func (c *CryptoCompareClient) queryCryptoCompare(endpoint string, ptr interface{}) error {
+func (c *Client) queryCryptoCompare(endpoint string, ptr interface{}) error {
 	req, err := http.NewRequest("GET", "https://min-api.cryptocompare.com"+endpoint, nil)
 
 	if err != nil {
@@ -72,20 +72,20 @@ func (c *CryptoCompareClient) queryCryptoCompare(endpoint string, ptr interface{
 	}
 
 	var apiKey string
-	var keyType string = "empty"
-	if c.useProdApiKey {
-		apiKey = c.config.Config.CryptoCompareProdApiKey
+	var keyType = "empty"
+	if c.useProdAPIKey {
+		apiKey = c.config.Config.CryptoCompareProdAPIKey
 	} else {
-		apiKey = c.config.Config.CryptoCompareFreeApiKey
+		apiKey = c.config.Config.CryptoCompareFreeAPIKey
 	}
 
 	if apiKey != "" {
 		req.Header.Set("authorization", fmt.Sprintf("Apikey %s", apiKey))
 
 		switch apiKey {
-		case c.config.Config.CryptoCompareFreeApiKey:
+		case c.config.Config.CryptoCompareFreeAPIKey:
 			keyType = "free"
-		case c.config.Config.CryptoCompareProdApiKey:
+		case c.config.Config.CryptoCompareProdAPIKey:
 			keyType = "production"
 		default:
 			keyType = "no"
@@ -115,7 +115,7 @@ func (c *CryptoCompareClient) queryCryptoCompare(endpoint string, ptr interface{
 	}
 
 	if rateLimitRemainder < 600000 {
-		c.useProdApiKey = false
+		c.useProdAPIKey = false
 		log.Warn().Str("module", "crypto-compare").Msg("Switching to crypto-compare free api key")
 	}
 

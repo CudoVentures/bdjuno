@@ -1,4 +1,4 @@
-package cryptoCompare_test
+package cryptocompare_test
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/forbole/bdjuno/v4/client/cryptoCompare"
+	"github.com/forbole/bdjuno/v4/client/cryptocompare"
 )
 
 func TestConvertCoingeckoPrices(t *testing.T) {
@@ -117,20 +117,20 @@ func TestConvertCoingeckoPrices(t *testing.T) {
 }
 `
 
-	var apisPrices map[string]map[string]cryptoCompare.MarketTicker
+	var apisPrices map[string]map[string]cryptocompare.MarketTicker
 	err := json.Unmarshal([]byte(result), &apisPrices)
 	require.NoError(t, err)
-	cfg := cryptoCompare.Config{
+	cfg := cryptocompare.Config{
 		Config: struct {
-			CryptoCompareProdApiKey string "yaml:\"crypto_compare_prod_api_key\""
-			CryptoCompareFreeApiKey string "yaml:\"crypto_compare_free_api_key\""
+			CryptoCompareProdAPIKey string "yaml:\"crypto_compare_prod_api_key\""
+			CryptoCompareFreeAPIKey string "yaml:\"crypto_compare_free_api_key\""
 		}{
-			CryptoCompareProdApiKey: "test",
-			CryptoCompareFreeApiKey: "test",
+			CryptoCompareProdAPIKey: "test",
+			CryptoCompareFreeAPIKey: "test",
 		},
 	}
 
-	ccc := cryptoCompare.NewClient(&cfg)
+	ccc := cryptocompare.NewClient(&cfg)
 	prices := ccc.ConvertCoingeckoPrices(apisPrices)
 	require.Equal(t, 2, len(prices))
 	require.Equal(t, "cudos", prices[0].UnitName)

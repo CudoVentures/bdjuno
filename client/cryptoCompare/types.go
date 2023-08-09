@@ -1,7 +1,7 @@
-package cryptoCompare
+package cryptocompare
 
-type CryptoCompareClient struct {
-	useProdApiKey bool
+type Client struct {
+	useProdAPIKey bool
 	config        *Config
 }
 
@@ -33,7 +33,7 @@ type PricesRes struct {
 
 type Config struct {
 	Config struct {
-		CryptoCompareProdApiKey string `yaml:"crypto_compare_prod_api_key"`
-		CryptoCompareFreeApiKey string `yaml:"crypto_compare_free_api_key"`
+		CryptoCompareProdAPIKey string `yaml:"crypto_compare_prod_api_key"`
+		CryptoCompareFreeAPIKey string `yaml:"crypto_compare_free_api_key"`
 	} `yaml:"crypto-compare"`
 }

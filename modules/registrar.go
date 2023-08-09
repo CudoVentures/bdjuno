@@ -36,7 +36,7 @@ import (
 	"github.com/forbole/bdjuno/v4/modules/staking"
 	"github.com/forbole/bdjuno/v4/modules/upgrade"
 
-	"github.com/forbole/bdjuno/v4/client/cryptoCompare"
+	"github.com/forbole/bdjuno/v4/client/cryptocompare"
 	"github.com/forbole/bdjuno/v4/modules/history"
 )
 
@@ -80,7 +80,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		panic(err)
 	}
 
-	var cryptoCompareConfig cryptoCompare.Config
+	var cryptoCompareConfig cryptocompare.Config
 	bytes, err := ctx.JunoConfig.GetBytes()
 	if err != nil {
 		panic(fmt.Errorf("failed to get bytes from JunoConfig: %s", err))
@@ -89,7 +89,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		panic(fmt.Errorf("failed to parse cryptoCompare config: %s", err))
 	}
 
-	cryptoCompareClient := cryptoCompare.NewClient(&cryptoCompareConfig)
+	cryptoCompareClient := cryptocompare.NewClient(&cryptoCompareConfig)
 
 	actionsModule := actions.NewModule(ctx.JunoConfig, ctx.EncodingConfig)
 	authModule := auth.NewModule(r.parser, cdc, db)
