@@ -10,6 +10,7 @@ import (
 
 	migratecmd "github.com/forbole/bdjuno/v4/cmd/migrate"
 	parsecmd "github.com/forbole/bdjuno/v4/cmd/parse"
+	"github.com/forbole/bdjuno/v4/workers"
 
 	"github.com/forbole/bdjuno/v4/types/config"
 
@@ -35,10 +36,13 @@ func main() {
 	// Run the command
 	rootCmd := cmd.RootCmd(cfg.GetName())
 
+	pcmd := parsecmd.NewParseCmd(cfg.GetParseConfig())
+	pcmd.PreRunE = workers.GetStartWorkersPrerunE(pcmd.PreRunE, cfg.GetParseConfig())
+
 	rootCmd.AddCommand(
 		cmd.VersionCmd(),
 		initcmd.NewInitCmd(cfg.GetInitConfig()),
-		parsecmd.NewParseCmd(cfg.GetParseConfig()),
+		pcmd,
 		migratecmd.NewMigrateCmd(cfg.GetName(), cfg.GetParseConfig()),
 		startcmd.NewStartCmd(cfg.GetParseConfig()),
 	)
