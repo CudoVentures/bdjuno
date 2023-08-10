@@ -35,10 +35,10 @@ func (c *Client) GetTokensPrices(currency string, ids []string) ([]types.TokenPr
 	}
 
 	// return nil, nil
-	return c.ConvertCoingeckoPrices(resStruct.Raw), nil
+	return c.ConvertCryptocompare(resStruct.Raw), nil
 }
 
-func (c *Client) ConvertCoingeckoPrices(tokens map[string]map[string]MarketTicker) []types.TokenPrice {
+func (c *Client) ConvertCryptocompare(tokens map[string]map[string]MarketTicker) []types.TokenPrice {
 	var tokenPrices []types.TokenPrice
 
 	for token, price := range tokens {
