@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/forbole/bdjuno/v4/client/cryptocompare"
-	"github.com/forbole/bdjuno/v4/types"
 )
 
 func TestConvertCryptocomparePrices(t *testing.T) {
@@ -134,16 +133,6 @@ func TestConvertCryptocomparePrices(t *testing.T) {
 	ccc := cryptocompare.NewClient(&cfg)
 	prices := ccc.ConvertCryptocompare(apisPrices)
 	require.Equal(t, 2, len(prices))
-
-	var cudosPrice *types.TokenPrice
-	for _, price := range prices {
-		if price.UnitName == "cudos" {
-			cudosPrice = &price
-			break
-		}
-	}
-
-	require.NotNil(t, cudosPrice, "CUDOS price not found")
-	require.Equal(t, 0.00237, cudosPrice.Price)
-	require.Equal(t, int64(21017810), cudosPrice.MarketCap)
+	require.Equal(t, 0.00237, prices[0].Price)
+	require.Equal(t, int64(21017810), prices[0].MarketCap)
 }
