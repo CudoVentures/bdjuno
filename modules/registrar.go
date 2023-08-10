@@ -38,6 +38,7 @@ import (
 	"github.com/forbole/bdjuno/v4/modules/cosmwasm"
 	"github.com/forbole/bdjuno/v4/modules/cudomint"
 	"github.com/forbole/bdjuno/v4/modules/history"
+	"github.com/forbole/bdjuno/v4/modules/marketplace"
 	"github.com/forbole/bdjuno/v4/modules/nft"
 )
 
@@ -105,6 +106,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	govModule := gov.NewModule(sources.GovSource, authModule, distrModule, slashingModule, stakingModule, cdc, db)
 	cosmwasmModule := cosmwasm.NewModule(cdc, db)
 	nftModule := nft.NewModule(cdc, db)
+	marketplaceModule := marketplace.NewModule(cdc, db, configBytes, cryptoCompareClient)
 	upgradeModule := upgrade.NewModule(db, stakingModule)
 
 	return []jmodules.Module{
@@ -126,6 +128,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		slashingModule,
 		stakingModule,
 		cosmwasmModule,
+		marketplaceModule,
 		nftModule,
 		upgradeModule,
 	}
