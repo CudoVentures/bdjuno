@@ -30,7 +30,6 @@ import (
 
 	dailyrefetch "github.com/forbole/bdjuno/v4/modules/daily_refetch"
 	"github.com/forbole/bdjuno/v4/modules/gov"
-	"github.com/forbole/bdjuno/v4/modules/mint"
 	"github.com/forbole/bdjuno/v4/modules/modules"
 	"github.com/forbole/bdjuno/v4/modules/pricefeed"
 	"github.com/forbole/bdjuno/v4/modules/staking"
@@ -38,6 +37,7 @@ import (
 
 	"github.com/forbole/bdjuno/v4/client/cryptocompare"
 	"github.com/forbole/bdjuno/v4/modules/cosmwasm"
+	"github.com/forbole/bdjuno/v4/modules/cudomint"
 	"github.com/forbole/bdjuno/v4/modules/history"
 )
 
@@ -82,11 +82,11 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	}
 
 	var cryptoCompareConfig cryptocompare.Config
-	bytes, err := ctx.JunoConfig.GetBytes()
+	configBytes, err := ctx.JunoConfig.GetBytes()
 	if err != nil {
 		panic(fmt.Errorf("failed to get bytes from JunoConfig: %s", err))
 	}
-	if err := yaml.Unmarshal(bytes, &cryptoCompareConfig); err != nil {
+	if err := yaml.Unmarshal(configBytes, &cryptoCompareConfig); err != nil {
 		panic(fmt.Errorf("failed to parse cryptoCompare config: %s", err))
 	}
 
@@ -100,10 +100,10 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	distrModule := distribution.NewModule(sources.DistrSource, cdc, db)
 	feegrantModule := feegrant.NewModule(cdc, db)
 	historyModule := history.NewModule(ctx.JunoConfig.Chain, r.parser, cdc, db)
-	mintModule := mint.NewModule(sources.MintSource, cdc, db)
+	cudoMintModule := cudomint.NewModule(cdc, db, configBytes)
 	slashingModule := slashing.NewModule(sources.SlashingSource, cdc, db)
 	stakingModule := staking.NewModule(sources.StakingSource, cdc, db)
-	govModule := gov.NewModule(sources.GovSource, authModule, distrModule, mintModule, slashingModule, stakingModule, cdc, db)
+	govModule := gov.NewModule(sources.GovSource, authModule, distrModule, slashingModule, stakingModule, cdc, db)
 	cosmwasmModule := cosmwasm.NewModule(cdc, db)
 	upgradeModule := upgrade.NewModule(db, stakingModule)
 
@@ -121,7 +121,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		feegrantModule,
 		govModule,
 		historyModule,
-		mintModule,
+		cudoMintModule,
 		modules.NewModule(ctx.JunoConfig.Chain, db),
 		pricefeed.NewModule(ctx.JunoConfig, cryptoCompareClient, historyModule, cdc, db),
 		slashingModule,
