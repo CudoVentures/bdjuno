@@ -37,6 +37,7 @@ import (
 	"github.com/forbole/bdjuno/v4/modules/upgrade"
 
 	"github.com/forbole/bdjuno/v4/client/cryptocompare"
+	"github.com/forbole/bdjuno/v4/modules/cosmwasm"
 	"github.com/forbole/bdjuno/v4/modules/history"
 )
 
@@ -103,6 +104,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	slashingModule := slashing.NewModule(sources.SlashingSource, cdc, db)
 	stakingModule := staking.NewModule(sources.StakingSource, cdc, db)
 	govModule := gov.NewModule(sources.GovSource, authModule, distrModule, mintModule, slashingModule, stakingModule, cdc, db)
+	cosmwasmModule := cosmwasm.NewModule(cdc, db)
 	upgradeModule := upgrade.NewModule(db, stakingModule)
 
 	return []jmodules.Module{
@@ -124,6 +126,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		pricefeed.NewModule(ctx.JunoConfig, cryptoCompareClient, historyModule, cdc, db),
 		slashingModule,
 		stakingModule,
+		cosmwasmModule,
 		upgradeModule,
 	}
 }
