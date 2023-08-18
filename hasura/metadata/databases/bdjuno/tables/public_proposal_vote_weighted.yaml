@@ -1,7 +1,10 @@
 table:
-  name: software_upgrade_plan
+  name: proposal_vote_weighted
   schema: public
 object_relationships:
+- name: account
+  using:
+    foreign_key_constraint_on: voter_address
 - name: proposal
   using:
     foreign_key_constraint_on: proposal_id
@@ -10,9 +13,9 @@ select_permissions:
     allow_aggregations: true
     columns:
     - proposal_id
-    - plan_name
-    - upgrade_height
-    - info
+    - voter_address
+    - option
+    - weight
     - height
     filter: {}
   role: anonymous

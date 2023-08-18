@@ -7,12 +7,11 @@ object_relationships:
     foreign_key_constraint_on: validator_address
 select_permissions:
 - permission:
-    allow_aggregations: false
+    allow_aggregations: true
     columns:
     - validator_address
     - commission
     - min_self_delegation
     - height
     filter: {}
-    limit: 100
   role: anonymous

@@ -1,0 +1,23 @@
+table:
+  name: marketplace_collection
+  schema: public
+object_relationships:
+- name: transaction
+  using:
+    foreign_key_constraint_on: transaction_hash
+- name: nft_denom
+  using:
+    foreign_key_constraint_on: denom_id
+select_permissions:
+- permission:
+    allow_aggregations: true
+    columns:
+    - transaction_hash
+    - id
+    - denom_id
+    - mint_royalties
+    - resale_royalties
+    - verified
+    - creator
+    filter: {}
+  role: anonymous
