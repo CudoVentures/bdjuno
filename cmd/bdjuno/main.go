@@ -10,6 +10,7 @@ import (
 
 	cudosapp "github.com/CudoVentures/cudos-node/app"
 	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
+	databasemigratecmd "github.com/forbole/bdjuno/v4/cmd/database-migrate"
 	migratecmd "github.com/forbole/bdjuno/v4/cmd/migrate"
 	parsecmd "github.com/forbole/bdjuno/v4/cmd/parse"
 	"github.com/forbole/bdjuno/v4/workers"
@@ -47,6 +48,7 @@ func main() {
 		pcmd,
 		migratecmd.NewMigrateCmd(cfg.GetName(), cfg.GetParseConfig()),
 		startcmd.NewStartCmd(cfg.GetParseConfig()),
+		databasemigratecmd.NewDatabaseMigrateCmd(cfg.GetParseConfig()),
 	)
 
 	executor := cmd.PrepareRootCmd(cfg.GetName(), rootCmd)
