@@ -99,3 +99,12 @@ type RedelegationEntry struct {
 	CompletionTime time.Time   `json:"completion_time"`
 	Balance        sdkmath.Int `json:"balance"`
 }
+
+type TransferEventsResponse struct {
+	TransferEvents []TransferEvent `json:"events"`
+}
+type TransferEvent struct {
+	From      string `json:"from"`
+	To        string `json:"to"`
+	Timestamp int    `json:"timestamp"`
+}

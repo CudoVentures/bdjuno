@@ -94,7 +94,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 
 	cryptoCompareClient := cryptocompare.NewClient(&cryptoCompareConfig)
 
-	actionsModule := actions.NewModule(ctx.JunoConfig, ctx.EncodingConfig)
+	actionsModule := actions.NewModule(cdc, ctx.JunoConfig, ctx.EncodingConfig)
 	authModule := auth.NewModule(r.parser, cdc, db)
 	bankModule := bank.NewModule(r.parser, sources.BankSource, cdc, db)
 	consensusModule := consensus.NewModule(db)

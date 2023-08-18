@@ -3,7 +3,7 @@ package types
 import (
 	"encoding/json"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -36,7 +36,7 @@ func (w *ActionsWorker) RegisterHandler(path string, handler ActionHandler) {
 		writer.Header().Set("Content-Type", "application/json")
 
 		// Read the body
-		reqBody, err := io.ReadAll(request.Body)
+		reqBody, err := ioutil.ReadAll(request.Body)
 		if err != nil {
 			http.Error(writer, "invalid payload", http.StatusBadRequest)
 			return
@@ -70,6 +70,46 @@ func (w *ActionsWorker) RegisterHandler(path string, handler ActionHandler) {
 		// Prometheus
 		logging.SuccessCounter(path)
 		logging.ReponseTimeBuckets(path, start)
+
+		// Write the response
+		writer.Write(data)
+	})
+}
+
+func (w *ActionsWorker) RegisterNftTransferEventsHandler(path string, handler NftTransferEventsActionHandler) {
+	w.mux.HandleFunc(path, func(writer http.ResponseWriter, request *http.Request) {
+		// Set the content type
+		writer.Header().Set("Content-Type", "application/json")
+
+		// Read the body
+		reqBody, err := ioutil.ReadAll(request.Body)
+		if err != nil {
+			http.Error(writer, "invalid payload", http.StatusBadRequest)
+			return
+		}
+		defer request.Body.Close()
+
+		// Get the actions payload
+		var payload NftTransferEventsPayload
+		err = json.Unmarshal(reqBody, &payload)
+		if err != nil {
+			http.Error(writer, "invalid payload: failed to unmarshal json", http.StatusInternalServerError)
+			return
+		}
+
+		// Handle the request
+		res, err := handler(w.context, &payload)
+		if err != nil {
+			w.handleError(writer, path, err)
+			return
+		}
+
+		// Marshal the response
+		data, err := json.Marshal(res)
+		if err != nil {
+			w.handleError(writer, path, err)
+			return
+		}
 
 		// Write the response
 		writer.Write(data)
