@@ -55,7 +55,7 @@ require (
 	github.com/OpenPeeDeeP/depguard v1.1.1 // indirect
 	github.com/alexkohler/prealloc v1.0.0 // indirect
 	github.com/alingse/asasalint v0.0.11 // indirect
-	github.com/althea-net/cosmos-gravity-bridge/module v0.0.0-00010101000000-000000000000 // indirect
+	github.com/althea-net/cosmos-gravity-bridge/module v0.0.0-00010101000000-000000000000
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/ashanbrown/forbidigo v1.5.1 // indirect
 	github.com/ashanbrown/makezero v1.1.1 // indirect

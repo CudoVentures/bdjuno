@@ -27,6 +27,7 @@ import (
 	"github.com/forbole/bdjuno/v4/modules/consensus"
 	"github.com/forbole/bdjuno/v4/modules/distribution"
 	"github.com/forbole/bdjuno/v4/modules/feegrant"
+	"github.com/forbole/bdjuno/v4/modules/gravity"
 
 	"github.com/forbole/bdjuno/v4/modules/gov"
 	"github.com/forbole/bdjuno/v4/modules/modules"
@@ -106,6 +107,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	stakingModule := staking.NewModule(sources.StakingSource, cdc, db)
 	govModule := gov.NewModule(sources.GovSource, authModule, distrModule, slashingModule, stakingModule, cdc, db)
 	cosmwasmModule := cosmwasm.NewModule(cdc, db)
+	gravityModule := gravity.NewModule(cdc, db)
 	nftModule := nft.NewModule(cdc, db)
 	groupModule := group.NewModule(cdc, db)
 	marketplaceModule := marketplace.NewModule(cdc, db, configBytes, cryptoCompareClient)
@@ -130,6 +132,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		slashingModule,
 		stakingModule,
 		cosmwasmModule,
+		gravityModule,
 		marketplaceModule,
 		nftModule,
 		groupModule,
