@@ -673,12 +673,12 @@ github.com/CosmWasm/wasmvm v1.2.4 h1:6OfeZuEcEH/9iqwrg2pkeVtDCkMoj9U6PpKtcrCyVrQ
 github.com/CosmWasm/wasmvm v1.2.4/go.mod h1:vW/E3h8j9xBQs9bCoijDuawKo9kCtxOaS8N8J7KFtkc=
 github.com/CudoVentures/cosmos-gravity-bridge/module v0.0.0-20230726085514-1f7d33f2fd4c h1:lxxRrNPxfxNhtsOGQQg26e0advcLDRQDO9dyG6LdH7Y=
 github.com/CudoVentures/cosmos-gravity-bridge/module v0.0.0-20230726085514-1f7d33f2fd4c/go.mod h1:3rImw3IlUlB+88+Nf0ThhOuq5zS2ixePnwXE9pyvi8k=
-github.com/CudoVentures/cosmos-sdk v0.0.0-20230717140133-df4d8422a08d h1:h7yqC3hOB754kXQBvPe8Nhs7ljBeLvsz5V1WTUCK7MU=
-github.com/CudoVentures/cosmos-sdk v0.0.0-20230717140133-df4d8422a08d/go.mod h1:c4OfLdAykA9zsj1CqrxBRqXzVz48I++JSvIMPSPcEmk=
+github.com/CudoVentures/cosmos-sdk v0.47.4-0.20230717140133-df4d8422a08d h1:aTil1/hVuy5ZW86x+BXU6VbjXC+gLzPZKN8UDTx1t8Y=
+github.com/CudoVentures/cosmos-sdk v0.47.4-0.20230717140133-df4d8422a08d/go.mod h1:c4OfLdAykA9zsj1CqrxBRqXzVz48I++JSvIMPSPcEmk=
 github.com/CudoVentures/cosmos-sdk/simapp v0.0.0-20230717140133-df4d8422a08d h1:NwQEruMckJHrYckMwcCnDn6j2fdF8VStff/U0dseJBA=
 github.com/CudoVentures/cosmos-sdk/simapp v0.0.0-20230717140133-df4d8422a08d/go.mod h1:xbjky3L3DJEylaho6gXplkrMvJ5sFgv+qNX+Nn47bzY=
-github.com/CudoVentures/cudos-node v1.1.1-0.20230801141935-0aeb431e601b h1:+azu0L6teAD3g4Zs7yGoqcVB88NLvjcgTj8oCKCnJoU=
-github.com/CudoVentures/cudos-node v1.1.1-0.20230801141935-0aeb431e601b/go.mod h1:r2Sm3YbwICb6e0/XFSrv9nmMbufUQJuiGf0KbBr4pRU=
+github.com/CudoVentures/cudos-node v1.1.1-0.20230821122417-31402f8ea2d9 h1:0+2Q1PuSAyjeI5txD+24+vY5NcwwcepfB7SAR4HWODE=
+github.com/CudoVentures/cudos-node v1.1.1-0.20230821122417-31402f8ea2d9/go.mod h1:JqQysOSVKiSi5upBKM+dfMDEIZi4pl03/WSDEY06mNA=
 github.com/CudoVentures/juno/v5 v5.0.0-20230809124750-cf23f747fdde h1:H2kKKV+Su1Y8oetbw4GmCG+h1zwlKjohTseLHY+XpC0=
 github.com/CudoVentures/juno/v5 v5.0.0-20230809124750-cf23f747fdde/go.mod h1:4xgSKG+fuP3Ku//O7Sqq4IRI1V71mzEOdPxC2leuilA=
 github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=

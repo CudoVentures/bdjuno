@@ -6,7 +6,7 @@ require (
 	cosmossdk.io/math v1.0.1
 	cosmossdk.io/simapp v0.0.0-20230224204036-a6adb0821462
 	github.com/CosmWasm/wasmd v0.40.1
-	github.com/CudoVentures/cudos-node v1.1.1-0.20230801141935-0aeb431e601b
+	github.com/CudoVentures/cudos-node v1.1.1-0.20230821122417-31402f8ea2d9
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cosmos/cosmos-sdk v0.47.3
 	github.com/cosmos/gogoproto v1.4.10
@@ -319,7 +319,7 @@ require (
 
 replace github.com/forbole/juno/v5 => github.com/CudoVentures/juno/v5 v5.0.0-20230809124750-cf23f747fdde
 
-replace github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.0.0-20230717140133-df4d8422a08d
+replace github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.47.4-0.20230717140133-df4d8422a08d
 
 replace cosmossdk.io/simapp => github.com/CudoVentures/cosmos-sdk/simapp v0.0.0-20230717140133-df4d8422a08d
 
