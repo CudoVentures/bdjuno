@@ -37,6 +37,7 @@ parsing:
     fast_sync: false # when fast sync is set to true, ignores all previous block
     genesis_file_path: /usr/local/bdjuno/bdjuno/genesis.json
 database:
+    url: postgres://user:password@host:5432/database-name?sslmode=disable&search_path=public
     name: new-private-testnet-explorer-v2
     host: host.docker.internal # uses gcloud sql auth proxy on localhost to connecto gcloud sql db
     port: 5432

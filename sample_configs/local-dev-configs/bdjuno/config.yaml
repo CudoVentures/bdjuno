@@ -38,9 +38,10 @@ parsing:
     fast_sync: false # when fast sync is set to true, ignores all previous block
     genesis_file_path: /usr/local/bdjuno/bdjuno/genesis.json
 database:
+    url: postgres://postgres:12345@localhost:5432/LocalBigDipperTestV2?sslmode=disable&search_path=public
     name: LocalBigDipperTestV2
     host: host.docker.internal
-    port: 5444
+    port: 5432
     user: postgres
     password: passhere
     schema: public
