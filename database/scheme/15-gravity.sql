@@ -11,9 +11,11 @@ CREATE TABLE gravity_transaction
     receiver TEXT NOT NULL,
     votes INTEGER NOT NULL,
     consensus BOOLEAN NOT NULL,
-    transaction_hash TEXT NOT NULL REFERENCES transaction (hash),
+    transaction_hash TEXT NOT NULL,
+    partition_id BIGINT NOT NULL,
     height BIGINT NOT NULL REFERENCES block (height),
-    PRIMARY KEY(attestation_id, orchestrator)
+    PRIMARY KEY(attestation_id, orchestrator),
+    FOREIGN KEY(transaction_hash, partition_id) REFERENCES transaction (hash, partition_id)
 );
 
 CREATE INDEX gravity_transaction_receiver_index ON gravity_transaction (receiver);
@@ -29,7 +31,7 @@ CREATE FUNCTION gravity_messages_by_address(
     "offset" BIGINT = 0)
     RETURNS SETOF message AS
 $$
-SELECT m.transaction_hash, m.index, m.type, m.value, m.involved_accounts_addresses
+SELECT m.transaction_hash, m.index, m.type, m.value, m.involved_accounts_addresses, m.partition_id, m.height
 FROM message m
          JOIN gravity_transaction t on m.transaction_hash = t.transaction_hash
 WHERE t.receiver = receiver_addr AND t.orchestrator = ANY(m.involved_accounts_addresses)
