@@ -5,17 +5,9 @@ object_relationships:
   - name: block
     using:
       foreign_key_constraint_on: height
-array_relationships:
-  - name: messagesByTransactionHash
-    using:
-      foreign_key_constraint_on:
-        column: transaction_hash
-        table:
-          name: message
-          schema: public
 select_permissions:
   - permission:
-      allow_aggregations: true
+      allow_aggregations: false
       columns:
         - hash
         - height
@@ -29,6 +21,6 @@ select_permissions:
         - gas_used
         - raw_log
         - logs
-        - partition_id
       filter: {}
+      limit: 100
     role: anonymous
