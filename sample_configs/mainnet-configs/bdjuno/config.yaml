@@ -10,7 +10,6 @@ chain:
         - slashing 
         - staking
         - distribution
-        - history
         - pricefeed
         - cosmwasm
         - gravity

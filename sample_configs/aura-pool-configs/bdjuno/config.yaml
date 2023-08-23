@@ -10,13 +10,11 @@ chain:
         - slashing 
         - staking
         - pricefeed
-        - history
         - distribution
         - cosmwasm
         - gravity
         - nft
         - marketplace
-        - cw20token
         - group
 node:
     type: remote

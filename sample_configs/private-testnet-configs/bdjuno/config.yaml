@@ -10,14 +10,12 @@ chain:
         - slashing 
         - staking
         - distribution
-        - history
         - pricefeed
         - cosmwasm
         - gravity
         - cudomint
         - nft
         - group
-        - cw20token
 node:
     type: remote
     config:

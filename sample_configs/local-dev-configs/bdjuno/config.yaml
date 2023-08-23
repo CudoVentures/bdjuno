@@ -10,14 +10,12 @@ chain:
         - slashing 
         - staking
         - pricefeed
-        - history
         - distribution
         - cosmwasm
         - gravity
         - cudomint
         - nft
         - marketplace
-        - cw20token
         - group
 node:
     type: remote
@@ -38,7 +36,7 @@ parsing:
     fast_sync: false # when fast sync is set to true, ignores all previous block
     genesis_file_path: /usr/local/bdjuno/bdjuno/genesis.json
 database:
-    url: postgres://postgres:12345@localhost:5432/LocalBigDipperTestV2?sslmode=disable&search_path=public
+    url: postgres://user:password@host:port/database-name?sslmode=disable&search_path=public
     name: LocalBigDipperTestV2
     host: host.docker.internal
     port: 5432
