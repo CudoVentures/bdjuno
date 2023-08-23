@@ -256,6 +256,38 @@ func NewVote(
 	}
 }
 
+type WeightedVoteOption struct {
+	Option string
+	Weight string
+}
+
+type WeightedVote struct {
+	ProposalID uint64
+	Voter      string
+	Options    []WeightedVoteOption
+	Height     int64
+}
+
+func NewWeightedVote(
+	proposalID uint64,
+	voter string,
+	options []*govtypesv1.WeightedVoteOption,
+	height int64,
+) WeightedVote {
+	weightedvote := WeightedVote{
+		ProposalID: proposalID,
+		Voter:      voter,
+		Height:     height,
+	}
+	for _, opt := range options {
+		weightedvote.Options = append(weightedvote.Options, WeightedVoteOption{
+			Option: govtypesv1.VoteOption_name[int32(opt.Option)],
+			Weight: opt.Weight,
+		})
+	}
+	return weightedvote
+}
+
 // -------------------------------------------------------------------------------------------------------------------
 
 // TallyResult contains the data about the final results of a proposal
