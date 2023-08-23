@@ -39,7 +39,6 @@ import (
 	"github.com/forbole/bdjuno/v4/modules/cosmwasm"
 	"github.com/forbole/bdjuno/v4/modules/cudomint"
 	"github.com/forbole/bdjuno/v4/modules/group"
-	"github.com/forbole/bdjuno/v4/modules/history"
 	"github.com/forbole/bdjuno/v4/modules/marketplace"
 	"github.com/forbole/bdjuno/v4/modules/nft"
 )
@@ -101,7 +100,6 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	consensusModule := consensus.NewModule(db)
 	distrModule := distribution.NewModule(sources.DistrSource, cdc, db)
 	feegrantModule := feegrant.NewModule(cdc, db)
-	historyModule := history.NewModule(ctx.JunoConfig.Chain, r.parser, cdc, db)
 	cudoMintModule := cudomint.NewModule(cdc, db, configBytes)
 	slashingModule := slashing.NewModule(sources.SlashingSource, cdc, db)
 	stakingModule := staking.NewModule(sources.StakingSource, cdc, db)
@@ -125,10 +123,9 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		distrModule,
 		feegrantModule,
 		govModule,
-		historyModule,
 		cudoMintModule,
 		modules.NewModule(ctx.JunoConfig.Chain, db),
-		pricefeed.NewModule(ctx.JunoConfig, cryptoCompareClient, historyModule, cdc, db),
+		pricefeed.NewModule(ctx.JunoConfig, cryptoCompareClient, cdc, db),
 		slashingModule,
 		stakingModule,
 		cosmwasmModule,
