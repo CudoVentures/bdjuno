@@ -2,18 +2,24 @@ table:
   name: distinct_message
   schema: public
 object_relationships:
-- name: transaction
-  using:
-    foreign_key_constraint_on: transaction_hash
+  - name: transaction
+    using:
+      manual_configuration:
+        remote_table:
+          schema: public
+          name: transaction
+        insertion_order:
+        column_mapping:
+          transaction_hash: hash
 select_permissions:
-- permission:
-    allow_aggregations: true
-    columns:
-    - transaction_hash
-    - height
-    - index
-    - type
-    - value
-    - involved_accounts_addresses
-    filter: {}
-  role: anonymous
+  - permission:
+      allow_aggregations: true
+      columns:
+        - transaction_hash
+        - height
+        - index
+        - type
+        - value
+        - involved_accounts_addresses
+      filter: {}
+    role: anonymous

@@ -2,21 +2,27 @@ table:
   name: cosmwasm_instantiate
   schema: public
 object_relationships:
-- name: transaction
-  using:
-    foreign_key_constraint_on: transaction_hash
+  - name: transaction
+    using:
+      manual_configuration:
+        remote_table:
+          schema: public
+          name: transaction
+        insertion_order:
+        column_mapping:
+          transaction_hash: hash
 select_permissions:
-- permission:
-    allow_aggregations: true
-    columns:
-    - transaction_hash
-    - index
-    - admin
-    - funds
-    - label
-    - sender
-    - code_id
-    - result_contract_address
-    - success
-    filter: {}
-  role: anonymous
+  - permission:
+      allow_aggregations: true
+      columns:
+        - transaction_hash
+        - index
+        - admin
+        - funds
+        - label
+        - sender
+        - code_id
+        - result_contract_address
+        - success
+      filter: {}
+    role: anonymous
