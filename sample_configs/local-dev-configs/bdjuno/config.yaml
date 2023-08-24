@@ -1,13 +1,13 @@
 chain:
     bech32_prefix: cudos
-    modules: 
+    modules:
         - modules
         - messages
         - auth
         - bank
         - consensus
         - gov
-        - slashing 
+        - slashing
         - staking
         - pricefeed
         - distribution
@@ -45,6 +45,8 @@ database:
     schema: public
     max_open_connections: 10
     max_idle_connections: 10
+    partition_size: 100000
+    partition_batch: 1000
 logging:
     level: debug
     format: text
@@ -54,9 +56,9 @@ pricefeed:
     tokens:
         - name: Cudos
           units:
-            - denom: cudos
-              exponent: 0
-              price_id: cudos
+              - denom: cudos
+                exponent: 0
+                price_id: cudos
 distribution:
     rewards_frequency: 1000
 workers:

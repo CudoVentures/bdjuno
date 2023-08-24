@@ -43,6 +43,8 @@ database:
     schema: public
     max_open_connections: 10
     max_idle_connections: 10
+    partition_size: 100000
+    partition_batch: 1000
 logging:
     level: debug
     format: json
