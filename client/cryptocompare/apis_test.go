@@ -133,6 +133,14 @@ func TestConvertCryptocomparePrices(t *testing.T) {
 	ccc := cryptocompare.NewClient(&cfg)
 	prices := ccc.ConvertCryptocompare(apisPrices)
 	require.Equal(t, 2, len(prices))
-	require.Equal(t, 0.00237, prices[0].Price)
-	require.Equal(t, int64(21017810), prices[0].MarketCap)
+	priceValues := make([]float64, len(prices))
+	marketCapValues := make([]int64, len(prices))
+	for i, p := range prices {
+		priceValues[i] = p.Price
+		marketCapValues[i] = p.MarketCap
+	}
+	require.Contains(t, priceValues, float64(0.00237), "priceValues should contain USD VALUE")
+	require.Contains(t, priceValues, float64(0.00000132), "priceValues should contain ETH VALUE")
+	require.Contains(t, marketCapValues, int64(21017810), "marketCapValues should contain USD market cap")
+	require.Contains(t, marketCapValues, int64(11706), "marketCapValues should contain ETH market cap")
 }
