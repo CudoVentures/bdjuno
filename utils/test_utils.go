@@ -18,8 +18,9 @@ import (
 )
 
 func NewTestDb(schema string) (*database.Db, error) {
+	connStr := fmt.Sprintf("postgresql://bdjuno:password@localhost:6433/bdjuno?sslmode=disable&search_path=%s", schema)
 	dbCfg := dbconfig.NewDatabaseConfig(
-		"postgresql://bdjuno:password@localhost:6433/bdjuno?sslmode=disable&search_path=public",
+		connStr,
 		"",
 		"",
 		"",
@@ -57,6 +58,12 @@ func NewTestDb(schema string) (*database.Db, error) {
 		defer cancelFunc()
 
 		err = database.ExecuteMigrations(ctx, &parser.Context{Database: db})
+		if err != nil {
+			return err
+		}
+
+		// Create a default partition for the transaction table
+		_, err = bigDipperDb.SQL.Exec(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s.transaction_default PARTITION OF transaction DEFAULT;`, schema))
 		if err != nil {
 			return err
 		}
