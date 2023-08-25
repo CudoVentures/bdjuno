@@ -30,6 +30,7 @@ type GroupProposalRow struct {
 	BlockHeight      int64          `db:"height"`
 	SubmitTime       time.Time      `db:"submit_time"`
 	MemberCount      int            `db:"member_count"`
+	PartitionID      sql.NullInt64  `db:"partition_id"`
 }
 
 type GroupMemberRow struct {

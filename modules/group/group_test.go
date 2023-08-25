@@ -144,6 +144,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgSubmitProposal() {
 		BlockHeight:      int64(one),
 		SubmitTime:       timestamp,
 		MemberCount:      int(one),
+		PartitionID:      sql.NullInt64{},
 	}}
 	var actualProposal []dbtypes.GroupProposalRow
 	err = suite.db.Sqlx.Select(&actualProposal, `SELECT * FROM group_proposal where id = $1`, two)
@@ -241,6 +242,7 @@ func (suite *GroupModuleTestSuite) TestGroup_HandleMsgExec() {
 		BlockHeight:      int64(one),
 		SubmitTime:       timestamp,
 		MemberCount:      int(one),
+		PartitionID:      sql.NullInt64{},
 	}}
 	var actualProposal []dbtypes.GroupProposalRow
 	err = suite.db.Sqlx.Select(&actualProposal, `SELECT * FROM group_proposal WHERE ID = $1`, one)

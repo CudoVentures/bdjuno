@@ -120,6 +120,7 @@ func (dbTx *DbTx) GetProposal(proposalID uint64) (*dbtypes.GroupProposalRow, err
 	err := dbTx.QueryRow(`SELECT * FROM group_proposal WHERE id = $1`, proposalID).Scan(
 		&p.ID, &p.GroupID, &p.ProposalMetadata, &p.Proposer, &p.Status, &p.ExecutorResult, &p.Executor,
 		&p.ExecutionTime, &p.ExecutionLog, &p.Messages, &p.BlockHeight, &p.SubmitTime, &p.TxHash, &p.MemberCount,
+		&p.PartitionID,
 	)
 
 	return &p, err
