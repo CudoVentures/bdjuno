@@ -12,7 +12,7 @@ CREATE TABLE gravity_transaction
     votes INTEGER NOT NULL,
     consensus BOOLEAN NOT NULL,
     transaction_hash TEXT NOT NULL,
-    partition_id BIGINT NOT NULL,
+    partition_id BIGINT NULL,
     height BIGINT NOT NULL REFERENCES block (height),
     PRIMARY KEY(attestation_id, orchestrator),
     FOREIGN KEY(transaction_hash, partition_id) REFERENCES transaction (hash, partition_id)
