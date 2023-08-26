@@ -1,12 +1,15 @@
 package types
 
+import "database/sql"
+
 type CosmwasmStoreRow struct {
-	TransactionHash       string `db:"transaction_hash"`
-	Index                 int    `db:"index"`
-	Sender                string `db:"sender"`
-	InstantiatePermission string `db:"instantiate_permission"`
-	ResultCodeID          string `db:"result_code_id"`
-	Success               bool   `db:"success"`
+	TransactionHash       string        `db:"transaction_hash"`
+	PartitionID           sql.NullInt64 `db:"partition_id"`
+	Index                 int           `db:"index"`
+	Sender                string        `db:"sender"`
+	InstantiatePermission string        `db:"instantiate_permission"`
+	ResultCodeID          string        `db:"result_code_id"`
+	Success               bool          `db:"success"`
 }
 
 type CosmwasmInstantiateRow struct {
