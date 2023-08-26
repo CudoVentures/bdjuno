@@ -14,6 +14,6 @@ type GravityTransactionRow struct {
 	Votes           int           `db:"votes"`
 	Consensus       bool          `db:"consensus"`
 	Height          int64         `db:"height"`
-	PartitionId     sql.NullInt64 `db:"partition_id"`
+	PartitionID     sql.NullInt64 `db:"partition_id"`
 	TransactionHash string        `db:"transaction_hash"`
 }
