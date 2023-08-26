@@ -22,7 +22,7 @@ $$ LANGUAGE sql STABLE;
 CREATE TABLE marketplace_collection
 (
     transaction_hash TEXT NOT NULL,
-    partition_id BIGINT NOT NULL,
+    partition_id BIGINT NULL,
     id BIGINT NOT NULL,
     denom_id TEXT NOT NULL REFERENCES nft_denom (id),
     mint_royalties TEXT NOT NULL,
@@ -39,7 +39,7 @@ CREATE INDEX marketplace_collection_creator_index ON marketplace_collection (cre
 CREATE TABLE marketplace_nft
 (
     transaction_hash TEXT NOT NULL,
-    partition_id BIGINT NOT NULL,
+    partition_id BIGINT NULL,
     id BIGINT,
     uid TEXT,
     token_id BIGINT NOT NULL,
@@ -58,7 +58,7 @@ CREATE INDEX marketplace_nft_uid_index ON marketplace_nft (uid);
 CREATE TABLE marketplace_nft_buy_history
 (
     transaction_hash TEXT NOT NULL,
-    partition_id BIGINT NOT NULL,
+    partition_id BIGINT NULL,
     token_id BIGINT NOT NULL,
     denom_id TEXT NOT NULL REFERENCES nft_denom (id),
     price DECIMAL NOT NULL,
@@ -81,7 +81,7 @@ CREATE TABLE nft_transfer_history
 (
     id BIGINT NOT NULL,
     transaction_hash TEXT NOT NULL,
-    partition_id BIGINT NOT NULL,
+    partition_id BIGINT NULL,
     denom_id TEXT NOT NULL REFERENCES nft_denom (id),
     old_owner TEXT NOT NULL,
     new_owner TEXT NOT NULL,

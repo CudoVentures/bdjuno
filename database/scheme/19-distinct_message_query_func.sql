@@ -6,7 +6,7 @@ CREATE TABLE distinct_message
   type                        TEXT,
   value                       JSONB,
   involved_accounts_addresses TEXT[],
-  partition_id BIGINT NOT NULL,
+  partition_id BIGINT NULL,
   FOREIGN KEY(transaction_hash, partition_id) REFERENCES transaction (hash, partition_id)
 );
 

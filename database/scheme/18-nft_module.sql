@@ -2,7 +2,7 @@
 CREATE TABLE nft_denom
 (
     transaction_hash TEXT NOT NULL,
-    partition_id BIGINT NOT NULL,
+    partition_id BIGINT NULL,
     id TEXT NOT NULL,
     name TEXT NOT NULL,
     schema TEXT NOT NULL,
@@ -18,7 +18,7 @@ CREATE INDEX nft_denom_owner_index ON nft_denom (owner);
 CREATE TABLE nft_nft
 (
     transaction_hash TEXT NOT NULL,
-    partition_id BIGINT NOT NULL,
+    partition_id BIGINT NULL,
     id BIGINT NOT NULL,
     denom_id TEXT NOT NULL REFERENCES nft_denom (id),
     name TEXT NOT NULL,
