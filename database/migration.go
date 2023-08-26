@@ -9,15 +9,10 @@ import (
 	"regexp"
 	"time"
 
+	dbtypes "github.com/forbole/bdjuno/v4/database/types"
 	"github.com/forbole/juno/v5/parser"
 	"github.com/jmoiron/sqlx"
 )
-
-type Migration struct {
-	ID        int64  `db:"id"`
-	Name      string `db:"name"`
-	CreatedAt int64  `db:"created_at"`
-}
 
 const noMigrationsTablePqError = "pq: relation \"migrations\" does not exist"
 
@@ -27,7 +22,7 @@ var scheme embed.FS
 func ExecuteMigrations(ctx context.Context, parseCtx *parser.Context) error {
 	db := Cast(parseCtx.Database)
 
-	var rows []Migration
+	var rows []dbtypes.Migration
 	if err := db.Sqlx.SelectContext(ctx, &rows, "SELECT * FROM migrations"); err != nil && err.Error() != noMigrationsTablePqError {
 		return err
 	}
