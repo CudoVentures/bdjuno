@@ -1,17 +1,18 @@
 package mockutils
 
 import (
+	"strconv"
 	"testing"
 	"time"
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	"github.com/stretchr/testify/require"
 
-	juno "github.com/forbole/juno/v5/types"
-
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
+	marketplaceTypes "github.com/CudoVentures/cudos-node/x/marketplace/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/group"
+	juno "github.com/forbole/juno/v5/types"
 )
 
 type MockTxBuilder struct {
@@ -24,6 +25,63 @@ type MockTxBuilder struct {
 
 func NewMockTxBuilder(t *testing.T, timestamp time.Time, txHash string, height uint64) *MockTxBuilder {
 	return &MockTxBuilder{timestamp: timestamp, txHash: txHash, height: height, t: t}
+}
+
+func (b *MockTxBuilder) WithEventBuyNft(tokenID, denomID, owner string) *MockTxBuilder {
+	e := sdk.NewEvent(
+		marketplaceTypes.EventBuyNftType,
+		sdk.NewAttribute(marketplaceTypes.AttributeKeyTokenID, tokenID),
+		sdk.NewAttribute(marketplaceTypes.AttributeKeyDenomID, denomID),
+		sdk.NewAttribute(marketplaceTypes.AttributeKeyOwner, owner),
+	)
+	b.events = append(b.events, abcitypes.Event(e))
+	return b
+}
+
+func (b *MockTxBuilder) WithEventMintNft(tokenID uint64) *MockTxBuilder {
+	tokenIDStr := strconv.FormatUint(tokenID, 10)
+	e := sdk.NewEvent(
+		marketplaceTypes.EventMintNftType,
+		sdk.NewAttribute(marketplaceTypes.AttributeKeyTokenID, tokenIDStr),
+	)
+	b.events = append(b.events, abcitypes.Event(e))
+	return b
+}
+
+func (b *MockTxBuilder) WithEventPublishNft(nftID uint64) *MockTxBuilder {
+	e := sdk.NewEvent(
+		marketplaceTypes.EventPublishNftType,
+		sdk.NewAttribute(marketplaceTypes.AttributeKeyNftID, strconv.FormatUint(nftID, 10)),
+	)
+	b.events = append(b.events, abcitypes.Event(e))
+	return b
+}
+
+func (b *MockTxBuilder) WithEventPublishCollection(collectionID int64) *MockTxBuilder {
+	e := sdk.NewEvent(
+		marketplaceTypes.EventPublishCollectionType,
+		sdk.NewAttribute(marketplaceTypes.AttributeKeyCollectionID, strconv.FormatInt(collectionID, 10)),
+	)
+	b.events = append(b.events, abcitypes.Event(e))
+	return b
+}
+
+func (b *MockTxBuilder) WithEventCreateCollection(collectionID int64) *MockTxBuilder {
+	e := sdk.NewEvent(
+		marketplaceTypes.EventCreateCollectionType,
+		sdk.NewAttribute(marketplaceTypes.AttributeKeyCollectionID, strconv.FormatInt(collectionID, 10)),
+	)
+	b.events = append(b.events, abcitypes.Event(e))
+	return b
+}
+
+func (b *MockTxBuilder) WithEventVerifyCollection(collectionID int64) *MockTxBuilder {
+	e := sdk.NewEvent(
+		marketplaceTypes.EventVerifyCollectionType,
+		sdk.NewAttribute(marketplaceTypes.AttributeKeyCollectionID, strconv.FormatInt(collectionID, 10)),
+	)
+	b.events = append(b.events, abcitypes.Event(e))
+	return b
 }
 
 func (b *MockTxBuilder) WithEventCreateGroup(groupID uint64, address string) *MockTxBuilder {
