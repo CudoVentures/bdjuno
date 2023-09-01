@@ -13,7 +13,7 @@ FROM amd64/golang:1.19
 USER root
 
 WORKDIR /bdjuno
-COPY --from=builder /go/pkg/mod/github.com/!cosm!wasm/wasmvm/api/libwasmvm.so /usr/lib
+COPY --from=builder /go/pkg/mod/github.com/!cosm!wasm/wasmvm/internal/api/libwasmvm.x86_64.so /usr/lib
 COPY --from=builder /go/src/github.com/forbole/bdjuno/build/bdjuno /usr/bin/bdjuno
 COPY --from=builder /go/src/github.com/forbole/bdjuno/hasura /hasura
 COPY bdjuno/ /usr/local/bdjuno/bdjuno/
