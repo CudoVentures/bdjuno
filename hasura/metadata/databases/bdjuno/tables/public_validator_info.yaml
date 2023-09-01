@@ -8,9 +8,17 @@ object_relationships:
 - name: validator
   using:
     foreign_key_constraint_on: consensus_address
+array_relationships:
+- name: delegations
+  using:
+    foreign_key_constraint_on:
+      column: validator_address
+      table:
+        name: delegation
+        schema: public
 select_permissions:
 - permission:
-    allow_aggregations: false
+    allow_aggregations: true
     columns:
     - consensus_address
     - operator_address
@@ -18,5 +26,4 @@ select_permissions:
     - max_change_rate
     - max_rate
     filter: {}
-    limit: 100
   role: anonymous

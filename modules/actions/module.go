@@ -2,6 +2,7 @@ package actions
 
 import (
 	"cosmossdk.io/simapp/params"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/forbole/juno/v5/modules"
 	"github.com/forbole/juno/v5/node"
 	"github.com/forbole/juno/v5/node/builder"
@@ -24,9 +25,10 @@ type Module struct {
 	cfg     *Config
 	node    node.Node
 	sources *modulestypes.Sources
+	cdc     codec.Codec
 }
 
-func NewModule(cfg config.Config, encodingConfig *params.EncodingConfig) *Module {
+func NewModule(cdc codec.Codec, cfg config.Config, encodingConfig *params.EncodingConfig) *Module {
 	bz, err := cfg.GetBytes()
 	if err != nil {
 		panic(err)
@@ -58,6 +60,7 @@ func NewModule(cfg config.Config, encodingConfig *params.EncodingConfig) *Module
 		cfg:     actionsCfg,
 		node:    junoNode,
 		sources: sources,
+		cdc:     cdc,
 	}
 }
 

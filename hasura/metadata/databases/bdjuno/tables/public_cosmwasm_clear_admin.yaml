@@ -1,0 +1,24 @@
+table:
+  name: cosmwasm_clear_admin
+  schema: public
+object_relationships:
+  - name: transaction
+    using:
+      manual_configuration:
+        remote_table:
+          schema: public
+          name: transaction
+        insertion_order:
+        column_mapping:
+          transaction_hash: hash
+select_permissions:
+  - permission:
+      allow_aggregations: true
+      columns:
+        - transaction_hash
+        - index
+        - sender
+        - contract
+        - success
+      filter: {}
+    role: anonymous

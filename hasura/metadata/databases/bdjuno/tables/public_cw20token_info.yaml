@@ -1,0 +1,32 @@
+table:
+  name: cw20token_info
+  schema: public
+array_relationships:
+  - name: balances
+    using:
+      foreign_key_constraint_on:
+        column: token
+        table:
+          name: cw20token_balance
+          schema: public
+select_permissions:
+- permission:
+    allow_aggregations: true
+    columns:
+    - address
+    - code_id
+    - name
+    - symbol
+    - decimals
+    - initial_supply
+    - circulating_supply
+    - max_supply
+    - minter
+    - marketing_admin
+    - project_url
+    - description
+    - logo
+    - creator
+    - type
+    filter: {}
+  role: anonymous

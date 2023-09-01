@@ -1,10 +1,11 @@
 .idea/
 build/
+postgres-data/
 
 # Configuration
 *.toml
 *.json
-config.yaml
 
 # Coverage
 coverage.*
+.env

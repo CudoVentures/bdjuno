@@ -1,0 +1,66 @@
+version: '3.6'
+services:
+  bdjuno:
+    build:
+      context: .
+      # args:
+      #   HASURA_GRAPHQL_ENDPOINT_URL: ${HASURA_GRAPHQL_ENDPOINT_URL}
+      #   HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET}
+      dockerfile: Dockerfile
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      HASURA_GRAPHQL_ENDPOINT_URL: ${HASURA_GRAPHQL_ENDPOINT_URL}
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET}
+    logging:
+      driver: ${LOGGING_DRIVER}
+    depends_on:
+      - cloudsql-proxy
+  hasura:
+    image: hasura/graphql-engine:v2.3.1
+    ports:
+      - "8080:8080"
+    logging:
+      driver: ${LOGGING_DRIVER}
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: ${HASURA_GRAPHQL_DATABASE_URL}
+      HASURA_GRAPHQL_ENABLE_CONSOLE: ${HASURA_GRAPHQL_ENABLE_CONSOLE}
+      HASURA_GRAPHQL_DEV_MODE: ${HASURA_GRAPHQL_DEV_MODE}
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: ${HASURA_GRAPHQL_ENABLED_LOG_TYPES}
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET}
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: ${HASURA_GRAPHQL_UNAUTHORIZED_ROLE}
+    depends_on:
+      - cloudsql-proxy
+      - hasura-actions
+  hasura-actions:
+    build:
+      context: .
+      args:
+        HASURA_ACTIONS_PORT: ${HASURA_ACTIONS_PORT}
+        HASURA_ACTIONS_GRPC: ${HASURA_ACTIONS_GRPC}
+        HASURA_ACTIONS_RPC: ${HASURA_ACTIONS_RPC}
+      dockerfile: ./hasura/Dockerfile
+    ports:
+      - "4000:4000"
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      HASURA_ACTIONS_PORT: ${HASURA_ACTIONS_PORT}
+      HASURA_ACTIONS_GRPC: ${HASURA_ACTIONS_GRPC}
+      HASURA_ACTIONS_RPC: ${HASURA_ACTIONS_RPC}
+  cloudsql-proxy:
+    container_name: cloudsql-proxy
+    image: gcr.io/cloudsql-docker/gce-proxy:1.11
+    command: /cloud_sql_proxy --dir=/cloudsql -instances=${GCLOUD_INSTANCE_CONNECTION_NAME}=tcp:0.0.0.0:5432
+    ports:
+      - 5432:5432
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: ${GCLOUD_INSTANCE_CONNECTION_NAME}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: always

@@ -1,0 +1,47 @@
+table:
+  name: group_proposal
+  schema: public
+object_relationships:
+  - name: group_with_policy
+    using:
+      foreign_key_constraint_on: group_id
+  - name: transaction
+    using:
+      manual_configuration:
+        remote_table:
+          schema: public
+          name: transaction
+        insertion_order:
+        column_mapping:
+          transaction_hash: hash
+  - name: block
+    using:
+      foreign_key_constraint_on: height
+array_relationships:
+  - name: group_proposal_votes
+    using:
+      foreign_key_constraint_on:
+        column: proposal_id
+        table:
+          schema: public
+          name: group_proposal_vote
+select_permissions:
+  - permission:
+      allow_aggregations: true
+      columns:
+        - id
+        - group_id
+        - metadata
+        - proposer
+        - status
+        - executor_result
+        - executor
+        - execution_time
+        - execution_log
+        - messages
+        - height
+        - submit_time
+        - transaction_hash
+        - member_count
+      filter: {}
+    role: anonymous

@@ -1,0 +1,35 @@
+table:
+  name: marketplace_nft_buy_history
+  schema: public
+object_relationships:
+  - name: transaction
+    using:
+      manual_configuration:
+        remote_table:
+          schema: public
+          name: transaction
+        insertion_order:
+        column_mapping:
+          transaction_hash: hash
+  - name: nft_denom
+    using:
+      foreign_key_constraint_on: denom_id
+  - name: nft_nft
+    using:
+      foreign_key_constraint_on: [token_id, denom_id]
+select_permissions:
+  - permission:
+      allow_aggregations: true
+      columns:
+        - transaction_hash
+        - token_id
+        - denom_id
+        - price
+        - seller
+        - buyer
+        - usd_price
+        - btc_price
+        - timestamp
+        - uniq_id
+      filter: {}
+    role: anonymous

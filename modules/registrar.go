@@ -1,6 +1,10 @@
 package modules
 
 import (
+	"fmt"
+
+	"gopkg.in/yaml.v3"
+
 	"github.com/forbole/bdjuno/v4/modules/actions"
 	"github.com/forbole/bdjuno/v4/modules/types"
 
@@ -23,14 +27,20 @@ import (
 	"github.com/forbole/bdjuno/v4/modules/consensus"
 	"github.com/forbole/bdjuno/v4/modules/distribution"
 	"github.com/forbole/bdjuno/v4/modules/feegrant"
+	"github.com/forbole/bdjuno/v4/modules/gravity"
 
-	dailyrefetch "github.com/forbole/bdjuno/v4/modules/daily_refetch"
 	"github.com/forbole/bdjuno/v4/modules/gov"
-	"github.com/forbole/bdjuno/v4/modules/mint"
 	"github.com/forbole/bdjuno/v4/modules/modules"
 	"github.com/forbole/bdjuno/v4/modules/pricefeed"
 	"github.com/forbole/bdjuno/v4/modules/staking"
 	"github.com/forbole/bdjuno/v4/modules/upgrade"
+
+	"github.com/forbole/bdjuno/v4/client/cryptocompare"
+	"github.com/forbole/bdjuno/v4/modules/cosmwasm"
+	"github.com/forbole/bdjuno/v4/modules/cudomint"
+	"github.com/forbole/bdjuno/v4/modules/group"
+	"github.com/forbole/bdjuno/v4/modules/marketplace"
+	"github.com/forbole/bdjuno/v4/modules/nft"
 )
 
 // UniqueAddressesParser returns a wrapper around the given parser that removes all duplicated addresses
@@ -73,17 +83,32 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		panic(err)
 	}
 
-	actionsModule := actions.NewModule(ctx.JunoConfig, ctx.EncodingConfig)
+	var cryptoCompareConfig cryptocompare.Config
+	configBytes, err := ctx.JunoConfig.GetBytes()
+	if err != nil {
+		panic(fmt.Errorf("failed to get bytes from JunoConfig: %s", err))
+	}
+	if err := yaml.Unmarshal(configBytes, &cryptoCompareConfig); err != nil {
+		panic(fmt.Errorf("failed to parse cryptoCompare config: %s", err))
+	}
+
+	cryptoCompareClient := cryptocompare.NewClient(&cryptoCompareConfig)
+
+	actionsModule := actions.NewModule(cdc, ctx.JunoConfig, ctx.EncodingConfig)
 	authModule := auth.NewModule(r.parser, cdc, db)
 	bankModule := bank.NewModule(r.parser, sources.BankSource, cdc, db)
 	consensusModule := consensus.NewModule(db)
-	dailyRefetchModule := dailyrefetch.NewModule(ctx.Proxy, db)
 	distrModule := distribution.NewModule(sources.DistrSource, cdc, db)
 	feegrantModule := feegrant.NewModule(cdc, db)
-	mintModule := mint.NewModule(sources.MintSource, cdc, db)
+	cudoMintModule := cudomint.NewModule(cdc, db, configBytes)
 	slashingModule := slashing.NewModule(sources.SlashingSource, cdc, db)
 	stakingModule := staking.NewModule(sources.StakingSource, cdc, db)
-	govModule := gov.NewModule(sources.GovSource, authModule, distrModule, mintModule, slashingModule, stakingModule, cdc, db)
+	govModule := gov.NewModule(sources.GovSource, authModule, distrModule, slashingModule, stakingModule, cdc, db)
+	cosmwasmModule := cosmwasm.NewModule(cdc, db)
+	gravityModule := gravity.NewModule(cdc, db)
+	nftModule := nft.NewModule(cdc, db)
+	groupModule := group.NewModule(cdc, db)
+	marketplaceModule := marketplace.NewModule(cdc, db, configBytes, cryptoCompareClient)
 	upgradeModule := upgrade.NewModule(db, stakingModule)
 
 	return []jmodules.Module{
@@ -95,15 +120,19 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		authModule,
 		bankModule,
 		consensusModule,
-		dailyRefetchModule,
 		distrModule,
 		feegrantModule,
 		govModule,
-		mintModule,
+		cudoMintModule,
 		modules.NewModule(ctx.JunoConfig.Chain, db),
-		pricefeed.NewModule(ctx.JunoConfig, cdc, db),
+		pricefeed.NewModule(ctx.JunoConfig, cryptoCompareClient, cdc, db),
 		slashingModule,
 		stakingModule,
+		cosmwasmModule,
+		gravityModule,
+		marketplaceModule,
+		nftModule,
+		groupModule,
 		upgradeModule,
 	}
 }

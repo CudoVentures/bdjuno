@@ -7,18 +7,16 @@ import (
 	"github.com/go-co-op/gocron"
 	"github.com/rs/zerolog/log"
 
-	"github.com/forbole/bdjuno/v4/types"
-
-	"github.com/forbole/bdjuno/v4/modules/pricefeed/coingecko"
 	"github.com/forbole/bdjuno/v4/modules/utils"
+	"github.com/forbole/bdjuno/v4/types"
 )
 
 // RegisterPeriodicOperations implements modules.PeriodicOperationsModule
 func (m *Module) RegisterPeriodicOperations(scheduler *gocron.Scheduler) error {
 	log.Debug().Str("module", "pricefeed").Msg("setting up periodic tasks")
 
-	// Fetch the token prices every 2 mins
-	if _, err := scheduler.Every(2).Minutes().Do(func() {
+	// Fetch the token prices every 5 mins
+	if _, err := scheduler.Every(5).Minutes().Do(func() {
 		utils.WatchMethod(m.UpdatePrice)
 	}); err != nil {
 		return fmt.Errorf("error while setting up pricefeed period operations: %s", err)
@@ -48,7 +46,7 @@ func (m *Module) getTokenPrices() ([]types.TokenPrice, error) {
 	}
 
 	// Get the tokens prices
-	prices, err := coingecko.GetTokensPrices(ids)
+	prices, err := m.ccc.GetTokensPrices("usd", ids)
 	if err != nil {
 		return nil, fmt.Errorf("error while getting tokens prices: %s", err)
 	}
@@ -104,6 +102,5 @@ func (m *Module) UpdatePricesHistory() error {
 	if err != nil {
 		return fmt.Errorf("error while saving token prices history: %s", err)
 	}
-
 	return nil
 }

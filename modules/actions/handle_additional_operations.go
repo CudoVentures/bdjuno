@@ -16,7 +16,7 @@ var (
 
 func (m *Module) RunAdditionalOperations() error {
 	// Build the worker
-	context := actionstypes.NewContext(m.node, m.sources)
+	context := actionstypes.NewContext(m.node, m.sources, m.cdc)
 	worker := actionstypes.NewActionsWorker(context)
 
 	// Register the endpoints

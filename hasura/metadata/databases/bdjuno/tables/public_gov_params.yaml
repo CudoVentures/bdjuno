@@ -3,10 +3,9 @@ table:
   schema: public
 select_permissions:
 - permission:
-    allow_aggregations: false
+    allow_aggregations: true
     columns:
     - params
     - height
     filter: {}
-    limit: 1
   role: anonymous

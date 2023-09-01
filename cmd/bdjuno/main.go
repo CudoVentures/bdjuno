@@ -8,8 +8,13 @@ import (
 	startcmd "github.com/forbole/juno/v5/cmd/start"
 	"github.com/forbole/juno/v5/modules/messages"
 
+	cudosapp "github.com/CudoVentures/cudos-node/app"
+	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
+	databasemigratecmd "github.com/forbole/bdjuno/v4/cmd/database-migrate"
 	migratecmd "github.com/forbole/bdjuno/v4/cmd/migrate"
 	parsecmd "github.com/forbole/bdjuno/v4/cmd/parse"
+	parsegenesiscmd "github.com/forbole/bdjuno/v4/cmd/parse-genesis"
+	"github.com/forbole/bdjuno/v4/workers"
 
 	"github.com/forbole/bdjuno/v4/types/config"
 
@@ -35,12 +40,17 @@ func main() {
 	// Run the command
 	rootCmd := cmd.RootCmd(cfg.GetName())
 
+	pcmd := parsecmd.NewParseCmd(cfg.GetParseConfig())
+	pcmd.PreRunE = workers.GetStartWorkersPrerunE(pcmd.PreRunE, cfg.GetParseConfig())
+
 	rootCmd.AddCommand(
 		cmd.VersionCmd(),
 		initcmd.NewInitCmd(cfg.GetInitConfig()),
-		parsecmd.NewParseCmd(cfg.GetParseConfig()),
+		pcmd,
 		migratecmd.NewMigrateCmd(cfg.GetName(), cfg.GetParseConfig()),
 		startcmd.NewStartCmd(cfg.GetParseConfig()),
+		parsegenesiscmd.NewParseGenesisCmd(cfg.GetParseConfig()),
+		databasemigratecmd.NewDatabaseMigrateCmd(cfg.GetParseConfig()),
 	)
 
 	executor := cmd.PrepareRootCmd(cfg.GetName(), rootCmd)
@@ -56,6 +66,8 @@ func main() {
 func getBasicManagers() []module.BasicManager {
 	return []module.BasicManager{
 		simapp.ModuleBasics,
+		cudosapp.ModuleBasics,
+		module.NewBasicManager(groupmodule.AppModuleBasic{}),
 	}
 }
 
