@@ -1,24 +1,21 @@
 
 CREATE TABLE nft_denom
 (
-    transaction_hash TEXT NOT NULL,
-    partition_id BIGINT NULL,
+    transaction_hash TEXT NOT NULL REFERENCES transaction (hash),
     id TEXT NOT NULL,
     name TEXT NOT NULL,
     schema TEXT NOT NULL,
     symbol TEXT NOT NULL,
     owner TEXT NOT NULL,
     contract_address_signer TEXT NOT NULL,
-    PRIMARY KEY(id),
-    FOREIGN KEY(transaction_hash, partition_id) REFERENCES transaction (hash, partition_id)
+    PRIMARY KEY(id)
 );
 
 CREATE INDEX nft_denom_owner_index ON nft_denom (owner);
 
 CREATE TABLE nft_nft
 (
-    transaction_hash TEXT NOT NULL,
-    partition_id BIGINT NULL,
+    transaction_hash TEXT NOT NULL REFERENCES transaction (hash),
     id BIGINT NOT NULL,
     denom_id TEXT NOT NULL REFERENCES nft_denom (id),
     name TEXT NOT NULL,
@@ -29,8 +26,7 @@ CREATE TABLE nft_nft
     sender TEXT NOT NULL,
     contract_address_signer TEXT NOT NULL,
     burned BOOLEAN DEFAULT FALSE,
-    PRIMARY KEY(id, denom_id),
-    FOREIGN KEY(transaction_hash, partition_id) REFERENCES transaction (hash, partition_id)
+    PRIMARY KEY(id, denom_id)
 );
 
 CREATE INDEX nft_nft_owner_index ON nft_nft (owner);

@@ -57,10 +57,8 @@ CREATE TABLE group_proposal
     messages         JSONB                       NOT NULL,
     height           BIGINT                      NOT NULL REFERENCES block (height),
     submit_time      TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    transaction_hash TEXT                        NULL,
-    member_count     INT                         NOT NULL,
-    partition_id     BIGINT                      NULL,
-    FOREIGN KEY(transaction_hash, partition_id) REFERENCES transaction (hash, partition_id)
+    transaction_hash TEXT                        NULL REFERENCES transaction (hash),
+    member_count     INT                         NOT NULL
 );
 
 CREATE INDEX group_proposal_status_index ON group_proposal (group_id) WHERE status = 'PROPOSAL_STATUS_SUBMITTED';

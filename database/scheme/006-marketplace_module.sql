@@ -21,16 +21,14 @@ $$ LANGUAGE sql STABLE;
 
 CREATE TABLE marketplace_collection
 (
-    transaction_hash TEXT NOT NULL,
-    partition_id BIGINT NULL,
+    transaction_hash TEXT NOT NULL REFERENCES transaction (hash),
     id BIGINT NOT NULL,
     denom_id TEXT NOT NULL REFERENCES nft_denom (id),
     mint_royalties TEXT NOT NULL,
     resale_royalties TEXT NOT NULL,
     verified BOOLEAN NOT NULL,
     creator TEXT NOT NULL,
-    PRIMARY KEY(id),
-    FOREIGN KEY(transaction_hash, partition_id) REFERENCES transaction (hash, partition_id)
+    PRIMARY KEY(id)
 );
 
 CREATE INDEX marketplace_collection_denom_id_index ON marketplace_collection (denom_id);
@@ -38,8 +36,7 @@ CREATE INDEX marketplace_collection_creator_index ON marketplace_collection (cre
 
 CREATE TABLE marketplace_nft
 (
-    transaction_hash TEXT NOT NULL,
-    partition_id BIGINT NULL,
+    transaction_hash TEXT NOT NULL REFERENCES transaction (hash),
     id BIGINT,
     uid TEXT,
     token_id BIGINT NOT NULL,
@@ -47,8 +44,7 @@ CREATE TABLE marketplace_nft
     price DECIMAL,
     creator TEXT NOT NULL,
     PRIMARY KEY(token_id, denom_id),
-    FOREIGN KEY (token_id, denom_id) REFERENCES nft_nft(id, denom_id),
-    FOREIGN KEY(transaction_hash, partition_id) REFERENCES transaction (hash, partition_id)
+    FOREIGN KEY (token_id, denom_id) REFERENCES nft_nft(id, denom_id)
 );
 
 CREATE INDEX marketplace_nft_id_index ON marketplace_nft (id);
@@ -57,8 +53,7 @@ CREATE INDEX marketplace_nft_uid_index ON marketplace_nft (uid);
 
 CREATE TABLE marketplace_nft_buy_history
 (
-    transaction_hash TEXT NOT NULL,
-    partition_id BIGINT NULL,
+    transaction_hash TEXT NOT NULL REFERENCES transaction (hash),
     token_id BIGINT NOT NULL,
     denom_id TEXT NOT NULL REFERENCES nft_denom (id),
     price DECIMAL NOT NULL,
@@ -67,8 +62,7 @@ CREATE TABLE marketplace_nft_buy_history
     usd_price DECIMAL NOT NULL,
     btc_price DECIMAL NOT NULL,
     timestamp BIGINT NOT NULL,
-    FOREIGN KEY (token_id, denom_id) REFERENCES nft_nft(id, denom_id),
-    FOREIGN KEY(transaction_hash, partition_id) REFERENCES transaction (hash, partition_id)
+    FOREIGN KEY (token_id, denom_id) REFERENCES nft_nft(id, denom_id)
 );
 
 CREATE INDEX marketplace_nft_buy_history_token_id_denom_id_index ON marketplace_nft_buy_history (token_id, denom_id);
@@ -80,11 +74,9 @@ CREATE INDEX marketplace_nft_buy_history_timestamp_index ON marketplace_nft_buy_
 CREATE TABLE nft_transfer_history
 (
     id BIGINT NOT NULL,
-    transaction_hash TEXT NOT NULL,
-    partition_id BIGINT NULL,
+    transaction_hash TEXT NOT NULL REFERENCES transaction (hash),
     denom_id TEXT NOT NULL REFERENCES nft_denom (id),
     old_owner TEXT NOT NULL,
     new_owner TEXT NOT NULL,
-    timestamp BIGINT NOT NULL,
-    FOREIGN KEY(transaction_hash, partition_id) REFERENCES transaction (hash, partition_id)
+    timestamp BIGINT NOT NULL
 );
