@@ -1,3 +1,16 @@
+-- DROPS
+DROP FUNCTION IF EXISTS account_balance_history_tokens_prices;
+DROP TABLE IF EXISTS account_balance_history;
+DROP FUNCTION IF EXISTS account_balance_tokens_prices;
+DROP TABLE IF EXISTS account_balance;
+DROP TABLE IF EXISTS delegation_reward;
+DROP TABLE IF EXISTS delegators_to_refresh;
+DROP TABLE IF EXISTS nft_mint;
+DROP TABLE IF EXISTS nft_issue_denom;
+DROP TABLE IF EXISTS redelegation;
+DROP TABLE IF EXISTS unbonding_delegation;
+DROP TABLE IF EXISTS validator_commission_amount;
+
 -- 00-cosmos.sql
 UPDATE transaction
 SET logs = REPLACE(logs::text, '\u0000', '')::json
@@ -30,6 +43,8 @@ CREATE TABLE transaction_new
     CONSTRAINT unique_tx UNIQUE (hash, partition_id)
 )PARTITION BY LIST(partition_id);
 
+CREATE TABLE transaction_0 PARTITION OF transaction_new FOR VALUES IN (0);
+
 -- Copy data from the old table to the new partitioned table
 INSERT INTO transaction_new SELECT * FROM transaction;
 
@@ -53,7 +68,7 @@ ALTER TABLE marketplace_collection DROP CONSTRAINT marketplace_collection_transa
 ALTER TABLE marketplace_nft DROP CONSTRAINT marketplace_nft_transaction_hash_fkey;
 ALTER TABLE marketplace_nft_buy_history DROP CONSTRAINT marketplace_nft_buy_history_transaction_hash_fkey;
 ALTER TABLE nft_transfer_history DROP CONSTRAINT nft_transfer_history_transaction_hash_fkey;
-ALTER TABLE message DROP CONSTRAINT message_transaction_hash_fkey
+ALTER TABLE message DROP CONSTRAINT message_transaction_hash_fkey;
 
 -- Drop the old table
 DROP TABLE transaction_old;
@@ -78,6 +93,8 @@ CREATE TABLE message_new
     FOREIGN KEY (transaction_hash, partition_id) REFERENCES transaction (hash, partition_id),
     CONSTRAINT unique_message_per_tx UNIQUE (transaction_hash, index, partition_id)
 )PARTITION BY LIST(partition_id);
+
+CREATE TABLE message_0 PARTITION OF message_new FOR VALUES IN (0);
 
 -- Copy data from the old table to the new partitioned table
 INSERT INTO message_new (transaction_hash, index, type, value, involved_accounts_addresses, partition_id, height)
@@ -117,18 +134,21 @@ $$ LANGUAGE sql STABLE;
 
 
 -- 04-staking.sql
-ALTER TABLE staking_pool ADD COLUMN unbonding_tokens TEXT NOT NULL;
-ALTER TABLE staking_pool ADD COLUMN staked_not_bonded_tokens TEXT NOT NULL;
+ALTER TABLE staking_pool ADD COLUMN unbonding_tokens TEXT NOT NULL DEFAULT '0';
+ALTER TABLE staking_pool ADD COLUMN staked_not_bonded_tokens TEXT NOT NULL DEFAULT '0';
 
 ALTER TABLE validator_status DROP COLUMN tombstoned;
 
 -- 09-gov.sql
+ALTER TABLE gov_params ADD COLUMN params JSONB;
+UPDATE gov_params SET params = deposit_params || voting_params || tally_params || '{"burn_vote_veto": true, "min_initial_deposit_ratio": "0.000000000000000000"}';
+ALTER TABLE gov_params ALTER COLUMN params SET NOT NULL;
+
 ALTER TABLE gov_params DROP COLUMN deposit_params;
 ALTER TABLE gov_params DROP COLUMN voting_params;
 ALTER TABLE gov_params DROP COLUMN tally_params;
-ALTER TABLE gov_params ADD COLUMN params JSONB NOT NULL;
 
-ALTER TABLE proposal ADD COLUMN metadata TEXT NOT NULL;
+ALTER TABLE proposal ADD COLUMN metadata TEXT NOT NULL DEFAULT '';
 ALTER TABLE proposal DROP COLUMN proposal_route;
 ALTER TABLE proposal DROP COLUMN proposal_type;
 
@@ -145,10 +165,6 @@ ALTER TABLE proposal_staking_pool_snapshot
 ALTER COLUMN not_bonded_tokens TYPE TEXT;
 ALTER TABLE proposal_staking_pool_snapshot
 ALTER COLUMN not_bonded_tokens SET NOT NULL;
-
--- REMOVE HISTORY
-DROP FUNCTION account_balance_history_tokens_prices;
-DROP TABLE account_balance_history;
 
 -- 13-upgrade
 CREATE TABLE software_upgrade_plan
@@ -304,3 +320,4 @@ WHERE t.receiver = receiver_addr AND t.orchestrator = ANY(m.involved_accounts_ad
 ORDER BY t.height DESC
 LIMIT "limit" OFFSET "offset"
 $$ LANGUAGE sql STABLE;
+
