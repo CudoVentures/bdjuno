@@ -30,4 +30,55 @@ This will:
 1. Create a Docker container running a PostgreSQL database.
 2. Run all the tests using that database as support.
 
+# Cudos Fork
 
+The fork is based on branch cosmos/v0.47.x. It is at 67a1737418672d5357e72731b5e99a4c460c19df, which is 4 commit ahead of official version 4.0.0. These 4 commits (actually the last one) adds support to cosmos-sdk v0.47 proposals.
+
+## Migrating to this version
+
+This version includes hasura actions as module so they do not need to be started separately. 
+
+### config.yaml
+- remove history module
+- add actions, feegrant, group modules
+- add database -> url to be the connection string from the .env plus appending "?sslmode=disable&search_path=public"
+- add database -> partition_size: 100000
+- add database -> partition_batch: 1000
+- add actions -> host: 127.0.0.1 (or any other value)
+- add actions -> port: 3100 (or any other value)
+
+### .env
+
+- check for missing values in .env based on .env.sample
+
+### database
+
+There are duplicates in "messages" table in existing databases. Check them and delete them beforing proceeding with the upgrade.
+
+- Check for duplicates
+
+```sql
+SELECT message.transaction_hash, message.index, count(*) FROM message Group by message.transaction_hash, message.index HAVING count(*) > 1
+```
+
+or
+
+```sql
+SELECT * FROM message T1, message T2
+WHERE  T1.ctid    < T2.ctid       -- delete the "older" ones
+  AND  T1.transaction_hash    = T2.transaction_hash       -- list columns that define duplicates
+  AND  T1.index = T2.index;
+```
+
+- Remove duplicates all at once
+```sql
+DELETE FROM message T1 USING message T2
+WHERE  T1.ctid    < T2.ctid       -- delete the "older" ones
+  AND  T1.transaction_hash    = T2.transaction_hash       -- list columns that define duplicates
+  AND  T1.index = T2.index;
+```
+
+- Remove duplicates one by one
+```sql
+DELETE FROM message WHERE ctid IN ('(10469,7)', '(10264,6)')
+```

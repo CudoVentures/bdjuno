@@ -141,7 +141,7 @@ ALTER TABLE validator_status DROP COLUMN tombstoned;
 
 -- 09-gov.sql
 ALTER TABLE gov_params ADD COLUMN params JSONB;
-UPDATE gov_params SET params = deposit_params || voting_params || tally_params || '{"burn_vote_veto": true, "min_initial_deposit_ratio": "0.000000000000000000"}';
+UPDATE gov_params SET params = deposit_params || voting_params || tally_params || '{"burn_vote_quorum": false, "burn_proposal_deposit_prevote": false, "burn_vote_veto": true, "min_initial_deposit_ratio": "0.000000000000000000"}';
 ALTER TABLE gov_params ALTER COLUMN params SET NOT NULL;
 
 ALTER TABLE gov_params DROP COLUMN deposit_params;
