@@ -36,23 +36,6 @@ services:
     depends_on:
       - cloudsql-proxy
       - hasura-actions
-  hasura-actions:
-    build:
-      context: .
-      args:
-        HASURA_ACTIONS_PORT: ${HASURA_ACTIONS_PORT}
-        HASURA_ACTIONS_GRPC: ${HASURA_ACTIONS_GRPC}
-        HASURA_ACTIONS_RPC: ${HASURA_ACTIONS_RPC}
-      dockerfile: ./hasura/Dockerfile
-    ports:
-      - "4000:4000"
-    restart: always
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    environment:
-      HASURA_ACTIONS_PORT: ${HASURA_ACTIONS_PORT}
-      HASURA_ACTIONS_GRPC: ${HASURA_ACTIONS_GRPC}
-      HASURA_ACTIONS_RPC: ${HASURA_ACTIONS_RPC}
   cloudsql-proxy:
     container_name: cloudsql-proxy
     image: gcr.io/cloudsql-docker/gce-proxy:1.11
