@@ -16,6 +16,8 @@ chain:
         - cudomint
         - nft
         - marketplace
+        - actions
+        - feegrant
         - group
 node:
     type: remote
@@ -73,3 +75,5 @@ cudomint:
 crypto-compare:
     crypto_compare_prod_api_key: %CRYPTO_COMPARE_PROD_API_KEY%
     crypto_compare_free_api_key: %CRYPTO_COMPARE_FREE_API_KEY%
+actions:
+    port: 3286
