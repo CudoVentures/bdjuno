@@ -41,7 +41,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "${HASURA_ACTIONS_PORT}:3000"
+      - "${HASURA_ACTIONS_PORT}:3286"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

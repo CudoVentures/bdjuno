@@ -34,7 +34,7 @@ This will:
 
 The fork is based on branch cosmos/v0.47.x. It is at 67a1737418672d5357e72731b5e99a4c460c19df, which is 4 commit ahead of official version 4.0.0. These 4 commits (actually the last one) adds support to cosmos-sdk v0.47 proposals.
 
-## Migrating to this version
+## Migrating from v2.0.2 (Cudos fork is tags as 1.6.x) to v4.0.0+ version
 
 This version includes hasura actions as module so they do not need to be started separately. 
 
@@ -44,12 +44,11 @@ This version includes hasura actions as module so they do not need to be started
 - add database -> url to be the connection string from the .env plus appending "?sslmode=disable&search_path=public"
 - add database -> partition_size: 100000
 - add database -> partition_batch: 1000
-- add actions -> host: 127.0.0.1 (or any other value)
-- add actions -> port: 3100 (or any other value)
+- add actions -> port: 3286 (don't change the port because exactly this port is exposed in docker-compose.yaml)
 
 ### .env
 
-- check for missing values in .env based on .env.sample
+- check for missing values in .env based on .env-prod.sample
 
 ### database
 
