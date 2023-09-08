@@ -1,15 +1,15 @@
 -- DROPS
 DROP FUNCTION IF EXISTS account_balance_history_tokens_prices;
-DROP TABLE IF EXISTS account_balance_history;
+DROP TABLE IF EXISTS account_balance_history; -- EMPTY in private testnet, not used in the code
 DROP FUNCTION IF EXISTS account_balance_tokens_prices;
-DROP TABLE IF EXISTS account_balance;
-DROP TABLE IF EXISTS delegation_reward;
-DROP TABLE IF EXISTS delegators_to_refresh;
-DROP TABLE IF EXISTS nft_mint;
-DROP TABLE IF EXISTS nft_issue_denom;
-DROP TABLE IF EXISTS redelegation;
-DROP TABLE IF EXISTS unbonding_delegation;
-DROP TABLE IF EXISTS validator_commission_amount;
+DROP TABLE IF EXISTS account_balance; -- EMPTY in private testnet, not used in the code
+DROP TABLE IF EXISTS delegation_reward; -- EMPTY in private testnet, not used in the code
+DROP TABLE IF EXISTS delegators_to_refresh; -- EMPTY in private testnet, not used in the code
+DROP TABLE IF EXISTS nft_mint; -- NOT EMPTY in private testnet, not used in the code
+DROP TABLE IF EXISTS nft_issue_denom; -- NOT EMPTY in private testnet, not used in the code
+DROP TABLE IF EXISTS redelegation; -- EMPTY in private testnet, not used in the code
+DROP TABLE IF EXISTS unbonding_delegation; -- EMPTY in private testnet, not used in the code
+DROP TABLE IF EXISTS validator_commission_amount; -- EMPTY in private testnet, not used in the code
 
 -- 00-cosmos.sql
 UPDATE transaction
