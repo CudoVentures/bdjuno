@@ -3,16 +3,12 @@ services:
   bdjuno:
     build:
       context: .
-      # args:
-      #   HASURA_GRAPHQL_ENDPOINT_URL: ${HASURA_GRAPHQL_ENDPOINT_URL}
-      #   HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET}
       dockerfile: Dockerfile
     restart: always
+    ports:
+      - "${HASURA_ACTIONS_PORT}:3000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    environment:
-      HASURA_GRAPHQL_ENDPOINT_URL: ${HASURA_GRAPHQL_ENDPOINT_URL}
-      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET}
     logging:
       driver: ${LOGGING_DRIVER}
     depends_on:
@@ -20,7 +16,7 @@ services:
   hasura:
     image: hasura/graphql-engine:v2.3.1
     ports:
-      - "8080:8080"
+      - "${HASURA_PORT}:8080"
     logging:
       driver: ${LOGGING_DRIVER}
     restart: always
