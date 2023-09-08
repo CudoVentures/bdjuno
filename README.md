@@ -46,6 +46,8 @@ This version includes hasura actions as module so they do not need to be started
 - add database -> partition_batch: 1000
 - add actions -> port: 3286 (don't change the port because exactly this port is exposed in docker-compose.yaml)
 
+we must upgrade "start_height" to be equal at the height when the chain is migrated to cosmos-sdk 0.47
+
 ### .env
 
 - check for missing values in .env based on .env-prod.sample
