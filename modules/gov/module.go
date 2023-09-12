@@ -24,7 +24,6 @@ type Module struct {
 	source         govsource.Source
 	authModule     AuthModule
 	distrModule    DistrModule
-	mintModule     MintModule
 	slashingModule SlashingModule
 	stakingModule  StakingModule
 }

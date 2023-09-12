@@ -91,6 +91,10 @@ func (suite *DbTestSuite) SetupTest() {
 	_, err = bigDipperDb.SQL.Exec(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS public.transaction_default PARTITION OF transaction DEFAULT;`))
 	suite.Require().NoError(err)
 
+	// Create a default partition for the message table
+	_, err = bigDipperDb.SQL.Exec(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS public.message_default PARTITION OF message DEFAULT;`))
+	suite.Require().NoError(err)
+
 	suite.database = bigDipperDb
 }
 
