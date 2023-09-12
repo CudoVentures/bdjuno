@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS nft_issue_denom; -- NOT EMPTY in private testnet, not used 
 DROP TABLE IF EXISTS redelegation; -- EMPTY in private testnet, not used in the code
 DROP TABLE IF EXISTS unbonding_delegation; -- EMPTY in private testnet, not used in the code
 DROP TABLE IF EXISTS validator_commission_amount; -- EMPTY in private testnet, not used in the code
+DROP TABLE IF EXISTS delegation; -- NOT EMPTY. It holds data for current validators' delegations. It is updated using an extra request to the Node so it should be replacable by using hasura action
 
 -- 00-cosmos.sql
 UPDATE transaction
