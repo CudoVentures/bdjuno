@@ -83,3 +83,9 @@ WHERE  T1.ctid    < T2.ctid       -- delete the "older" ones
 ```sql
 DELETE FROM message WHERE ctid IN ('(10469,7)', '(10264,6)')
 ```
+
+## Explanation of some changes
+
+### Daily fetcher
+
+The BdJuno could skip a block. In order to fix that there is "original" daily_fetcher module but it only fetches blocks for last 24h. We have removed this module and replaced it by "fix_blocks_worker.go" which always check all blocks from <startHeight> to <last known height - 10>.
