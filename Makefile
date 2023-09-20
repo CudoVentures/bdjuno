@@ -65,8 +65,13 @@ start-docker-test: stop-docker-test
 
 test-unit: start-docker-test
 	@echo "Executing unit tests..."
-	@go test -mod=readonly -v -coverprofile coverage.txt ./...
+	@go test -mod=readonly -v -coverprofile coverage.txt $(shell go list ./... | grep -v /integration_tests/)
 .PHONY: test-unit
+
+test-integration:
+	@echo "Running integration tests..."
+	@./integration_tests/run_tests.sh
+.PHONY: test-integration
 
 ###############################################################################
 ###                                Linting                                  ###

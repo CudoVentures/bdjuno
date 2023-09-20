@@ -17,7 +17,8 @@ created using [Hasura](https://hasura.io/).
 To know how to setup and run BDJuno, please refer to
 the [docs website](https://docs.bigdipper.live/cosmos-based/parser/overview/).
 
-## Testing
+# Testing
+## UNIT
 If you want to test the code, you can do so by running
 
 ```shell
@@ -29,6 +30,23 @@ $ make test-unit
 This will:
 1. Create a Docker container running a PostgreSQL database.
 2. Run all the tests using that database as support.
+
+## INTEGRATION/END-TO-END
+If you want to test the code, you can do so by running
+
+```shell
+$ make test-integration
+```
+
+**Note**: Requires [Docker](https://docker.com).
+
+This will:
+
+1. Pull and run locally a root node instance
+2. Create a Docker container running a PostgreSQL database.
+3. Pull and run locally a BDJuno instance
+4. Execute actual TXs against the node and test BDJuno for correctly parsing them into the DB.
+5. Clean up after tests being completed
 
 # Cudos Fork
 
