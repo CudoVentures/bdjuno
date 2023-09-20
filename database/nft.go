@@ -1,6 +1,9 @@
 package database
 
-import "github.com/forbole/bdjuno/v4/database/utils"
+import (
+	dbtypes "github.com/forbole/bdjuno/v4/database/types"
+	"github.com/forbole/bdjuno/v4/database/utils"
+)
 
 func (db *Db) SaveDenom(txHash, denomID, name, schema, symbol, owner, contractAddressSigner, traits, minter, description, dataText, dataJSON string) error {
 	_, err := db.SQL.Exec(`INSERT INTO nft_denom (transaction_hash, id, name, schema, symbol, owner, contract_address_signer, 
@@ -41,4 +44,13 @@ func (tx *DbTx) UpdateNFTHistory(txHash string, tokenID uint64, denomID, from, t
 		VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING`,
 		txHash, tokenID, denomID, from, to, timestamp, utils.FormatUniqID(tokenID, denomID))
 	return err
+}
+
+func (db *Db) GetNftFromDB(nftID, denomID string) (dbtypes.NftFromDB, error) {
+	var nft dbtypes.NftFromDB
+	err := db.Sqlx.Select(&nft, `SELECT * FROM nft_nft WHERE id = $1 AND denom_id = $2`, nftID, denomID)
+	if err != nil {
+		return nft, err
+	}
+	return nft, nil
 }

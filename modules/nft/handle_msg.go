@@ -8,7 +8,6 @@ import (
 	nftTypes "github.com/CudoVentures/cudos-node/x/nft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/forbole/bdjuno/v4/database"
-	dbtypes "github.com/forbole/bdjuno/v4/database/types"
 	utils "github.com/forbole/bdjuno/v4/utils"
 	juno "github.com/forbole/juno/v5/types"
 	"github.com/rs/zerolog/log"
@@ -91,27 +90,26 @@ func (m *Module) handleMsgEditNFT(msg *nftTypes.MsgEditNFT) error {
 	denomID := msg.DenomId
 	log.Debug().Str("module", "nft").Str("denomId", denomID).Str("tokenId", nftID).Msg("handling message edit nft")
 
-	var nftData dbtypes.EditNftQuery
-	err := m.db.SQL.Select(&nftData, `SELECT name, uri, data_text, data_json FROM nft_nft WHERE id = $1 AND denom_id = $2`, nftID, denomID)
+	nft, err := m.db.GetNftFromDB(nftID, denomID)
 	if err != nil {
 		return err
 	}
 
-	if msg.Data != nftTypes.DoNotModify {
+	if nftTypes.Modified(msg.Data) {
 		dataJSON, dataText := utils.GetData(msg.Data)
-		nftData.DataJSON = dataJSON
-		nftData.DataText = dataText
+		nft.DataJSON = dataJSON
+		nft.DataText = dataText
 	}
 
-	if msg.URI != nftTypes.DoNotModify {
-		nftData.URI = msg.URI
+	if nftTypes.Modified(msg.URI) {
+		nft.URI = msg.URI
 	}
 
-	if msg.Name != nftTypes.DoNotModify {
-		nftData.Name = msg.Name
+	if nftTypes.Modified(msg.Name) {
+		nft.Name = msg.Name
 	}
 
-	return m.db.UpdateNFT(nftID, denomID, nftData.Name, nftData.URI, nftData.DataJSON, nftData.DataText)
+	return m.db.UpdateNFT(nftID, denomID, nft.Name, nft.URI, nft.DataJSON, nft.DataText)
 }
 
 func (m *Module) handleMsgTransferNFT(tx *juno.Tx, msg *nftTypes.MsgTransferNft) error {
