@@ -91,36 +91,27 @@ func (m *Module) handleMsgEditNFT(msg *nftTypes.MsgEditNFT) error {
 	denomID := msg.DenomId
 	log.Debug().Str("module", "nft").Str("denomId", denomID).Str("tokenId", nftID).Msg("handling message edit nft")
 
-	// Parse newly proposed changes
-	newDataJSON, newDataText := utils.GetData(msg.Data)
-	newNftData := dbtypes.EditNftQuery{
-		Name:     msg.Name,
-		URI:      msg.URI,
-		DataText: newDataText,
-		DataJSON: newDataJSON,
-	}
-
-	// Getting previous DB records
-	var currentNftData dbtypes.EditNftQuery
-	err := m.db.SQL.Select(&currentNftData, `SELECT name, uri, data_text, data_json FROM nft_nft WHERE id = $1 AND denom_id = $2`, nftID, denomID)
+	var nftData dbtypes.EditNftQuery
+	err := m.db.SQL.Select(&nftData, `SELECT name, uri, data_text, data_json FROM nft_nft WHERE id = $1 AND denom_id = $2`, nftID, denomID)
 	if err != nil {
 		return err
 	}
 
-	if newNftData.Name == nftTypes.DoNotModify {
-		newNftData.Name = currentNftData.Name
+	if msg.Data != nftTypes.DoNotModify {
+		dataJSON, dataText := utils.GetData(msg.Data)
+		nftData.DataJSON = dataJSON
+		nftData.DataText = dataText
 	}
 
-	if newNftData.URI == nftTypes.DoNotModify {
-		newNftData.URI = currentNftData.URI
+	if msg.URI != nftTypes.DoNotModify {
+		nftData.URI = msg.URI
 	}
 
-	if msg.Data == nftTypes.DoNotModify {
-		newNftData.DataText = currentNftData.DataText
-		newNftData.DataJSON = currentNftData.DataJSON
+	if msg.Name != nftTypes.DoNotModify {
+		nftData.Name = msg.Name
 	}
 
-	return m.db.UpdateNFT(nftID, denomID, newNftData.Name, newNftData.URI, newNftData.DataJSON, newNftData.DataText)
+	return m.db.UpdateNFT(nftID, denomID, nftData.Name, nftData.URI, nftData.DataJSON, nftData.DataText)
 }
 
 func (m *Module) handleMsgTransferNFT(tx *juno.Tx, msg *nftTypes.MsgTransferNft) error {
