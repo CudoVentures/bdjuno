@@ -86,11 +86,30 @@ func (m *Module) handleMsgMintNFT(index int, tx *juno.Tx, msg *nftTypes.MsgMintN
 }
 
 func (m *Module) handleMsgEditNFT(msg *nftTypes.MsgEditNFT) error {
-	log.Debug().Str("module", "nft").Str("denomId", msg.DenomId).Str("tokenId", msg.Id).Msg("handling message edit nft")
+	nftID := msg.Id
+	denomID := msg.DenomId
+	log.Debug().Str("module", "nft").Str("denomId", denomID).Str("tokenId", nftID).Msg("handling message edit nft")
 
-	dataJSON, dataText := utils.GetData(msg.Data)
+	nft, err := m.db.GetNftFromDB(nftID, denomID)
+	if err != nil {
+		return err
+	}
 
-	return m.db.UpdateNFT(msg.Id, msg.DenomId, msg.Name, msg.URI, utils.SanitizeUTF8(dataJSON), dataText)
+	if nftTypes.Modified(msg.Data) {
+		dataJSON, dataText := utils.GetData(msg.Data)
+		nft.DataJSON = dataJSON
+		nft.DataText = dataText
+	}
+
+	if nftTypes.Modified(msg.URI) {
+		nft.URI = msg.URI
+	}
+
+	if nftTypes.Modified(msg.Name) {
+		nft.Name = msg.Name
+	}
+
+	return m.db.UpdateNFT(nftID, denomID, nft.Name, nft.URI, nft.DataJSON, nft.DataText)
 }
 
 func (m *Module) handleMsgTransferNFT(tx *juno.Tx, msg *nftTypes.MsgTransferNft) error {
