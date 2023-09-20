@@ -87,36 +87,40 @@ func (m *Module) handleMsgMintNFT(index int, tx *juno.Tx, msg *nftTypes.MsgMintN
 }
 
 func (m *Module) handleMsgEditNFT(msg *nftTypes.MsgEditNFT) error {
-	log.Debug().Str("module", "nft").Str("denomId", msg.DenomId).Str("tokenId", msg.Id).Msg("handling message edit nft")
-
 	nftID := msg.Id
 	denomID := msg.DenomId
-	dataJSON, dataText := utils.GetData(msg.Data)
+	log.Debug().Str("module", "nft").Str("denomId", denomID).Str("tokenId", nftID).Msg("handling message edit nft")
+
+	// Parse newly proposed changes
+	newDataJSON, newDataText := utils.GetData(msg.Data)
 	newNftData := dbtypes.EditNftQuery{
 		Name:     msg.Name,
 		URI:      msg.URI,
-		DataText: msg.Data,
+		DataText: newDataText,
+		DataJSON: newDataJSON,
 	}
 
+	// Getting previous DB records
 	var currentNftData dbtypes.EditNftQuery
-	err := m.db.SQL.Select(&currentNftData, `SELECT name, uri, data_text FROM nft_nft WHERE id = $1 AND denom_id =$2`, nftID, denomID)
+	err := m.db.SQL.Select(&currentNftData, `SELECT name, uri, data_text, data_json FROM nft_nft WHERE id = $1 AND denom_id = $2`, nftID, denomID)
 	if err != nil {
 		return err
 	}
 
-	if newNftData.Name == nftTypes.DoNotModify || newNftData.Name == currentNftData.Name {
+	if newNftData.Name == nftTypes.DoNotModify {
 		newNftData.Name = currentNftData.Name
 	}
 
-	if newNftData.URI == nftTypes.DoNotModify || newNftData.URI == currentNftData.URI {
+	if newNftData.URI == nftTypes.DoNotModify {
 		newNftData.URI = currentNftData.URI
 	}
 
-	if newNftData.DataText == nftTypes.DoNotModify || newNftData.DataText == currentNftData.DataText {
-		dataJSON, dataText = utils.GetData(currentNftData.DataText)
+	if msg.Data == nftTypes.DoNotModify {
+		newNftData.DataText = currentNftData.DataText
+		newNftData.DataJSON = currentNftData.DataJSON
 	}
 
-	return m.db.UpdateNFT(nftID, denomID, newNftData.Name, newNftData.URI, utils.SanitizeUTF8(dataJSON), dataText)
+	return m.db.UpdateNFT(nftID, denomID, newNftData.Name, newNftData.URI, newNftData.DataJSON, newNftData.DataText)
 }
 
 func (m *Module) handleMsgTransferNFT(tx *juno.Tx, msg *nftTypes.MsgTransferNft) error {
