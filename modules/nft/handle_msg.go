@@ -94,7 +94,7 @@ func (m *Module) handleMsgEditNFT(msg *nftTypes.MsgEditNFT) error {
 	dataJSON, dataText := utils.GetData(msg.Data)
 	newNftData := dbtypes.EditNftQuery{
 		Name:     msg.Name,
-		Uri:      msg.URI,
+		URI:      msg.URI,
 		DataText: msg.Data,
 	}
 
@@ -108,15 +108,15 @@ func (m *Module) handleMsgEditNFT(msg *nftTypes.MsgEditNFT) error {
 		newNftData.Name = currentNftData.Name
 	}
 
-	if newNftData.Uri == nftTypes.DoNotModify || newNftData.Uri == currentNftData.Uri {
-		newNftData.Uri = currentNftData.Uri
+	if newNftData.URI == nftTypes.DoNotModify || newNftData.URI == currentNftData.URI {
+		newNftData.URI = currentNftData.URI
 	}
 
 	if newNftData.DataText == nftTypes.DoNotModify || newNftData.DataText == currentNftData.DataText {
 		dataJSON, dataText = utils.GetData(currentNftData.DataText)
 	}
 
-	return m.db.UpdateNFT(nftID, denomID, newNftData.Name, newNftData.Uri, utils.SanitizeUTF8(dataJSON), dataText)
+	return m.db.UpdateNFT(nftID, denomID, newNftData.Name, newNftData.URI, utils.SanitizeUTF8(dataJSON), dataText)
 }
 
 func (m *Module) handleMsgTransferNFT(tx *juno.Tx, msg *nftTypes.MsgTransferNft) error {
