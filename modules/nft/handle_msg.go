@@ -8,6 +8,7 @@ import (
 	nftTypes "github.com/CudoVentures/cudos-node/x/nft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/forbole/bdjuno/v4/database"
+	dbtypes "github.com/forbole/bdjuno/v4/database/types"
 	utils "github.com/forbole/bdjuno/v4/utils"
 	juno "github.com/forbole/juno/v5/types"
 	"github.com/rs/zerolog/log"
@@ -88,9 +89,34 @@ func (m *Module) handleMsgMintNFT(index int, tx *juno.Tx, msg *nftTypes.MsgMintN
 func (m *Module) handleMsgEditNFT(msg *nftTypes.MsgEditNFT) error {
 	log.Debug().Str("module", "nft").Str("denomId", msg.DenomId).Str("tokenId", msg.Id).Msg("handling message edit nft")
 
+	nftID := msg.Id
+	denomID := msg.DenomId
 	dataJSON, dataText := utils.GetData(msg.Data)
+	newNftData := dbtypes.EditNftQuery{
+		Name:     msg.Name,
+		Uri:      msg.URI,
+		DataText: msg.Data,
+	}
 
-	return m.db.UpdateNFT(msg.Id, msg.DenomId, msg.Name, msg.URI, utils.SanitizeUTF8(dataJSON), dataText)
+	var currentNftData dbtypes.EditNftQuery
+	err := m.db.SQL.Select(&currentNftData, `SELECT name, uri, data_text FROM nft_nft WHERE id = $1 AND denom_id =$2`, nftID, denomID)
+	if err != nil {
+		return err
+	}
+
+	if newNftData.Name == nftTypes.DoNotModify || newNftData.Name == currentNftData.Name {
+		newNftData.Name = currentNftData.Name
+	}
+
+	if newNftData.Uri == nftTypes.DoNotModify || newNftData.Uri == currentNftData.Uri {
+		newNftData.Uri = currentNftData.Uri
+	}
+
+	if newNftData.DataText == nftTypes.DoNotModify || newNftData.DataText == currentNftData.DataText {
+		dataJSON, dataText = utils.GetData(currentNftData.DataText)
+	}
+
+	return m.db.UpdateNFT(nftID, denomID, newNftData.Name, newNftData.Uri, utils.SanitizeUTF8(dataJSON), dataText)
 }
 
 func (m *Module) handleMsgTransferNFT(tx *juno.Tx, msg *nftTypes.MsgTransferNft) error {
