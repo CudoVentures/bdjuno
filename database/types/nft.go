@@ -14,5 +14,6 @@ type NftFromDB struct {
 	Sender                string        `json:"sender"`
 	ContractAddressSigner string        `json:"contract_address_signer"`
 	Burned                bool          `json:"burned"`
-	UniqID                sql.NullInt64 `json:"uniq_id"`
+	UniqID                string        `json:"uniq_id"`
+	PartionID             sql.NullInt64 `json:"partition_id"`
 }

@@ -48,9 +48,23 @@ func (tx *DbTx) UpdateNFTHistory(txHash string, tokenID uint64, denomID, from, t
 
 func (db *Db) GetNftFromDB(nftID, denomID string) (dbtypes.NftFromDB, error) {
 	var nft dbtypes.NftFromDB
-	err := db.Sqlx.Select(&nft, `SELECT * FROM nft_nft WHERE id = $1 AND denom_id = $2`, nftID, denomID)
+	err := db.Sqlx.QueryRow(`SELECT * FROM nft_nft WHERE id = $1 AND denom_id = $2`, nftID, denomID).Scan(
+		&nft.TransactionHash,
+		&nft.ID,
+		&nft.DenomID,
+		&nft.Name,
+		&nft.URI,
+		&nft.DataJSON,
+		&nft.DataText,
+		&nft.Owner,
+		&nft.Sender,
+		&nft.ContractAddressSigner,
+		&nft.Burned,
+		&nft.UniqID,
+		&nft.PartionID,
+	)
 	if err != nil {
-		return nft, err
+		return dbtypes.NftFromDB{}, err
 	}
 	return nft, nil
 }
