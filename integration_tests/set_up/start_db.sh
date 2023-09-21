@@ -1,5 +1,18 @@
 #!/bin/bash
 
+ARCH=$(uname -m)
+
+if [[ "$ARCH" == "x86_64" ]]; then
+    PLATFORM="linux/amd64"
+elif [[ "$ARCH" == "arm64" ]]; then
+    PLATFORM="linux/arm64"
+else
+    echo "Unsupported architecture: $ARCH"
+    exit 1
+fi
+
+docker pull --platform=$PLATFORM postgres
+
 # # Database details
 export DB_NAME="bdjuno_test_db"
 export DB_USER="postgres"
