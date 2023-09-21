@@ -20,6 +20,7 @@ var (
 	groupModule  = "group"
 	stringAmount = "1000000000000000000"
 	groupID      = 1
+	proposal     types.GroupProposal
 )
 
 func TestCreateGroupWithPolicy(t *testing.T) {
@@ -146,7 +147,7 @@ func TestSubmitGroupProposal(t *testing.T) {
 		},
 	}
 	metadataEncoded := base64.StdEncoding.EncodeToString([]byte(Metadata))
-	proposal := types.GroupProposal{
+	proposal = types.GroupProposal{
 		GroupPolicyAddress: groupAddress,
 		Messages:           []types.MsgSend{msgSend},
 		Metadata:           metadataEncoded,
@@ -191,6 +192,71 @@ func TestSubmitGroupProposal(t *testing.T) {
 	require.Equal(t, proposal.Proposers[0], actualProposal.Proposer)
 	require.Equal(t, proposal.Metadata, actualProposal.ProposalMetadata)
 	require.Equal(t, proposal.Messages, actualProposalMsgs)
+}
+
+func TestWithdrawalGroupProposal(t *testing.T) {
+	// PREPARE
+	proposalID := "2"
+	require.NotEmpty(t, proposal)
+	proposalFile, err := config.SaveToTempFile(proposal)
+	require.NoError(t, err)
+	defer os.Remove(proposalFile)
+	args := []string{
+		groupModule,
+		"submit-proposal",
+		proposalFile,
+	}
+
+	// EXECUTE
+	result, err := config.ExecuteTxCommand(User1, args...)
+	require.NoError(t, err)
+
+	// ASSERT
+
+	// make sure TX is included on chain
+	txHash, blockHeight, err := config.IsTxSuccess(result)
+	require.NoError(t, err)
+
+	// make sure TX is parsed to DB
+	exists := config.IsParsedToTheDb(txHash, blockHeight)
+	require.True(t, exists)
+
+	// make sure the proposal have initial status column before voting
+	var currentProposalStatus string
+	err = config.QueryDatabase(`SELECT status FROM group_proposal where id = $1`, proposalID).Scan(&currentProposalStatus)
+	require.NoError(t, err)
+	require.Equal(t,
+		groupTypes.ProposalStatus_name[int32(groupTypes.PROPOSAL_STATUS_SUBMITTED)],
+		currentProposalStatus,
+	)
+
+	withdrawArgs := []string{
+		groupModule,
+		"withdraw-proposal",
+		proposalID,
+		User1,
+	}
+
+	// EXECUTE
+	result, err = config.ExecuteTxCommand(User1, withdrawArgs...)
+	require.NoError(t, err)
+
+	// ASSERT
+
+	// make sure TX is included on chain
+	txHash, blockHeight, err = config.IsTxSuccess(result)
+	require.NoError(t, err)
+
+	// make sure TX is parsed to DB
+	exists = config.IsParsedToTheDb(txHash, blockHeight)
+	require.True(t, exists)
+
+	err = config.QueryDatabase(`SELECT status FROM group_proposal where id = $1`, proposalID).Scan(&currentProposalStatus)
+	require.NoError(t, err)
+	require.Equal(t,
+		groupTypes.ProposalStatus_name[int32(groupTypes.PROPOSAL_STATUS_WITHDRAWN)],
+		currentProposalStatus,
+	)
 }
 
 func TestSubmitVoteToGroupProposal(t *testing.T) {
