@@ -100,6 +100,10 @@ func TestMintNftToDenom(t *testing.T) {
 	txHash, blockHeight, err := config.IsTxSuccess(result)
 	require.NoError(t, err)
 
+	// make sure TX is parsed to DB
+	exists := config.IsParsedToTheDb(txHash, blockHeight)
+	require.True(t, exists)
+
 	// PREPARE MINT
 	mintArgs := []string{
 		nftModule,
@@ -120,7 +124,7 @@ func TestMintNftToDenom(t *testing.T) {
 	require.NoError(t, err)
 
 	// make sure TX is parsed to DB
-	exists := config.IsParsedToTheDb(txHash, blockHeight)
+	exists = config.IsParsedToTheDb(txHash, blockHeight)
 	require.True(t, exists)
 
 	expectedNft := types.NftQuery{

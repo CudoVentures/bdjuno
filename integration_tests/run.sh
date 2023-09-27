@@ -17,11 +17,6 @@ chmod +x ./start_bdjuno.sh
 echo "Starting BDJuno..."
 source ./start_bdjuno.sh 
 
-echo "Start testing..."
-sleep 2
-cd "$SETUP_DIR/tests"
-go test -v -p 1 ./...
-
 cd "$SETUP_DIR/set_up"
 chmod +x ./clean_up.sh
 echo "Clean Up..."

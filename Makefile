@@ -70,7 +70,7 @@ test-unit: start-docker-test
 
 test-integration:
 	@echo "Running integration tests..."
-	@./integration_tests/run_tests.sh
+	@./integration_tests/run.sh
 .PHONY: test-integration
 
 ###############################################################################

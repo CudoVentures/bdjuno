@@ -24,6 +24,8 @@ func addAdmin(t *testing.T, adminAddress string) {
 		adminAddress,
 	}
 	result, err := config.ExecuteTxCommand(CudosAdmin, addAdminArgs...)
+	require.NoError(t, err)
+
 	// make sure TX is included on chain
 	txHash, blockHeight, err := config.IsTxSuccess(result)
 	require.NoError(t, err)
