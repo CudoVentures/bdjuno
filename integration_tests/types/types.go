@@ -93,3 +93,8 @@ type MarketplaceCollectionQuery struct {
 	Verified        bool   `json:"verified"`
 	Creator         string `json:"creator"`
 }
+
+type Royalty struct {
+	Address string `json:"address"`
+	Percent string `json:"percent"`
+}
