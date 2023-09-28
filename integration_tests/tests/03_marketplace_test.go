@@ -17,6 +17,7 @@ var (
 	marketplaceModule                = "marketplace"
 	marketplaceNftName               = "marketplaceNftName"
 	marketplaceNftNDenomID           = "marketplacenftnftdenomid"
+	marketplacePublishedNftNDenomID  = "marketplacepublishednftnftdenomid"
 	marketplaceNftSymbol             = "MKTNFTSMBL"
 	marketplaceUnverifiedNftName     = "marketplaceUnverifiedNftName"
 	marketplaceUnverifiedNftNDenomID = "marketplaceunverifiednftnftdenomid"
@@ -309,7 +310,7 @@ func TestPublishCollection(t *testing.T) {
 	args := []string{
 		marketplaceModule,
 		"publish-collection",
-		marketplaceNftNDenomID,
+		marketplacePublishedNftNDenomID,
 		config.GetFlag(MintRoyalties, Royalties),
 		config.GetFlag(ResaleRoyalties, Royalties),
 	}
