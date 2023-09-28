@@ -17,7 +17,6 @@ var (
 	marketplaceModule                = "marketplace"
 	marketplaceNftName               = "marketplaceNftName"
 	marketplaceNftNDenomID           = "marketplacenftnftdenomid"
-	marketplacePublishedNftNDenomID  = "marketplacepublishednftnftdenomid"
 	marketplaceNftSymbol             = "MKTNFTSMBL"
 	marketplaceUnverifiedNftName     = "marketplaceUnverifiedNftName"
 	marketplaceUnverifiedNftNDenomID = "marketplaceunverifiednftnftdenomid"
@@ -306,11 +305,11 @@ func TestUpdateRoyalties(t *testing.T) {
 
 func TestPublishCollection(t *testing.T) {
 	// PREPARE
-	// Dependant on existing nft denom
+	// Dependent on existing nft denom, which is not published as marketplace collection yet!!!
 	args := []string{
 		marketplaceModule,
 		"publish-collection",
-		marketplacePublishedNftNDenomID,
+		NftDenomId,
 		config.GetFlag(MintRoyalties, Royalties),
 		config.GetFlag(ResaleRoyalties, Royalties),
 	}
@@ -326,6 +325,18 @@ func TestPublishCollection(t *testing.T) {
 
 	// make sure TX is parsed to DB
 	exists := config.IsParsedToTheDb(txHash, blockHeight)
+	require.True(t, exists)
+
+	err = config.QueryDatabase(`
+	SELECT EXISTS(
+		SELECT 1 FROM marketplace_collection 
+		WHERE transaction_hash = $1 
+		AND denom_id = $2 
+		AND creator = $3
+	)`,
+		txHash, NftDenomId, User1,
+	).Scan(&exists)
+	require.NoError(t, err)
 	require.True(t, exists)
 }
 
