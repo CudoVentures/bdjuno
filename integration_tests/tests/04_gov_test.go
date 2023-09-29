@@ -192,8 +192,8 @@ func TestProposalIsReadyForVotingAfterDeposit(t *testing.T) {
 	SELECT 
 		status FROM proposal
 		WHERE id = $1 
-		AND voting_end_time NOT NULL 
-		AND voting_start_time NOT NULL`, expectedProposalID,
+		AND voting_end_time IS NOT NULL 
+		AND voting_start_time IS NOT NULL`, expectedProposalID,
 	).Scan(&actualStatus)
 
 	require.NoError(t, err)
