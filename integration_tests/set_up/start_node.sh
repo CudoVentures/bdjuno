@@ -9,7 +9,7 @@ ORCH_ETH_ADDRESS=0x41D0B5762341B0FCE6aDCCF69572c663481C7286
 MONITORING_ENABLED="true"
 ADDR_BOOK_STRICT="false"
 GRAVITY_MODULE_BALANCE="10000000000000000000000000000"
-CUDOS_TOKEN_CONTRACT_ADDRESS="0x28ea52f3ee46CaC5a72f72e8B3A387C0291d586d"
+CUDOS_TOKEN_CONTRACT_ADDRESS="0xE92f6A5b005B8f98F30313463Ada5cb35500a919"
 NUMBER_OF_VALIDATORS="3"
 NUMBER_OF_TEST_USERS="3"
 NUMBER_OF_ORCHESTRATORS="3"
@@ -33,7 +33,7 @@ make install
 cudos-noded init $MONIKER --home=$CUDOS_HOME --chain-id=$CHAIN_ID &> /dev/null
 
 VALID_TOKEN_CONTRACT_ADDRESS="false"
-if [ "$CUDOS_TOKEN_CONTRACT_ADDRESS" = "0x28ea52f3ee46CaC5a72f72e8B3A387C0291d586d" ] || [ "$CUDOS_TOKEN_CONTRACT_ADDRESS" = "0x12d474723cb8c02bcbf46cd335a3bb4c75e9de44" ]; then
+if [ "$CUDOS_TOKEN_CONTRACT_ADDRESS" = "0xE92f6A5b005B8f98F30313463Ada5cb35500a919" ] || [ "$CUDOS_TOKEN_CONTRACT_ADDRESS" = "0x12d474723cb8c02bcbf46cd335a3bb4c75e9de44" ]; then
   VALID_TOKEN_CONTRACT_ADDRESS="true"
   PARAM_UNBONDING_TIME="28800s"
   PARAM_MAX_DEPOSIT_PERIOD="21600s"
@@ -92,19 +92,19 @@ genesisJson=$(jq ".app_state.crisis.constant_fee.denom = \"$BOND_DENOM\"" "${CUD
 echo $genesisJson > "${CUDOS_HOME}/config/genesis.json"
 
 # government proposal params
-genesisJson=$(jq ".app_state.gov.deposit_params.min_deposit[0].amount = \"50000000000000000000000\"" "${CUDOS_HOME}/config/genesis.json")
+genesisJson=$(jq ".app_state.gov.params.min_deposit[0].amount = \"50000000000000000000000\"" "${CUDOS_HOME}/config/genesis.json")
 echo $genesisJson > "${CUDOS_HOME}/config/genesis.json"
-genesisJson=$(jq ".app_state.gov.deposit_params.min_deposit[0].denom = \"$BOND_DENOM\"" "${CUDOS_HOME}/config/genesis.json")
+genesisJson=$(jq ".app_state.gov.params.min_deposit[0].denom = \"$BOND_DENOM\"" "${CUDOS_HOME}/config/genesis.json")
 echo $genesisJson > "${CUDOS_HOME}/config/genesis.json"
-genesisJson=$(jq ".app_state.gov.deposit_params.max_deposit_period = \"$PARAM_MAX_DEPOSIT_PERIOD\"" "${CUDOS_HOME}/config/genesis.json")
+genesisJson=$(jq ".app_state.gov.params.max_deposit_period = \"$PARAM_MAX_DEPOSIT_PERIOD\"" "${CUDOS_HOME}/config/genesis.json")
 echo $genesisJson > "${CUDOS_HOME}/config/genesis.json"
-genesisJson=$(jq ".app_state.gov.voting_params.voting_period = \"$PARAM_VOTING_PERIOD\"" "${CUDOS_HOME}/config/genesis.json")
+genesisJson=$(jq ".app_state.gov.params.voting_period = \"$PARAM_VOTING_PERIOD\"" "${CUDOS_HOME}/config/genesis.json")
 echo $genesisJson > "${CUDOS_HOME}/config/genesis.json"
-genesisJson=$(jq ".app_state.gov.tally_params.quorum = \"0.5\"" "${CUDOS_HOME}/config/genesis.json")
+genesisJson=$(jq ".app_state.gov.params.quorum = \"0.5\"" "${CUDOS_HOME}/config/genesis.json")
 echo $genesisJson > "${CUDOS_HOME}/config/genesis.json"
-genesisJson=$(jq ".app_state.gov.tally_params.threshold = \"0.5\"" "${CUDOS_HOME}/config/genesis.json")
+genesisJson=$(jq ".app_state.gov.params.threshold = \"0.5\"" "${CUDOS_HOME}/config/genesis.json")
 echo $genesisJson > "${CUDOS_HOME}/config/genesis.json"
-genesisJson=$(jq ".app_state.gov.tally_params.veto_threshold = \"0.4\"" "${CUDOS_HOME}/config/genesis.json")
+genesisJson=$(jq ".app_state.gov.params.veto_threshold = \"0.4\"" "${CUDOS_HOME}/config/genesis.json")
 echo $genesisJson > "${CUDOS_HOME}/config/genesis.json"
 
 # distribution params
