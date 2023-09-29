@@ -18,6 +18,8 @@ var (
 	Recipient        = "recipient"
 	Metadata         = "metadata"
 	URI              = "uri"
+	Title            = "title"
+	Summary          = "summary"
 	UID              = "uid"
 	MintRoyalties    = "mint-royalties"
 	ResaleRoyalties  = "resale-royalties"

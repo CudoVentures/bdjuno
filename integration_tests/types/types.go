@@ -48,6 +48,14 @@ type GroupProposal struct {
 	Summary            string    `json:"summary"`
 }
 
+type GovProposal struct {
+	Messages []MsgSend `json:"messages"`
+	Metadata string    `json:"metadata"`
+	Deposit  string    `json:"deposit"`
+	Title    string    `json:"title"`
+	Summary  string    `json:"summary"`
+}
+
 type ProposalExecStatuses struct {
 	ExecutorResult string `json:"executor_result"`
 	Executor       string `json:"executor"`

@@ -34,6 +34,7 @@ var (
 	txCmd            = "tx"
 	queryCmd         = "q"
 	from             = "from"
+	authModule       = "auth"
 	homeFlag         = fmt.Sprintf("--home=%s", cudosHome)
 	keyringFlag      = "--keyring-backend=test"
 	feesFlag         = fmt.Sprintf("--fees=1000000000000000000%s", Denom)
@@ -132,6 +133,16 @@ func SaveToTempFile(v interface{}) (string, error) {
 	return tmpFile.Name(), tmpFile.Close()
 }
 
+func extractAddressFromQueryResult(queryResultString string) string {
+	var address string
+	re := regexp.MustCompile(`address: (\w+)`)
+	match := re.FindStringSubmatch(queryResultString)
+	if len(match) > 1 {
+		address = match[1]
+	}
+	return address
+}
+
 func extractTxResult(result string) types.TxResult {
 	var txRes types.TxResult
 
@@ -180,6 +191,13 @@ func QueryDatabase(query string, args ...interface{}) *sql.Row {
 	return db.QueryRow(query, args...)
 }
 
+func QueryDatabaseMultiRows(query string, args ...interface{}) (*sql.Rows, error) {
+	if db == nil {
+		setupDB()
+	}
+	return db.Query(query, args...)
+}
+
 func IsParsedToTheDb(txHash string, blockHeight uint64) bool {
 	var exists bool
 
@@ -199,4 +217,22 @@ func IsParsedToTheDb(txHash string, blockHeight uint64) bool {
 	}
 
 	return exists
+}
+
+func GetModuleAccountAddress(moduleName string) (string, error) {
+	var address string
+
+	args := []string{
+		queryCmd,
+		authModule,
+		"module-account",
+		moduleName,
+	}
+
+	result, err := executeCommand(args...)
+	if err != nil {
+		return address, err
+	}
+	address = extractAddressFromQueryResult(result)
+	return address, nil
 }
