@@ -18,8 +18,9 @@ const (
 )
 
 var (
-	withCoinsFlag = config.GetFlag("amount", smallDepositAmount)
-	withAdminFlag = config.GetFlag("admin", CudosAdmin)
+	withCoinsFlag   = config.GetFlag("amount", smallDepositAmount)
+	withAdminFlag   = config.GetFlag("admin", CudosAdmin)
+	contractAddress string
 )
 
 func TestWasmStoreCode(t *testing.T) {
@@ -81,7 +82,7 @@ func TestWasmInstantiateContract(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommandWithGas(instantiator, args...)
+	result, err := config.ExecuteTxCommandWithFees(instantiator, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -114,7 +115,7 @@ func TestWasmInstantiateContract(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	contractAddress := resultFromDB.ResultContractAddress
+	contractAddress = resultFromDB.ResultContractAddress
 	require.NotEmpty(t, contractAddress)
 	bz, err := sdk.GetFromBech32(contractAddress, node.AccountAddressPrefix)
 	require.NoError(t, err)
@@ -130,4 +131,48 @@ func TestWasmInstantiateContract(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, contractFunds, 1)
 	require.Equal(t, smallDepositAmount, contractFunds[0].String())
+}
+
+func TestWasmUpdateAdmin(t *testing.T) {
+
+	// PREPARE
+	// Depending on the previous test success
+	require.NotEmpty(t, contractAddress)
+	intendedNewAdmin := User1
+	var currentAdmin string
+	err := config.QueryDatabase(`
+	SELECT 
+		admin FROM cosmwasm_instantiate
+		WHERE result_contract_address = $1`, contractAddress).Scan(&currentAdmin)
+	require.NoError(t, err)
+	require.NotEqual(t, intendedNewAdmin, currentAdmin)
+
+	args := []string{
+		wasmModule,
+		"set-contract-admin",
+		contractAddress,
+		intendedNewAdmin,
+	}
+
+	// EXECUTE
+	result, err := config.ExecuteTxCommandWithFees(currentAdmin, args...)
+	require.NoError(t, err)
+
+	// ASSERT
+
+	// make sure TX is included on chain
+	txHash, blockHeight, err := config.IsTxSuccess(result)
+	require.NoError(t, err)
+
+	// make sure TX is parsed to DB
+	exists := config.IsParsedToTheDb(txHash, blockHeight)
+	require.True(t, exists)
+
+	err = config.QueryDatabase(`
+	SELECT 
+		new_admin FROM cosmwasm_update_admin
+		WHERE contract = $1 
+		AND transaction_hash = $2`, contractAddress, txHash).Scan(&currentAdmin)
+	require.NoError(t, err)
+	require.Equal(t, intendedNewAdmin, currentAdmin)
 }
