@@ -26,18 +26,21 @@ const (
 )
 
 var (
-	db               *sql.DB
-	averageBlockTime = 7
-	cudosHome        = "/tmp/cudos-test-data"
-	cmd              = "cudos-noded"
-	Denom            = "acudos"
-	txCmd            = "tx"
-	queryCmd         = "q"
-	from             = "from"
-	authModule       = "auth"
-	homeFlag         = fmt.Sprintf("--home=%s", cudosHome)
-	keyringFlag      = "--keyring-backend=test"
-	feesFlag         = fmt.Sprintf("--fees=1000000000000000000%s", Denom)
+	db                *sql.DB
+	averageBlockTime  = 7
+	cudosHome         = "/tmp/cudos-test-data"
+	cmd               = "cudos-noded"
+	Denom             = "acudos"
+	txCmd             = "tx"
+	queryCmd          = "q"
+	from              = "from"
+	authModule        = "auth"
+	homeFlag          = fmt.Sprintf("--home=%s", cudosHome)
+	keyringFlag       = "--keyring-backend=test"
+	gasAdjustmentFlag = "--gas-adjustment=1.3"
+	gasFlag           = "--gas=8000000"
+	feesFlag          = fmt.Sprintf("--fees=1000000000000000000%s", Denom)
+	gasPricesFlag     = fmt.Sprintf("--gas-prices=5000000000000%s", Denom)
 
 	GetFlag = func(key string, value string) string {
 		return fmt.Sprintf("--%s=%s", key, value)
@@ -64,8 +67,15 @@ func executeCommand(args ...string) (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
-func ExecuteTxCommand(signerAddress string, args ...string) (string, error) {
+func ExecuteTxCommandWithFees(signerAddress string, args ...string) (string, error) {
 	additionalFlags := []string{GetFlag(from, signerAddress), keyringFlag, feesFlag, "-y"}
+	args = append(args, additionalFlags...)
+	args = append([]string{txCmd}, args...)
+	return executeCommand(args...)
+}
+
+func ExecuteTxCommandWithGas(signerAddress string, args ...string) (string, error) {
+	additionalFlags := []string{GetFlag(from, signerAddress), keyringFlag, gasAdjustmentFlag, gasFlag, gasPricesFlag, "-y"}
 	args = append(args, additionalFlags...)
 	args = append([]string{txCmd}, args...)
 	return executeCommand(args...)

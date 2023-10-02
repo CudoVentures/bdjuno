@@ -98,7 +98,7 @@ func addAdmin(t *testing.T, adminAddress string) {
 		"add-admin",
 		adminAddress,
 	}
-	result, err := config.ExecuteTxCommand(CudosAdmin, addAdminArgs...)
+	result, err := config.ExecuteTxCommandWithFees(CudosAdmin, addAdminArgs...)
 	require.NoError(t, err)
 
 	// make sure TX is included on chain
@@ -131,7 +131,7 @@ func TestCreateVerifiedCollection(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User1, args...)
+	result, err := config.ExecuteTxCommandWithFees(User1, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -185,7 +185,7 @@ func TestCreateUnverifiedCollection(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User1, args...)
+	result, err := config.ExecuteTxCommandWithFees(User1, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -224,7 +224,7 @@ func TestVerifyAndUnverifyCollection(t *testing.T) {
 	}
 
 	// EXECUTE VERIFY
-	result, err := config.ExecuteTxCommand(User1, verifyArgs...)
+	result, err := config.ExecuteTxCommandWithFees(User1, verifyArgs...)
 	require.NoError(t, err)
 
 	// ASSERT VERIFIED
@@ -247,7 +247,7 @@ func TestVerifyAndUnverifyCollection(t *testing.T) {
 	require.Equal(t, expectedVerifiedStatus, statusFromDB)
 
 	// EXECUTE UNVERIFY
-	result, err = config.ExecuteTxCommand(User1, unverifyArgs...)
+	result, err = config.ExecuteTxCommandWithFees(User1, unverifyArgs...)
 	require.NoError(t, err)
 
 	// ASSERT UNVERIFIED
@@ -285,7 +285,7 @@ func TestUpdateRoyalties(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User1, args...)
+	result, err := config.ExecuteTxCommandWithFees(User1, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -314,7 +314,7 @@ func TestPublishCollection(t *testing.T) {
 		config.GetFlag(ResaleRoyalties, Royalties),
 	}
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User1, args...)
+	result, err := config.ExecuteTxCommandWithFees(User1, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -357,7 +357,7 @@ func TestMintMarketplaceNftToCollection(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(recipient, args...)
+	result, err := config.ExecuteTxCommandWithFees(recipient, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -442,7 +442,7 @@ func TestPublishMintedNftForSale(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User1, args...)
+	result, err := config.ExecuteTxCommandWithFees(User1, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -475,7 +475,7 @@ func TestUpdateNftPrice(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User1, args...)
+	result, err := config.ExecuteTxCommandWithFees(User1, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -506,7 +506,7 @@ func TestRemoveNftFromSale(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User1, args...)
+	result, err := config.ExecuteTxCommandWithFees(User1, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -536,7 +536,7 @@ func TestBuyNft(t *testing.T) {
 	}
 
 	// EXECUTE PUBLISH
-	result, err := config.ExecuteTxCommand(oldOwner, args...)
+	result, err := config.ExecuteTxCommandWithFees(oldOwner, args...)
 	require.NoError(t, err)
 
 	// ASSERT PUBLISH
@@ -559,7 +559,7 @@ func TestBuyNft(t *testing.T) {
 	}
 
 	// EXECUTE BUY
-	result, err = config.ExecuteTxCommand(newOwner, args...)
+	result, err = config.ExecuteTxCommandWithFees(newOwner, args...)
 	require.NoError(t, err)
 
 	// ASSERT BUY

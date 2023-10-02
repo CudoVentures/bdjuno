@@ -73,7 +73,7 @@ func TestCreateGroupWithPolicy(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User1, args...)
+	result, err := config.ExecuteTxCommandWithFees(User1, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -165,7 +165,7 @@ func TestSubmitGroupProposal(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User1, args...)
+	result, err := config.ExecuteTxCommandWithFees(User1, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -208,7 +208,7 @@ func TestWithdrawalGroupProposal(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User1, args...)
+	result, err := config.ExecuteTxCommandWithFees(User1, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -238,7 +238,7 @@ func TestWithdrawalGroupProposal(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err = config.ExecuteTxCommand(User1, withdrawArgs...)
+	result, err = config.ExecuteTxCommandWithFees(User1, withdrawArgs...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -282,7 +282,7 @@ func TestSubmitVoteToGroupProposal(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User1, args...)
+	result, err := config.ExecuteTxCommandWithFees(User1, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -333,7 +333,7 @@ func TestExecuteAcceptedGroupProposal(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User1, args...)
+	result, err := config.ExecuteTxCommandWithFees(User1, args...)
 	require.NoError(t, err)
 
 	// ASSERT

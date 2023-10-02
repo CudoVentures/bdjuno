@@ -61,7 +61,7 @@ func TestSubmitGovProposal(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User1, args...)
+	result, err := config.ExecuteTxCommandWithFees(User1, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -162,7 +162,7 @@ func TestMsgDepositToProposal(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(newUser, args...)
+	result, err := config.ExecuteTxCommandWithFees(newUser, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -211,7 +211,7 @@ func TestVoteOnProposal(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(voter, args...)
+	result, err := config.ExecuteTxCommandWithFees(voter, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -258,7 +258,7 @@ func TestWeightedVoteOnProposal(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(voter, args...)
+	result, err := config.ExecuteTxCommandWithFees(voter, args...)
 	require.NoError(t, err)
 
 	// ASSERT

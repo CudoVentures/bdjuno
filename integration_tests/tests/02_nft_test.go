@@ -37,7 +37,7 @@ func TestIssueNftDenom(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User1, args...)
+	result, err := config.ExecuteTxCommandWithFees(User1, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -92,7 +92,7 @@ func TestMintNftToDenom(t *testing.T) {
 		config.GetFlag(Minter, User1),
 	}
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User1, argsForBurnableDenom...)
+	result, err := config.ExecuteTxCommandWithFees(User1, argsForBurnableDenom...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -115,7 +115,7 @@ func TestMintNftToDenom(t *testing.T) {
 	}
 
 	// EXECUTE MINT
-	result, err = config.ExecuteTxCommand(User1, mintArgs...)
+	result, err = config.ExecuteTxCommandWithFees(User1, mintArgs...)
 	require.NoError(t, err)
 
 	// ASSERT MINT
@@ -189,7 +189,7 @@ func TestEditNft(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User1, args...)
+	result, err := config.ExecuteTxCommandWithFees(User1, args...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -225,7 +225,7 @@ func TestTransferNft(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User1, transferArgs...)
+	result, err := config.ExecuteTxCommandWithFees(User1, transferArgs...)
 	require.NoError(t, err)
 
 	// ASSERT
@@ -266,7 +266,7 @@ func TestBurnNft(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(User3, burnArgs...)
+	result, err := config.ExecuteTxCommandWithFees(User3, burnArgs...)
 	require.NoError(t, err)
 
 	// ASSERT BURN
@@ -314,7 +314,7 @@ func TestTransferDenom(t *testing.T) {
 	}
 
 	// EXECUTE
-	result, err := config.ExecuteTxCommand(expectedCurrentOwner, args...)
+	result, err := config.ExecuteTxCommandWithFees(expectedCurrentOwner, args...)
 	require.NoError(t, err)
 
 	// ASSERT
