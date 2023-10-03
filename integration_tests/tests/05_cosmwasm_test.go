@@ -215,3 +215,39 @@ func TestWasmMigrateContract(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, success)
 }
+
+func TestWasmClearAdmin(t *testing.T) {
+	// PREPARE
+	// Depending on the previous test success
+	require.NotEmpty(t, contractAddress)
+	currentAdmin := User1
+	args := []string{
+		wasmModule,
+		"clear-contract-admin",
+		contractAddress,
+	}
+
+	// EXECUTE
+	result, err := config.ExecuteTxCommandWithFees(currentAdmin, args...)
+	require.NoError(t, err)
+
+	// ASSERT
+
+	// make sure TX is included on chain
+	txHash, blockHeight, err := config.IsTxSuccess(result)
+	require.NoError(t, err)
+
+	// make sure TX is parsed to DB
+	exists := config.IsParsedToTheDb(txHash, blockHeight)
+	require.True(t, exists)
+
+	// cosmwasm_clear_admin
+	var success bool
+	err = config.QueryDatabase(`
+	SELECT 
+		success FROM cosmwasm_clear_admin
+		WHERE contract = $1
+		AND transaction_hash = $2`, contractAddress, txHash).Scan(&success)
+	require.NoError(t, err)
+	require.True(t, success)
+}
