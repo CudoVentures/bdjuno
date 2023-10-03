@@ -69,8 +69,9 @@ test-unit: start-docker-test
 .PHONY: test-unit
 
 test-integration:
-	@echo "Running integration tests..."
-	@./integration_tests/run.sh
+	@echo "Running integration/e2e tests..."
+	@chmod +x ./integration_tests/run_tests_in_docker.sh
+	@./integration_tests/run_tests_in_docker.sh
 .PHONY: test-integration
 
 ###############################################################################

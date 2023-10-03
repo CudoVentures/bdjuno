@@ -8,16 +8,6 @@ echo "Starting the node..."
 source ./start_node.sh
 
 cd "$SETUP_DIR/set_up"
-chmod +x ./start_db.sh
-echo "Starting Database..."
-source ./start_db.sh
-
-cd "$SETUP_DIR/set_up"
 chmod +x ./start_bdjuno.sh
 echo "Starting BDJuno..."
 source ./start_bdjuno.sh 
-
-cd "$SETUP_DIR/set_up"
-chmod +x ./clean_up.sh
-echo "Clean Up..."
-source ./clean_up.sh
