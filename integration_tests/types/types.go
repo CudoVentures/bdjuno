@@ -39,6 +39,15 @@ type MsgSend struct {
 	Amount      []types.Coin `json:"amount"`
 }
 
+type WasmBankSendMsg struct {
+	ToAddress string       `json:"to_address"`
+	Amount    []types.Coin `json:"amount"`
+}
+
+type WasmBankSendCommand struct {
+	SendMsg WasmBankSendMsg `json:"send_msg"`
+}
+
 type GroupProposal struct {
 	GroupPolicyAddress string    `json:"group_policy_address"`
 	Messages           []MsgSend `json:"messages"`

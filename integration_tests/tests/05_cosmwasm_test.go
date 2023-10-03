@@ -9,6 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	dbTypes "github.com/forbole/bdjuno/v4/database/types"
 	config "github.com/forbole/bdjuno/v4/integration_tests/set_up"
+	testTypes "github.com/forbole/bdjuno/v4/integration_tests/types"
+	"github.com/forbole/bdjuno/v4/modules/actions/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,9 +20,9 @@ const (
 )
 
 var (
-	withCoinsFlag   = config.GetFlag("amount", smallDepositAmount)
+	withCoinsFlag   = config.GetFlag("amount", bigDepositAmount)
 	withAdminFlag   = config.GetFlag("admin", CudosAdmin)
-	contractAddress string
+	contractAddress = "cudos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9strccpl"
 )
 
 func TestWasmStoreCode(t *testing.T) {
@@ -130,7 +132,7 @@ func TestWasmInstantiateContract(t *testing.T) {
 	err = json.Unmarshal([]byte(resultFromDB.Funds), &contractFunds)
 	require.NoError(t, err)
 	require.Len(t, contractFunds, 1)
-	require.Equal(t, smallDepositAmount, contractFunds[0].String())
+	require.Equal(t, bigDepositAmount, contractFunds[0].String())
 }
 
 func TestWasmUpdateAdmin(t *testing.T) {
@@ -180,7 +182,6 @@ func TestWasmUpdateAdmin(t *testing.T) {
 func TestWasmMigrateContract(t *testing.T) {
 
 	// PREPARE
-	// Depending on the previous test success
 	require.NotEmpty(t, contractAddress)
 	currentAdmin := User1
 	args := []string{
@@ -218,7 +219,6 @@ func TestWasmMigrateContract(t *testing.T) {
 
 func TestWasmClearAdmin(t *testing.T) {
 	// PREPARE
-	// Depending on the previous test success
 	require.NotEmpty(t, contractAddress)
 	currentAdmin := User1
 	args := []string{
@@ -250,4 +250,61 @@ func TestWasmClearAdmin(t *testing.T) {
 		AND transaction_hash = $2`, contractAddress, txHash).Scan(&success)
 	require.NoError(t, err)
 	require.True(t, success)
+}
+
+func TestWasmExecuteContract(t *testing.T) {
+
+	// PREPARE
+	require.NotEmpty(t, contractAddress)
+
+	executeMsg := testTypes.WasmBankSendCommand{
+		SendMsg: testTypes.WasmBankSendMsg{
+			ToAddress: User2,
+			Amount: []types.Coin{
+				{
+					Denom:  config.Denom,
+					Amount: stringAmount,
+				},
+			},
+		},
+	}
+	jsonData, err := json.Marshal(executeMsg)
+	require.NoError(t, err)
+
+	args := []string{
+		wasmModule,
+		"execute",
+		contractAddress,
+		string(jsonData),
+	}
+
+	// EXECUTE
+	result, err := config.ExecuteTxCommandWithFees(User1, args...)
+	require.NoError(t, err)
+
+	// ASSERT
+
+	// make sure TX is included on chain
+	txHash, blockHeight, err := config.IsTxSuccess(result)
+	require.NoError(t, err)
+
+	// make sure TX is parsed to DB
+	exists := config.IsParsedToTheDb(txHash, blockHeight)
+	require.True(t, exists)
+
+	// cosmwasm_execute
+	var success bool
+	var arguments string
+	err = config.QueryDatabase(`
+	SELECT 
+		success, arguments FROM cosmwasm_clear_admin
+		WHERE contract = $1
+		AND transaction_hash = $2
+		AND method = $3`, contractAddress, txHash, "send_msg").Scan(
+		&success,
+		&arguments,
+	)
+	require.NoError(t, err)
+	require.True(t, success)
+	require.NotEmpty(t, arguments)
 }
