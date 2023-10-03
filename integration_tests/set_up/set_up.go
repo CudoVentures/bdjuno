@@ -19,7 +19,7 @@ import (
 
 const (
 	dbHost     = "postgres"
-	dbPort     = 6666
+	dbPort     = 5432
 	dbUser     = "postgres"
 	dbPassword = "12345"
 	dbName     = "bdjuno_test_db"
