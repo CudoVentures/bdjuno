@@ -297,7 +297,7 @@ func TestWasmExecuteContract(t *testing.T) {
 	var arguments string
 	err = config.QueryDatabase(`
 	SELECT 
-		success, arguments FROM cosmwasm_clear_admin
+		success, arguments FROM cosmwasm_execute
 		WHERE contract = $1
 		AND transaction_hash = $2
 		AND method = $3`, contractAddress, txHash, "send_msg").Scan(
