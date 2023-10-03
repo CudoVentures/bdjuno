@@ -36,9 +36,9 @@ parsing:
     fast_sync: false # when fast sync is set to true, ignores all previous block
     genesis_file_path: /tmp/cudos-test-data/config/genesis.json
 database:
-    url: postgres://postgres:12345@localhost:6666/bdjuno_test_db?sslmode=disable&search_path=public
+    url: postgres://postgres:12345@host.docker.internal:6666/bdjuno_test_db?sslmode=disable&search_path=public
     name: bdjuno_test_db
-    host: localhost
+    host: host.docker.internal
     port: 6666
     user: postgres
     password: 12345
