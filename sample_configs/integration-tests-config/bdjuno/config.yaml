@@ -36,13 +36,7 @@ parsing:
     fast_sync: false # when fast sync is set to true, ignores all previous block
     genesis_file_path: /tmp/cudos-test-data/config/genesis.json
 database:
-    url: postgres://postgres:12345@localhost:6666/bdjuno_test_db?sslmode=disable&search_path=public
-    name: bdjuno_test_db
-    host: localhost
-    port: 6666
-    user: postgres
-    password: 12345
-    schema: public
+    url: postgres://postgres:12345@postgres:5432/bdjuno_test_db?sslmode=disable&search_path=public
     max_open_connections: 10
     max_idle_connections: 10
     partition_size: 100000

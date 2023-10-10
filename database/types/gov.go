@@ -112,6 +112,15 @@ func (w TallyResultRow) Equals(v TallyResultRow) bool {
 		w.Height == v.Height
 }
 
+// WeightedVoteRow represents a single row inside the proposal_vote_weighted table
+type WeightedVoteRow struct {
+	ProposalID int64  `db:"proposal_id"`
+	Voter      string `db:"voter_address"`
+	Option     string `db:"option"`
+	Weight     string `db:"weight"`
+	Height     int64  `db:"height"`
+}
+
 // VoteRow represents a single row inside the vote table
 type VoteRow struct {
 	ProposalID int64     `db:"proposal_id"`
