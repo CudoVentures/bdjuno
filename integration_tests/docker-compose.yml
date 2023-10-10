@@ -2,7 +2,7 @@ version: '3.6'
 services:
   postgres:
     image: postgres:14
-    restart: always
+    restart: unless-stopped
     ports:
       - "6666:5432"
     environment:
@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: 12345
   tests:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../
+      dockerfile: ./integration_tests/Dockerfile
     depends_on:
       - postgres
