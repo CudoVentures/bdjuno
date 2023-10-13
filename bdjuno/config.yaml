@@ -1,0 +1,80 @@
+chain:
+    bech32_prefix: cudos
+    modules: 
+        - modules
+        - messages
+        - auth
+        - bank
+        - consensus
+        - gov
+        - slashing 
+        - staking
+        - pricefeed
+        - distribution
+        - cosmwasm
+        - gravity
+        - cudomint
+        - nft
+        - marketplace
+        - actions
+        - feegrant
+        - group
+node:
+    type: remote
+    config:
+        rpc:
+            client_name: cudos-debug-network
+            address: http://host.docker.internal:36657
+            max_connections: 20
+        grpc:
+            address: http://host.docker.internal:3090
+            insecure: true
+parsing:
+    workers: 1
+    listen_new_blocks: true
+    parse_old_blocks: true
+    parse_genesis: true
+    start_height: 0
+    fast_sync: false # when fast sync is set to true, ignores all previous block
+    genesis_file_path: /usr/local/bdjuno/bdjuno/genesis.json
+database:
+    url: postgres://postgres:12345@host.docker.internal:6444/bdjuno?sslmode=disable&search_path=public
+    name: bdjuno
+    host: host.docker.internal
+    port: 6444
+    user: postgres
+    password: 12345
+    schema: public
+    max_open_connections: 10
+    max_idle_connections: 10
+    partition_size: 100000
+    partition_batch: 1000
+logging:
+    level: debug
+    format: text
+telemetry:
+    port: 5100
+pricefeed:
+    tokens:
+        - name: Cudos
+          units:
+            - denom: cudos
+              exponent: 0
+              price_id: cudos
+distribution:
+    rewards_frequency: 1000
+workers:
+    - name: fix_blocks_worker
+      interval: 60m
+    - name: migrate_nfts_worker
+      interval: 1m
+    - name: blocks_monitoring_worker
+      interval: 30s
+cudomint:
+    stats_service_url: http://127.0.0.1:3000
+crypto-compare:
+    crypto_compare_prod_api_key: ""
+    crypto_compare_free_api_key: ""
+actions:
+    port: 3286
+

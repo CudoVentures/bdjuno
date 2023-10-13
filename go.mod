@@ -321,7 +321,7 @@ require (
 // See here: https://github.com/desmos-labs/desmos/pull/1131#discussion_r1194090419
 replace github.com/cosmos/gogoproto => github.com/cosmos/gogoproto v1.4.8
 
-replace github.com/forbole/juno/v5 => github.com/CudoVentures/juno/v5 v5.0.0-20230809124750-cf23f747fdde
+replace github.com/forbole/juno/v5 => github.com/CudoVentures/juno/v5 v5.0.0-20231013114723-92245a6b696a
 
 replace github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.47.4-0.20230717140133-df4d8422a08d
 

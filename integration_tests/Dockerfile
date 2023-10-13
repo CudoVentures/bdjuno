@@ -6,8 +6,9 @@ RUN apt-get update && apt-get install -y jq git && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /tmp/integration_tests
 
-COPY ./integration_tests ./
-COPY ./ /tmp/cudos-test-bdjuno
+COPY ./CudosBdJuno/integration_tests ./
+COPY ./CudosBdJuno/ /tmp/cudos-test-bdjuno
+# COPY ./CudosJuno/ /tmp/CudosJuno
 
 RUN chmod +x ./set_and_run_tests.sh
 CMD ["./set_and_run_tests.sh"]

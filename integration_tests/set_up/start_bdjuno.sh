@@ -16,7 +16,7 @@ cd $BDJUNO_INSTALL_PATH
 make install
 
 bdjuno database migrate --home $HOME
-bdjuno start --home $HOME &> /dev/null &
+bdjuno start --home $HOME &> /tmp/bdjuno.log &
 
 cd $TESTS_PATH
 go test -v -p 1 ./...

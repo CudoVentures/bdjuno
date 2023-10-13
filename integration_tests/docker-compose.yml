@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: 12345
   tests:
     build:
-      context: ../
-      dockerfile: ./integration_tests/Dockerfile
+      context: ../../
+      dockerfile: ./CudosBdJuno/integration_tests/Dockerfile
     depends_on:
       - postgres

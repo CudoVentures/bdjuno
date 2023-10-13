@@ -262,7 +262,7 @@ cudos-noded tendermint show-node-id --home=$CUDOS_HOME > "${CUDOS_HOME}/tendermi
 chmod 755 "${CUDOS_HOME}/config"
 
 # start node as daemon (in background)
-cudos-noded start --home=$CUDOS_HOME &> /dev/null &
+cudos-noded start --home=$CUDOS_HOME &> /tmp/node.log &
 
 # wait 8 secs and verify node is producing blocks
 sleep 8
