@@ -11,8 +11,6 @@ services:
       - "host.docker.internal:host-gateway"
     logging:
       driver: ${LOGGING_DRIVER}
-    depends_on:
-      - cloudsql-proxy
   hasura:
     image: hasura/graphql-engine:v2.3.1
     ports:
