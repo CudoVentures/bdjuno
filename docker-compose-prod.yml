@@ -31,15 +31,3 @@ services:
       HASURA_GRAPHQL_UNAUTHORIZED_ROLE: ${HASURA_GRAPHQL_UNAUTHORIZED_ROLE}
     depends_on:
       - cloudsql-proxy
-      - hasura-actions
-  cloudsql-proxy:
-    container_name: cloudsql-proxy
-    image: gcr.io/cloudsql-docker/gce-proxy:1.11
-    command: /cloud_sql_proxy --dir=/cloudsql -instances=${GCLOUD_INSTANCE_CONNECTION_NAME}=tcp:0.0.0.0:5432
-    ports:
-      - 5432:5432
-    environment:
-      HASURA_GRAPHQL_DATABASE_URL: ${GCLOUD_INSTANCE_CONNECTION_NAME}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    restart: always
