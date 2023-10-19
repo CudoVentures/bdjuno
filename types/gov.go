@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	legacyTypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 const (
@@ -129,6 +130,14 @@ type Vote struct {
 	Height     int64
 }
 
+type LegacyVote struct {
+	ProposalID uint64
+	Voter      string
+	Option     legacyTypes.VoteOption
+	Timestamp  time.Time
+	Height     int64
+}
+
 // NewVote return a new Vote instance
 func NewVote(
 	proposalID uint64,
@@ -138,6 +147,22 @@ func NewVote(
 	height int64,
 ) Vote {
 	return Vote{
+		ProposalID: proposalID,
+		Voter:      voter,
+		Option:     option,
+		Timestamp:  timestamp,
+		Height:     height,
+	}
+}
+
+func NewLegacyVote(
+	proposalID uint64,
+	voter string,
+	option legacyTypes.VoteOption,
+	timestamp time.Time,
+	height int64,
+) LegacyVote {
+	return LegacyVote{
 		ProposalID: proposalID,
 		Voter:      voter,
 		Option:     option,
@@ -173,6 +198,26 @@ func NewWeightedVote(
 		weightedvote.Options = append(weightedvote.Options, WeightedVoteOption{
 			Option: govtypesv1.VoteOption_name[int32(opt.Option)],
 			Weight: opt.Weight,
+		})
+	}
+	return weightedvote
+}
+
+func NewLegacyWeightedVote(
+	proposalID uint64,
+	voter string,
+	options []legacyTypes.WeightedVoteOption,
+	height int64,
+) WeightedVote {
+	weightedvote := WeightedVote{
+		ProposalID: proposalID,
+		Voter:      voter,
+		Height:     height,
+	}
+	for _, opt := range options {
+		weightedvote.Options = append(weightedvote.Options, WeightedVoteOption{
+			Option: govtypesv1.VoteOption_name[int32(opt.Option)],
+			Weight: opt.Weight.String(),
 		})
 	}
 	return weightedvote
