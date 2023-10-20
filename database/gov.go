@@ -278,6 +278,30 @@ WHERE proposal_vote.height <= excluded.height`
 	return nil
 }
 
+func (db *Db) SaveLegacyVote(vote types.LegacyVote) error {
+	query := `
+INSERT INTO proposal_vote (proposal_id, voter_address, option, timestamp, height)
+VALUES ($1, $2, $3, $4, $5)
+ON CONFLICT ON CONSTRAINT unique_vote DO UPDATE
+	SET option = excluded.option,
+		timestamp = excluded.timestamp,
+		height = excluded.height
+WHERE proposal_vote.height <= excluded.height`
+
+	// Store the voter account
+	err := db.SaveAccounts([]types.Account{types.NewAccount(vote.Voter)})
+	if err != nil {
+		return fmt.Errorf("error while storing voter account: %s", err)
+	}
+
+	_, err = db.SQL.Exec(query, vote.ProposalID, vote.Voter, vote.Option.String(), vote.Timestamp, vote.Height)
+	if err != nil {
+		return fmt.Errorf("error while storing vote: %s", err)
+	}
+
+	return nil
+}
+
 func (db *Db) SaveWeightedVote(weightedVote types.WeightedVote) error {
 	query := `
 INSERT INTO proposal_vote_weighted (proposal_id, voter_address, option, weight, height) 
