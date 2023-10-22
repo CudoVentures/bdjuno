@@ -82,17 +82,17 @@ func (m *Module) UpdateProposalStakingPoolSnapshot(height int64, blockVals *tmct
 // updateDeletedProposalStatus updates the proposal having the given id by setting its status
 // to the one that represents a deleted proposal
 func (m *Module) updateDeletedProposalStatus(id uint64) error {
-	stored, err := m.db.GetProposal(id)
+	proposalForUpdate, err := m.db.GetProposalForUpdate(id)
 	if err != nil {
 		return err
 	}
 
 	return m.db.UpdateProposal(
 		types.NewProposalUpdate(
-			stored.ID,
+			proposalForUpdate.ProposalID,
 			types.ProposalStatusInvalid,
-			stored.VotingStartTime,
-			stored.VotingEndTime,
+			proposalForUpdate.VotingStartTime,
+			proposalForUpdate.VotingEndTime,
 		),
 	)
 }
