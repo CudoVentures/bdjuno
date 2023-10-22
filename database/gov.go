@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/lib/pq"
@@ -131,7 +130,9 @@ INSERT INTO proposal(
 
 // GetProposal returns the proposal with the given id, or nil if not found
 func (db *Db) GetProposal(id uint64) (types.Proposal, error) {
+	var proposal types.Proposal
 	var rows []*dbtypes.ProposalRow
+
 	err := db.SQL.Select(&rows, `SELECT * FROM proposal WHERE id = $1`, id)
 	if err != nil {
 		return types.Proposal{}, err
@@ -142,34 +143,11 @@ func (db *Db) GetProposal(id uint64) (types.Proposal, error) {
 	}
 
 	row := rows[0]
+	proposal.ID = row.ProposalID
+	proposal.Status = row.Status
+	proposal.VotingStartTime = dbtypes.NullTimeToTime(row.VotingStartTime)
+	proposal.VotingEndTime = dbtypes.NullTimeToTime(row.VotingEndTime)
 
-	trimContent := strings.TrimPrefix(row.Content, "{")
-	trimContent = strings.TrimPrefix(trimContent, "}")
-	jsonMessages := strings.Split(trimContent, ",")
-
-	var messages []*codectypes.Any
-	for _, jsonMessage := range jsonMessages {
-		var msg codectypes.Any
-		err = db.Cdc.UnmarshalJSON([]byte(jsonMessage), &msg)
-		if err != nil {
-			return types.Proposal{}, err
-		}
-		messages = append(messages, &msg)
-	}
-
-	proposal := types.NewProposal(
-		row.ProposalID,
-		row.Title,
-		row.Description,
-		row.Metadata,
-		messages,
-		row.Status,
-		row.SubmitTime,
-		row.DepositEndTime,
-		dbtypes.NullTimeToTime(row.VotingStartTime),
-		dbtypes.NullTimeToTime(row.VotingEndTime),
-		row.Proposer,
-	)
 	return proposal, nil
 }
 
