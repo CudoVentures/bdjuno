@@ -173,6 +173,29 @@ func (db *Db) GetProposal(id uint64) (types.Proposal, error) {
 	return proposal, nil
 }
 
+// GetProposalForUpdate returns a proposal with data required by NewProposalUpdate type
+func (db *Db) GetProposalForUpdate(id uint64) (types.ProposalUpdate, error) {
+	var proposalForUpdate types.ProposalUpdate
+	var rows []*dbtypes.ProposalRow
+
+	err := db.SQL.Select(&rows, `SELECT status, voting_start_time, voting_end_time FROM proposal WHERE id = $1`, id)
+	if err != nil {
+		return types.ProposalUpdate{}, err
+	}
+
+	if len(rows) == 0 {
+		return types.ProposalUpdate{}, nil
+	}
+
+	row := rows[0]
+	proposalForUpdate.ProposalID = id
+	proposalForUpdate.Status = row.Status
+	proposalForUpdate.VotingStartTime = dbtypes.NullTimeToTime(row.VotingStartTime)
+	proposalForUpdate.VotingEndTime = dbtypes.NullTimeToTime(row.VotingEndTime)
+
+	return proposalForUpdate, nil
+}
+
 // GetOpenProposalsIds returns all the ids of the proposals that are in deposit or voting period at the given block time
 func (db *Db) GetOpenProposalsIds(blockTime time.Time) ([]uint64, error) {
 	var ids []uint64
