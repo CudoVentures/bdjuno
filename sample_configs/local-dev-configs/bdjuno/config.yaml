@@ -7,7 +7,7 @@ chain:
         - bank
         - consensus
         - gov
-        - slashing
+        - slashing 
         - staking
         - pricefeed
         - distribution
@@ -31,6 +31,7 @@ node:
             insecure: true
 parsing:
     workers: 1
+    last_upgrade_height: 101
     listen_new_blocks: true
     parse_old_blocks: true
     parse_genesis: true
@@ -39,12 +40,6 @@ parsing:
     genesis_file_path: /usr/local/bdjuno/bdjuno/genesis.json
 database:
     url: postgres://user:password@host:port/database-name?sslmode=disable&search_path=public
-    name: LocalBigDipperTestV2
-    host: host.docker.internal
-    port: 5432
-    user: postgres
-    password: passhere
-    schema: public
     max_open_connections: 10
     max_idle_connections: 10
     partition_size: 100000

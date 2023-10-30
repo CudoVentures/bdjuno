@@ -679,8 +679,8 @@ github.com/CudoVentures/cosmos-sdk/simapp v0.0.0-20230717140133-df4d8422a08d h1:
 github.com/CudoVentures/cosmos-sdk/simapp v0.0.0-20230717140133-df4d8422a08d/go.mod h1:xbjky3L3DJEylaho6gXplkrMvJ5sFgv+qNX+Nn47bzY=
 github.com/CudoVentures/cudos-node v1.1.1-0.20230821122417-31402f8ea2d9 h1:0+2Q1PuSAyjeI5txD+24+vY5NcwwcepfB7SAR4HWODE=
 github.com/CudoVentures/cudos-node v1.1.1-0.20230821122417-31402f8ea2d9/go.mod h1:JqQysOSVKiSi5upBKM+dfMDEIZi4pl03/WSDEY06mNA=
-github.com/CudoVentures/juno/v5 v5.0.0-20231013114723-92245a6b696a h1:xU3iYkRC2DTEJi9vgao/UToHgOTkTxYg47cidQ6fij0=
-github.com/CudoVentures/juno/v5 v5.0.0-20231013114723-92245a6b696a/go.mod h1:4xgSKG+fuP3Ku//O7Sqq4IRI1V71mzEOdPxC2leuilA=
+github.com/CudoVentures/juno/v5 v5.0.1-0.20231030142926-dc29ed9043f2 h1:kLE3KQ8pF3fNAUhdVn3pQLdc5IyAKIWNSzvZi+Y1uaE=
+github.com/CudoVentures/juno/v5 v5.0.1-0.20231030142926-dc29ed9043f2/go.mod h1:4xgSKG+fuP3Ku//O7Sqq4IRI1V71mzEOdPxC2leuilA=
 github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=

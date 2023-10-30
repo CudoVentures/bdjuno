@@ -29,6 +29,7 @@ node:
             insecure: true
 parsing:
     workers: 1
+    last_upgrade_height: 0
     listen_new_blocks: true
     parse_old_blocks: true
     parse_genesis: true

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/forbole/juno/v5/types"
+	"github.com/forbole/juno/v5/types/config"
 
 	tmctypes "github.com/cometbft/cometbft/rpc/core/types"
 )
@@ -21,7 +22,7 @@ func (m *Module) HandleBlock(
 }
 
 func (m *Module) refreshDataUponSoftwareUpgrade(height int64) error {
-	exist, err := m.db.CheckSoftwareUpgradePlan(height)
+	exist, err := m.db.CheckSoftwareUpgradePlan(height, config.GetLastUpgradeHeight())
 	if err != nil {
 		return fmt.Errorf("error while checking software upgrade plan existence: %s", err)
 	}
