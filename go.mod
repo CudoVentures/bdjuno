@@ -238,7 +238,6 @@ require (
 	github.com/quasilyte/stdinfo v0.0.0-20220114132959-f7386bf02567 // indirect
 	github.com/rakyll/statik v0.1.7 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
-	github.com/regen-network/cosmos-proto v0.3.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/rs/cors v1.8.3 // indirect
@@ -327,4 +326,4 @@ replace github.com/cosmos/cosmos-sdk => github.com/CudoVentures/cosmos-sdk v0.47
 
 replace cosmossdk.io/simapp => github.com/CudoVentures/cosmos-sdk/simapp v0.0.0-20230717140133-df4d8422a08d
 
-replace github.com/althea-net/cosmos-gravity-bridge/module => github.com/CudoVentures/cosmos-gravity-bridge/module v0.0.0-20230726085514-1f7d33f2fd4c
+replace github.com/althea-net/cosmos-gravity-bridge/module => github.com/CudoVentures/cosmos-gravity-bridge/module v0.0.0-20231030095900-24f30891f31d

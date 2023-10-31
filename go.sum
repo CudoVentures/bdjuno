@@ -671,8 +671,8 @@ github.com/CosmWasm/wasmd v0.40.1 h1:LxbO78t/6S8TkeQlUrJ0m5O87HtAwLx4RGHq3rdrOEU
 github.com/CosmWasm/wasmd v0.40.1/go.mod h1:6EOwnv7MpuFaEqxcUOdFV9i4yvrdOciaY6VQ1o7A3yg=
 github.com/CosmWasm/wasmvm v1.2.4 h1:6OfeZuEcEH/9iqwrg2pkeVtDCkMoj9U6PpKtcrCyVrQ=
 github.com/CosmWasm/wasmvm v1.2.4/go.mod h1:vW/E3h8j9xBQs9bCoijDuawKo9kCtxOaS8N8J7KFtkc=
-github.com/CudoVentures/cosmos-gravity-bridge/module v0.0.0-20230726085514-1f7d33f2fd4c h1:lxxRrNPxfxNhtsOGQQg26e0advcLDRQDO9dyG6LdH7Y=
-github.com/CudoVentures/cosmos-gravity-bridge/module v0.0.0-20230726085514-1f7d33f2fd4c/go.mod h1:3rImw3IlUlB+88+Nf0ThhOuq5zS2ixePnwXE9pyvi8k=
+github.com/CudoVentures/cosmos-gravity-bridge/module v0.0.0-20231030095900-24f30891f31d h1:svy+yQY1KsaEfoTNWvVpL5cUayuyJFGJPKKLJrGeGdI=
+github.com/CudoVentures/cosmos-gravity-bridge/module v0.0.0-20231030095900-24f30891f31d/go.mod h1:frvxi5drS1OOogIfA8w99xKVE8ZCg3UpNmVOCZk2hqk=
 github.com/CudoVentures/cosmos-sdk v0.47.4-0.20230717140133-df4d8422a08d h1:aTil1/hVuy5ZW86x+BXU6VbjXC+gLzPZKN8UDTx1t8Y=
 github.com/CudoVentures/cosmos-sdk v0.47.4-0.20230717140133-df4d8422a08d/go.mod h1:c4OfLdAykA9zsj1CqrxBRqXzVz48I++JSvIMPSPcEmk=
 github.com/CudoVentures/cosmos-sdk/simapp v0.0.0-20230717140133-df4d8422a08d h1:NwQEruMckJHrYckMwcCnDn6j2fdF8VStff/U0dseJBA=
@@ -2871,8 +2871,6 @@ github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqn
 github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 h1:N/ElC8H3+5XpJzTSTfLsJV/mx9Q9g7kxmchpfZyxgzM=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
-github.com/regen-network/cosmos-proto v0.3.1 h1:rV7iM4SSFAagvy8RiyhiACbWEGotmqzywPxOvwMdxcg=
-github.com/regen-network/cosmos-proto v0.3.1/go.mod h1:jO0sVX6a1B36nmE8C9xBFXpNwWejXC7QqCOnH3O0+YM=
 github.com/regen-network/gocuke v0.6.2 h1:pHviZ0kKAq2U2hN2q3smKNxct6hS0mGByFMHGnWA97M=
 github.com/regen-network/gocuke v0.6.2/go.mod h1:zYaqIHZobHyd0xOrHGPQjbhGJsuZ1oElx150u2o1xuk=
 github.com/remyoudompheng/bigfft v0.0.0-20170806203942-52369c62f446/go.mod h1:uYEyJGbgTkfkS4+E/PavXkNJcbFIpEtjt2B0KDQ5+9M=
