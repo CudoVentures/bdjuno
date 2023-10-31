@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/forbole/bdjuno/v4/modules/utils"
+	"github.com/forbole/juno/v5/types/config"
 )
 
 // RegisterPeriodicOperations implements modules.PeriodicOperationsModule
@@ -31,6 +32,16 @@ func (m *Module) UpdateStakingPool() error {
 	}
 	log.Debug().Str("module", "staking").Int64("height", height).
 		Msg("updating staking pool")
+
+	// Avoid getting pass that line if upgrade height
+	shouldErrorOnUpgrade, err := m.db.CheckSoftwareUpgradePlan(height, config.GetLastUpgradeHeight())
+	if err != nil {
+		return fmt.Errorf("error while checking software upgrade plan existence: %s", err)
+	}
+
+	if shouldErrorOnUpgrade {
+		return fmt.Errorf("upgrade height reached. not processing block %v", height)
+	}
 
 	pool, err := m.GetStakingPool(height)
 	if err != nil {

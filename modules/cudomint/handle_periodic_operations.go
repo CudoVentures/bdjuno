@@ -3,9 +3,11 @@ package cudomint
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/forbole/bdjuno/v4/modules/utils"
+	junoConfig "github.com/forbole/juno/v5/types/config"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/go-co-op/gocron"
@@ -44,11 +46,22 @@ func (m *Module) fetchStats() error {
 		return err
 	}
 
-	if err := m.db.SaveAPR(apr, stats.APR.Height); err != nil {
+	// Avoid getting pass that line if upgrade height
+	height := stats.APR.Height
+	shouldErrorOnUpgrade, err := m.db.CheckSoftwareUpgradePlan(height, junoConfig.GetLastUpgradeHeight())
+	if err != nil {
+		return fmt.Errorf("error while checking software upgrade plan existence: %s", err)
+	}
+
+	if shouldErrorOnUpgrade {
+		return fmt.Errorf("upgrade height reached. not processing block %v", height)
+	}
+
+	if err := m.db.SaveAPR(apr, height); err != nil {
 		return err
 	}
 
-	if err := m.db.SaveAPRHistory(apr, stats.APR.Height, time.Now().UnixNano()); err != nil {
+	if err := m.db.SaveAPRHistory(apr, height, time.Now().UnixNano()); err != nil {
 		return err
 	}
 

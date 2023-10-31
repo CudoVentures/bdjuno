@@ -12,6 +12,8 @@ import (
 	parsecmdtypes "github.com/forbole/juno/v5/cmd/parse/types"
 	"github.com/forbole/juno/v5/parser"
 	"github.com/rs/zerolog/log"
+
+	"github.com/forbole/juno/v5/types/config"
 )
 
 type migrateNftsWorker struct {
@@ -92,6 +94,16 @@ func (mnw migrateNftsWorker) migrateNfts(parseCfg *parsecmdtypes.Config, parseCt
 
 func (mnw migrateNftsWorker) processBlock(module *nft.Module, parseCtx *parser.Context, currentHeight int64) error {
 	log.Debug().Str("worker", "migrate_nft_worker").Msg(fmt.Sprintf("Processing block at height %d", currentHeight))
+
+	// Avoid getting pass that line if upgrade height
+	shouldErrorOnUpgrade, err := parseCtx.Database.CheckSoftwareUpgradePlan(currentHeight, config.GetLastUpgradeHeight())
+	if err != nil {
+		return fmt.Errorf("error while checking software upgrade plan existence: %s", err)
+	}
+
+	if shouldErrorOnUpgrade {
+		return fmt.Errorf("upgrade height reached. not processing block %v", currentHeight)
+	}
 
 	block, err := parseCtx.Node.Block(currentHeight)
 	if err != nil {
