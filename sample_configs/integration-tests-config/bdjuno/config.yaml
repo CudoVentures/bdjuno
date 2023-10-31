@@ -59,8 +59,6 @@ distribution:
 workers:
     - name: fix_blocks_worker
       interval: 60m
-    - name: migrate_nfts_worker
-      interval: 1m
     - name: blocks_monitoring_worker
       interval: 30s
 cudomint:

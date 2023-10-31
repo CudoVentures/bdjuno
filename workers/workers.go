@@ -24,7 +24,6 @@ var cancelWorkersCtx context.CancelFunc
 
 var workers = []worker{
 	fixBlocksWorker{},
-	migrateNftsWorker{},
 	blocksMonitoringWorker{},
 }
 
