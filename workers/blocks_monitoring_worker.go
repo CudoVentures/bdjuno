@@ -13,6 +13,7 @@ import (
 	parsecmdtypes "github.com/forbole/juno/v5/cmd/parse/types"
 	"github.com/forbole/juno/v5/parser"
 	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog/log"
 )
 
 type blocksMonitoringWorker struct {
@@ -72,6 +73,7 @@ func (bmw blocksMonitoringWorker) monitorBlocks(parseCfg *parsecmdtypes.Config, 
 	}
 
 	if currentTime-lastMonitoredBlockTime > 60 {
+		log.Info().Str("worker", bmw.Name()).Msg("No new blocks has been parsed to the DB. exiting...")
 		os.Exit(-1)
 	}
 

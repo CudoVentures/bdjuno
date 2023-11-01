@@ -989,12 +989,12 @@ func (suite *DbTestSuite) TestBigDipperDb_CheckSoftwareUpgradePlan() {
 	suite.Require().NoError(err)
 
 	// Check software upgrade plan at existing height
-	exist, err := suite.database.CheckSoftwareUpgradePlan(100)
+	exist, err := suite.database.CheckSoftwareUpgradePlan(100, 0)
 	suite.Require().NoError(err)
 	suite.Require().Equal(true, exist)
 
 	// Check software upgrade plan at non-existing height
-	exist, err = suite.database.CheckSoftwareUpgradePlan(11)
+	exist, err = suite.database.CheckSoftwareUpgradePlan(11, 0)
 	suite.Require().NoError(err)
 	suite.Require().Equal(false, exist)
 }

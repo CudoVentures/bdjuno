@@ -29,6 +29,7 @@ node:
             insecure: true
 parsing:
     workers: 1
+    last_upgrade_height: 0
     listen_new_blocks: true
     parse_old_blocks: true
     parse_genesis: true
@@ -58,8 +59,6 @@ distribution:
 workers:
     - name: fix_blocks_worker
       interval: 60m
-    - name: migrate_nfts_worker
-      interval: 1m
     - name: blocks_monitoring_worker
       interval: 30s
 cudomint:

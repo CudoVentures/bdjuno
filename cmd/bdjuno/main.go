@@ -12,7 +12,6 @@ import (
 	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
 	databasemigratecmd "github.com/forbole/bdjuno/v4/cmd/database-migrate"
 	migratecmd "github.com/forbole/bdjuno/v4/cmd/migrate"
-	parsecmd "github.com/forbole/bdjuno/v4/cmd/parse"
 	parsegenesiscmd "github.com/forbole/bdjuno/v4/cmd/parse-genesis"
 	"github.com/forbole/bdjuno/v4/workers"
 
@@ -37,23 +36,24 @@ func main() {
 		WithInitConfig(initCfg).
 		WithParseConfig(parseCfg)
 
-	// Run the command
-	rootCmd := cmd.RootCmd(cfg.GetName())
+	cfgName := cfg.GetName()
 
-	pcmd := parsecmd.NewParseCmd(cfg.GetParseConfig())
-	pcmd.PreRunE = workers.GetStartWorkersPrerunE(pcmd.PreRunE, cfg.GetParseConfig())
+	// Run the command
+	rootCmd := cmd.RootCmd(cfgName)
+
+	startcmd := startcmd.NewStartCmd(parseCfg)
+	startcmd.PreRunE = workers.GetStartWorkersPrerunE(startcmd.PreRunE, parseCfg)
 
 	rootCmd.AddCommand(
 		cmd.VersionCmd(),
 		initcmd.NewInitCmd(cfg.GetInitConfig()),
-		pcmd,
-		migratecmd.NewMigrateCmd(cfg.GetName(), cfg.GetParseConfig()),
-		startcmd.NewStartCmd(cfg.GetParseConfig()),
-		parsegenesiscmd.NewParseGenesisCmd(cfg.GetParseConfig()),
-		databasemigratecmd.NewDatabaseMigrateCmd(cfg.GetParseConfig()),
+		migratecmd.NewMigrateCmd(cfgName, parseCfg),
+		startcmd,
+		parsegenesiscmd.NewParseGenesisCmd(parseCfg),
+		databasemigratecmd.NewDatabaseMigrateCmd(parseCfg),
 	)
 
-	executor := cmd.PrepareRootCmd(cfg.GetName(), rootCmd)
+	executor := cmd.PrepareRootCmd(cfgName, rootCmd)
 	err := executor.Execute()
 	if err != nil {
 		panic(err)
