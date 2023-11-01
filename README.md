@@ -58,11 +58,14 @@ This version includes hasura actions as module so they do not need to be started
 
 ### config.yaml
 - remove history module
-- add actions, feegrant, group modules
+- add actions, feegrant, group, upgrade modules
 - add database -> url to be the connection string from the .env plus appending "?sslmode=disable&search_path=public"
 - add database -> partition_size: 100000
 - add database -> partition_batch: 1000
 - add actions -> port: 3286 (don't change the port because exactly this port is exposed in docker-compose.yaml)
+- remove database -> name/host/port/user/password/schema
+- remove workers -> migrate_nfts_worker
+- add parsing -> last_upgrade_height
 
 we must upgrade "start_height" to be equal at the height when the chain is migrated to cosmos-sdk 0.47
 
