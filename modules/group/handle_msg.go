@@ -3,6 +3,7 @@ package group
 import (
 	"encoding/json"
 	"errors"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -213,9 +214,14 @@ func (m *Module) updateProposalStatus(dbTx *database.DbTx, proposalID uint64, gr
 		return 0, err
 	}
 
+	// the real threshold of the policy is `min(threshold,total_weight)`. If
+	// the group member weights changes (member leaving, member weight update)
+	// and the threshold doesn't, we can end up with threshold > total_weight.
+	// In this case, as long as everyone votes yes (in which case
+	// `yesCount`==`realThreshold`), then the proposal still passes.
 	votesRemaining := totalPower - len(votes)
 	maxPossibleYesCount := votesYes + votesRemaining
-	if maxPossibleYesCount < threshold {
+	if maxPossibleYesCount < int(math.Min(float64(threshold), float64(totalPower))) {
 		err := dbTx.UpdateProposalStatus(proposalID, group.PROPOSAL_STATUS_REJECTED.String())
 		return group.PROPOSAL_STATUS_REJECTED, err
 	}
