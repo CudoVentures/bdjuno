@@ -204,11 +204,6 @@ func (m *Module) updateProposalStatus(dbTx *database.DbTx, proposalID uint64, gr
 		return 0, err
 	}
 
-	if votesYes >= threshold {
-		err := dbTx.UpdateProposalStatus(proposalID, group.PROPOSAL_STATUS_ACCEPTED.String())
-		return group.PROPOSAL_STATUS_ACCEPTED, err
-	}
-
 	totalPower, err := dbTx.GetGroupTotalVotingPower(groupID)
 	if err != nil {
 		return 0, err
@@ -219,9 +214,16 @@ func (m *Module) updateProposalStatus(dbTx *database.DbTx, proposalID uint64, gr
 	// and the threshold doesn't, we can end up with threshold > total_weight.
 	// In this case, as long as everyone votes yes (in which case
 	// `yesCount`==`realThreshold`), then the proposal still passes.
+	realThreshold := int(math.Min(float64(threshold), float64(totalPower)))
+
+	if votesYes >= realThreshold {
+		err := dbTx.UpdateProposalStatus(proposalID, group.PROPOSAL_STATUS_ACCEPTED.String())
+		return group.PROPOSAL_STATUS_ACCEPTED, err
+	}
+
 	votesRemaining := totalPower - len(votes)
 	maxPossibleYesCount := votesYes + votesRemaining
-	if maxPossibleYesCount < int(math.Min(float64(threshold), float64(totalPower))) {
+	if maxPossibleYesCount < realThreshold {
 		err := dbTx.UpdateProposalStatus(proposalID, group.PROPOSAL_STATUS_REJECTED.String())
 		return group.PROPOSAL_STATUS_REJECTED, err
 	}
