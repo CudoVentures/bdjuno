@@ -20,12 +20,12 @@ jobs:
 
       - name: Stop and remove any existing containers
         run: |
-          sudo docker stop deploy_bdjuno_hasura_1 || true
-          sudo docker rm deploy_bdjuno_hasura_1 || true
-          sudo docker stop deploy_bdjuno_bdjuno_1 || true
-          sudo docker rm  deploy_bdjuno_bdjuno_1 || true
-          sudo docker stop deploy_bdjuno_hasura-actions_1 || true
-          sudo docker rm  deploy_bdjuno_hasura-actions_1 || true
+          sudo docker stop cudos-bdjuno-hasura-1 || true
+          sudo docker rm cudos-bdjuno-hasura-1 || true
+          sudo docker stop cudos-bdjuno-bdjuno-1 || true
+          sudo docker rm  cudos-bdjuno-bdjuno-1 || true
+          sudo docker stop cudos-bdjuno-hasura-actions-1 || true
+          sudo docker rm  cudos-bdjuno-hasura-actions-1 || true
           sudo docker stop cloudsql-proxy || true
           sudo docker rm cloudsql-proxy || true
 
