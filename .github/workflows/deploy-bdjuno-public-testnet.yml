@@ -126,7 +126,7 @@ jobs:
 
       - name: Deploy with Docker Compose
         run: |
-          sudo docker-compose --file=docker-compose-prod.yml up --build -d
+          sudo docker compose --file=docker-compose-prod.yml up --build -d
 
       - name: Apply Hasura metadata
         run: |
