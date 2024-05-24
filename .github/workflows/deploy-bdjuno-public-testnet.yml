@@ -79,11 +79,11 @@ jobs:
               fast_sync: false
               genesis_file_path: /usr/local/bdjuno/bdjuno/genesis.json
           database:
-              name: \${{ secrets.POSTGRES_DB }}
+              name: ${{ secrets.POSTGRES_DB }}
               host: host.docker.internal
               port: 5432
-              user: \${{ secrets.POSTGRES_USER }}
-              password: \${{ secrets.POSTGRES_PASSWORD }}
+              user: ${{ secrets.POSTGRES_USER }}
+              password: ${{ secrets.POSTGRES_PASSWORD }}
               schema: public
               max_open_connections: 10
               max_idle_connections: 10
@@ -111,8 +111,8 @@ jobs:
           cudomint:
               stats_service_url: https://stats.testnet.cudos.org
           crypto-compare:
-              crypto_compare_prod_api_key: \${{ secrets.CRYPTO_COMPARE_PROD_API_KEY }}
-              crypto_compare_free_api_key: \${{ secrets.CRYPTO_COMPARE_FREE_API_KEY }}
+              crypto_compare_prod_api_key: ${{ secrets.CRYPTO_COMPARE_PROD_API_KEY }}
+              crypto_compare_free_api_key: ${{ secrets.CRYPTO_COMPARE_FREE_API_KEY }}
           EOF
           chmod 644 bdjuno/config.yaml
           cat bdjuno/config.yaml
@@ -120,19 +120,19 @@ jobs:
       - name: Setup .env for Hasura
         run: |
           cat << EOF > .env
-          HASURA_GRAPHQL_DATABASE_URL=postgres://\${{ secrets.POSTGRES_USER }}:\${{ secrets.POSTGRES_PASSWORD }}@host.docker.internal:5432/\${{ secrets.POSTGRES_DB }}
+          HASURA_GRAPHQL_DATABASE_URL=postgres://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@host.docker.internal:5432/${{ secrets.POSTGRES_DB }}
           HASURA_GRAPHQL_ENABLE_CONSOLE="true"
           HASURA_GRAPHQL_DEV_MODE="false"
           HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
-          HASURA_GRAPHQL_ADMIN_SECRET=\${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
-          HASURA_GRAPHQL_ENDPOINT_URL=\${{ secrets.HASURA_GRAPHQL_ENDPOINT_URL }}
+          HASURA_GRAPHQL_ADMIN_SECRET=${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+          HASURA_GRAPHQL_ENDPOINT_URL=${{ secrets.HASURA_GRAPHQL_ENDPOINT_URL }}
           HASURA_GRAPHQL_UNAUTHORIZED_ROLE="anonymous"
           HASURA_ACTIONS_GRPC="http://public-testnet-seed-02.hosts.cudos.org:9090"
           HASURA_ACTIONS_RPC="http://public-testnet-seed-02.hosts.cudos.org:26657"
           HASURA_ACTIONS_PORT=4000
           GCLOUD_INSTANCE_CONNECTION_NAME=cudos-testnet:us-central1:public-testnet
-          CRYPTO_COMPARE_PROD_API_KEY="\${{ secrets.CRYPTO_COMPARE_PROD_API_KEY }}"
-          CRYPTO_COMPARE_FREE_API_KEY="\${{ secrets.CRYPTO_COMPARE_FREE_API_KEY }}"
+          CRYPTO_COMPARE_PROD_API_KEY="${{ secrets.CRYPTO_COMPARE_PROD_API_KEY }}"
+          CRYPTO_COMPARE_FREE_API_KEY="${{ secrets.CRYPTO_COMPARE_FREE_API_KEY }}"
           EOF
           chmod 644 .env
           cat .env
@@ -145,4 +145,4 @@ jobs:
         run: |
           cd hasura
           curl -L https://github.com/hasura/graphql-engine/raw/stable/cli/get.sh | bash
-          hasura metadata apply --endpoint \${{ secrets.HASURA_GRAPHQL_ENDPOINT_URL }} --admin-secret "\${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}"
+          hasura metadata apply --endpoint ${{ secrets.HASURA_GRAPHQL_ENDPOINT_URL }} --admin-secret "${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}"
