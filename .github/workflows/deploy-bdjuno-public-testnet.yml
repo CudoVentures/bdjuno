@@ -115,6 +115,7 @@ jobs:
               crypto_compare_free_api_key: \${{ secrets.CRYPTO_COMPARE_FREE_API_KEY }}
           EOF
           chmod 644 bdjuno/config.yaml
+          cat bdjuno/config.yaml
 
       - name: Setup .env for Hasura
         run: |
@@ -134,6 +135,7 @@ jobs:
           CRYPTO_COMPARE_FREE_API_KEY="\${{ secrets.CRYPTO_COMPARE_FREE_API_KEY }}"
           EOF
           chmod 644 .env
+          cat .env
 
       - name: Deploy with Docker Compose
         run: |
