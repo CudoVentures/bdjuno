@@ -65,10 +65,10 @@ jobs:
               config:
                   rpc:
                       client_name: cudos-testnet-public-4
-                      address: http://public-testnet-sentry-02.hosts.cudos.org:26657
+                      address: http://public-testnet-seed-02.hosts.cudos.org:26657
                       max_connections: 20
                   grpc:
-                      address: http://public-testnet-sentry-02.hosts.cudos.org:9090
+                      address: http://public-testnet-seed-02.hosts.cudos.org:9090
                       insecure: true
           parsing:
               workers: 4
@@ -127,8 +127,8 @@ jobs:
           HASURA_GRAPHQL_ADMIN_SECRET=${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
           HASURA_GRAPHQL_ENDPOINT_URL=${{ secrets.HASURA_GRAPHQL_ENDPOINT_URL }}
           HASURA_GRAPHQL_UNAUTHORIZED_ROLE="anonymous"
-          HASURA_ACTIONS_GRPC="http://public-testnet-sentry-02.hosts.cudos.org:9090"
-          HASURA_ACTIONS_RPC="http://public-testnet-sentry-02.hosts.cudos.org:26657"
+          HASURA_ACTIONS_GRPC="http://public-testnet-seed-02.hosts.cudos.org:9090"
+          HASURA_ACTIONS_RPC="http://public-testnet-seed-02.hosts.cudos.org:26657"
           HASURA_ACTIONS_PORT=4000
           GCLOUD_INSTANCE_CONNECTION_NAME=cudos-testnet:us-central1:public-testnet
           CRYPTO_COMPARE_PROD_API_KEY="${{ secrets.CRYPTO_COMPARE_PROD_API_KEY }}"
