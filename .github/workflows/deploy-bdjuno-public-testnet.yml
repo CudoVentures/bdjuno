@@ -104,8 +104,8 @@ jobs:
           workers:
               - name: fix_blocks_worker
                 interval: 5m
-              # - name: migrate_nfts_worker
-              #   interval: 1m
+              - name: migrate_nfts_worker
+                interval: 120m
               - name: blocks_monitoring_worker
                 interval: 30s
           cudomint:
