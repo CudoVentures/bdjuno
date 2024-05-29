@@ -71,7 +71,7 @@ jobs:
                       address: http://public-testnet-seed-02.hosts.cudos.org:9090
                       insecure: true
           parsing:
-              workers: 4
+              workers: 2
               listen_new_blocks: true
               parse_old_blocks: false
               parse_genesis: true
@@ -85,8 +85,8 @@ jobs:
               user: ${{ secrets.POSTGRES_USER }}
               password: ${{ secrets.POSTGRES_PASSWORD }}
               schema: public
-              max_open_connections: 10
-              max_idle_connections: 10
+              max_open_connections: 20
+              max_idle_connections: 20
           logging:
               level: debug
               format: text
@@ -103,9 +103,9 @@ jobs:
               rewards_frequency: 1000
           workers:
               - name: fix_blocks_worker
-                interval: 10m
-              - name: migrate_nfts_worker
-                interval: 1m
+                interval: 5m
+              # - name: migrate_nfts_worker
+              #   interval: 1m
               - name: blocks_monitoring_worker
                 interval: 30s
           cudomint:
