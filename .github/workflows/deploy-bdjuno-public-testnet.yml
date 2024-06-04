@@ -166,10 +166,10 @@ jobs:
       - name: Deploy with Docker Compose
         run: |
           sudo docker compose --file=docker-compose-prod.yml up --build -d
+          sleep 15
 
       - name: Apply Hasura metadata
         run: |
-          sleep 15
           cd hasura
           curl -L https://github.com/hasura/graphql-engine/raw/stable/cli/get.sh | bash
           hasura metadata apply --endpoint ${{ secrets.HASURA_GRAPHQL_ENDPOINT_URL }} --admin-secret ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
