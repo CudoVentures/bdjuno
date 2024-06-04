@@ -15,5 +15,11 @@ jobs:
       - name: Apply Hasura metadata
         run: |
           cd hasura
+          curl -L https://github.com/hasura/graphql-engine/raw/stable/cli/get.sh | bash
+          echo "script finished"
           pwd
+          cat << EOF > diag.file
+          hasura metadata apply --endpoint ${{ secrets.HASURA_GRAPHQL_ENDPOINT_URL }} --admin-secret ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}
+          EOF
+          chmod +x diag.file
           ./diag.file
