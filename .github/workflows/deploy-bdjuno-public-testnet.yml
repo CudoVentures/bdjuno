@@ -66,12 +66,12 @@ jobs:
                   rpc:
                       client_name: cudos-testnet-public-4
                       address: http://public-testnet-seed-02.hosts.cudos.org:26657
-                      max_connections: 20
+                      max_connections: 10
                   grpc:
                       address: http://public-testnet-seed-02.hosts.cudos.org:9090
                       insecure: true
           parsing:
-              workers: 15
+              workers: 5
               listen_new_blocks: true
               parse_old_blocks: false
               parse_genesis: true
@@ -103,11 +103,11 @@ jobs:
               rewards_frequency: 1000
           workers:
               - name: fix_blocks_worker
-                interval: 60m
+                interval: 10m
               - name: migrate_nfts_worker
                 interval: 120m
               - name: blocks_monitoring_worker
-                interval: 5s
+                interval: 20s
           cudomint:
               stats_service_url: https://stats.testnet.cudos.org
           crypto-compare:
@@ -136,7 +136,33 @@ jobs:
           EOF
           chmod 644 .env
           cat .env
-
+          
+      - name: Setup Hasura config file
+        run: |
+          cat << EOF > hasura/config.yaml
+          version: 3
+          endpoint: http://cudos-public-testnet-explorer-02.hosts.testnet.cudos.org:8080
+          api_paths:
+            v1_query: v1/query
+            v2_query: v2/query
+            v1_metadata: v1/metadata
+            graphql: v1/graphql
+            config: v1alpha1/config
+            pg_dump: v1alpha1/pg_dump
+            version: v1/version
+          metadata_directory: metadata
+          migrations_directory: migrations
+          seeds_directory: seeds
+          actions:
+            kind: synchronous
+            handler_webhook_baseurl: http://cudos-public-testnet-explorer-02.hosts.testnet.cudos.org:4000
+            codegen:
+              framework: ""
+              output_dir: ""
+          EOF
+          chmod 644 hasura/config.yaml
+          cat hasura/config.yaml
+          
       - name: Deploy with Docker Compose
         run: |
           sudo docker compose --file=docker-compose-prod.yml up --build -d
