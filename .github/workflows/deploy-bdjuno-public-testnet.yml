@@ -71,7 +71,7 @@ jobs:
                       address: http://public-testnet-seed-02.hosts.cudos.org:9090
                       insecure: true
           parsing:
-              workers: 5
+              workers: 15
               listen_new_blocks: true
               parse_old_blocks: false
               parse_genesis: true
@@ -107,7 +107,7 @@ jobs:
               - name: migrate_nfts_worker
                 interval: 120m
               - name: blocks_monitoring_worker
-                interval: 30s
+                interval: 5s
           cudomint:
               stats_service_url: https://stats.testnet.cudos.org
           crypto-compare:
