@@ -171,4 +171,6 @@ jobs:
         run: |
           cd hasura
           curl -L https://github.com/hasura/graphql-engine/raw/stable/cli/get.sh | bash
+          echo "script finished"
+          pwd
           hasura metadata apply --endpoint ${{ secrets.HASURA_GRAPHQL_ENDPOINT_URL }} --admin-secret ${{ secrets.HASURA_GRAPHQL_ADMIN_SECRET_WITH_QUOTES }}
