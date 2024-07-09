@@ -29,6 +29,17 @@ jobs:
           sudo docker stop cloudsql-proxy || true
           sudo docker rm cloudsql-proxy || true
 
+      - name: Stop and remove any existing containers with alt names
+        run: |
+          sudo docker stop deploy_bdjuno_hasura_1 || true
+          sudo docker rm deploy_bdjuno_hasura_1 || true
+          sudo docker stop deploy_bdjuno_bdjuno_1 || true
+          sudo docker rm  deploy_bdjuno_bdjuno_1 || true
+          sudo docker stop deploy_bdjuno_hasura_1 || true
+          sudo docker rm  deploy_bdjuno_hasura_1 || true
+          sudo docker stop cloudsql-proxy || true
+          sudo docker rm cloudsql-proxy || true
+
       - name: Create bdjuno directory and download genesis file
         run: |
           mkdir bdjuno
