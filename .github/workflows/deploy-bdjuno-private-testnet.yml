@@ -43,8 +43,8 @@ jobs:
       - name: Create bdjuno directory and download genesis file
         run: |
           mkdir bdjuno
-          wget https://storage.googleapis.com/private-testnet-genesis/private_testnet_20240705.export
-          mv private_testnet_20240705.export bdjuno/genesis.json
+          wget https://storage.googleapis.com/private-testnet-genesis/cudos_private_tn_2024-10-02.export
+          mv cudos_private_tn_2024-10-02.export bdjuno/genesis.json
           chmod 644 bdjuno/genesis.json
 
       - name: Setup bdjuno config file
