@@ -132,6 +132,7 @@ jobs:
           GCLOUD_INSTANCE_CONNECTION_NAME=cudos-mainnet-infra:us-central1:sql-mainnet
           CRYPTO_COMPARE_PROD_API_KEY="${{ secrets.CRYPTO_COMPARE_PROD_API_KEY }}"
           CRYPTO_COMPARE_FREE_API_KEY="${{ secrets.CRYPTO_COMPARE_FREE_API_KEY }}"
+          LOGGING_DRIVER=gcplogs
           EOF
           chmod 644 .env
           cat .env
@@ -161,7 +162,16 @@ jobs:
           EOF
           chmod 644 hasura/config.yaml
           cat hasura/config.yaml
-          
+
+      - name: Prepare container access
+        run: |
+          sudo mkdir -p /opt/secrets
+          sudo echo "${{ secrets.CLOUDSQL_CREDS_JSON }}" > /opt/secrets/cloudsqlcreds.json
+          sudo chown -R automgmt:automgmt /opt/secrets
+          gcloud auth activate-service-account --key-file=/opt/secrets/cloudsqlcreds.json
+          gcloud auth configure-docker
+          sudo docker pull gcr.io/cloudsql-docker/gce-proxy:1.33.15
+
       - name: Deploy with Docker Compose
         run: |
           sudo docker compose --file=docker-compose-prod.yml up --build -d
