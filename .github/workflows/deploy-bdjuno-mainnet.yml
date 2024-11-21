@@ -119,7 +119,7 @@ jobs:
       - name: Setup .env for Hasura
         run: |
           cat << EOF > .env
-          HASURA_GRAPHQL_DATABASE_URL=postgres://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/${{ secrets.POSTGRES_DB }}
+          HASURA_GRAPHQL_DATABASE_URL=postgres://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@host.docker.internal:5432/${{ secrets.POSTGRES_DB }}
           HASURA_GRAPHQL_ENABLE_CONSOLE="true"
           HASURA_GRAPHQL_DEV_MODE="false"
           HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
