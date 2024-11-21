@@ -166,8 +166,7 @@ jobs:
       - name: Prepare container access
         run: |
           sudo mkdir -p /opt/secrets
-          sudo echo "${{ secrets.CLOUDSQL_CREDS_JSON }}" > /opt/secrets/unformatted_cloudsqlcreds.json
-          sudo jq . /opt/secrets/unformatted_cloudsqlcreds.json > /opt/secrets/cloudsqlcreds.json
+          sudo echo "${{ secrets.CLOUDSQL_CREDS_JSON }}" | base64 -d > /opt/secrets/cloudsqlcreds.json
           sudo chown -R automgmt:automgmt /opt/secrets
           gcloud auth activate-service-account --key-file=/opt/secrets/cloudsqlcreds.json
           gcloud auth configure-docker
