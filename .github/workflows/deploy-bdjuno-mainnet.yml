@@ -10,7 +10,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: gql-bdjuno
+    runs-on: cudos-explorer
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
