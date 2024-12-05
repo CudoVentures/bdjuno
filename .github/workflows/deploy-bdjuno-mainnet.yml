@@ -144,7 +144,7 @@ jobs:
           GCLOUD_INSTANCE_CONNECTION_NAME=cudos-mainnet-infra:europe-west2:cudos-mainnet-sql
           CRYPTO_COMPARE_PROD_API_KEY="${{ secrets.CRYPTO_COMPARE_PROD_API_KEY }}"
           CRYPTO_COMPARE_FREE_API_KEY="${{ secrets.CRYPTO_COMPARE_FREE_API_KEY }}"
-          LOGGING_DRIVER=gcplogs
+          LOGGING_DRIVER=local
           EOF
           chmod 644 .env
           cat .env
